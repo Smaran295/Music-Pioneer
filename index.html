@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JioSaavn Song Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .container { max-width: 800px; margin: auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        .search-bar { display: flex; justify-content: center; margin-bottom: 20px; }
+        input { padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        button { padding: 10px 15px; margin-left: 10px; border: none; background-color: #007bff; color: white; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .results { margin-top: 20px; }
+        .song {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #fafafa;
+            transition: transform 0.2s;
+        }
+        .song:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .song img {
+            max-height: 80px;
+            min-width: 80px;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+        .song-details { flex-grow: 1; }
+        .song-details strong { font-size: 1.1em; color: #333; }
+        .song-details span { font-size: 0.9em; color: #666; }
+        .audio-controls { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎵 JioSaavn Song Search</h2>
+        <div class="search-bar">
+            <input type="text" id="query" placeholder="Enter artist or song name...">
+            <button onclick="searchSongs()">Search</button>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        async function searchSongs() {
+            const query = document.getElementById("query").value;
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "<p>Searching...</p>";
+
+            try {
+                // Using a public CORS proxy to bypass the browser's CORS policy.
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const apiUrl = `https://jiosaavn.rajputhemant.dev/search?query=${encodeURIComponent(query)}`;
+                
+                const res = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                const data = await res.json();
+                
+                resultsDiv.innerHTML = "";
+
+                if (!data.data || data.data.length === 0) {
+                    resultsDiv.innerHTML = "<p>No results found.</p>";
+                    return;
+                }
+
+                data.data.forEach(song => {
+                    const div = document.createElement("div");
+                    div.className = "song";
+                    const songTitle = song.title.replace(/&amp;/g, '&'); // Fix for HTML entities
+                    const singers = song.more_info?.singers?.replace(/&amp;/g, '&') || "Unknown";
+                    const album = song.more_info?.album?.replace(/&amp;/g, '&') || "N/A";
+                    
+                    div.innerHTML = `
+                        <img src="${song.image[1].link}" alt="cover">
+                        <div class="song-details">
+                            <strong>${songTitle}</strong><br>
+                            <span>by ${singers}</span><br>
+                            <span>Album: ${album}</span>
+                        </div>
+                        <audio controls class="audio-controls" src="${song.downloadUrl?.[4]?.link || ""}"></audio>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+            } catch (err) {
+                resultsDiv.innerHTML = "<p>Error fetching data. Check console.</p>";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
