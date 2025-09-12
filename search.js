@@ -5,15 +5,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiUrl = `https://jiosaavn.rajputhemant.dev/search?query=${encodeURIComponent(query)}`;
+    const apiUrl = `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`;
     const response = await fetch(apiUrl);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     res.status(200).json(data);
   } catch (err) {
     console.error("API fetch error:", err.message);
-    res.status(500).json({ error: "Failed to fetch data from the external API" });
+    res.status(500).json({ error: `Failed to fetch data: ${err.message}` });
   }
 }
