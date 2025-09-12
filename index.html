@@ -37,6 +37,7 @@
         .song-details span { font-size: 0.9em; color: #666; }
         .audio-controls { margin-top: 10px; }
         .error { color: red; text-align: center; }
+        .loading { text-align: center; color: #666; }
     </style>
 </head>
 <body>
@@ -50,37 +51,54 @@
     </div>
     <script>
         async function searchSongs() {
-            const query = document.getElementById("query").value;
+            const query = document.getElementById("query").value.trim();
             const resultsDiv = document.getElementById("results");
-            resultsDiv.innerHTML = "<p>Searching...</p>";
+            if (!query) {
+                resultsDiv.innerHTML = "<p class='error'>Please enter a search term.</p>";
+                return;
+            }
+            resultsDiv.innerHTML = "<p class='loading'>Searching...</p>";
 
             try {
-                const apiUrl = `/api/search?query=${encodeURIComponent(query)}`;
-                const res = await fetch(apiUrl);
+                const apiUrl = `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`;
+                console.log(`Fetching from: ${apiUrl}`);
+                const res = await fetch(apiUrl, { headers: { 'Accept': 'application/json' } });
+                console.log(`Response status: ${res.status}`);
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
                 const text = await res.text();
-                const data = text ? JSON.parse(text) : {};
+                console.log(`Response preview: ${text.substring(0, 200)}...`);
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error(`JSON parse error: ${parseErr.message}`);
+                }
                 resultsDiv.innerHTML = "";
                 if (!data.data || !data.data.results || data.data.results.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-                data.data.results.forEach(song => {
+                data.data.results.forEach((song, index) => {
+                    if (index >= 10) return; // Limit to 10 results for better UX
                     const div = document.createElement("div");
                     div.className = "song";
-                    const songTitle = song.name.replace(/&amp;/g, '&');
-                    const singers = song.artists && song.artists.primary ? song.artists.primary.map(a => a.name.replace(/&amp;/g, '&')).join(', ') : "Unknown";
-                    const album = song.album ? song.album.name.replace(/&amp;/g, '&') : "N/A";
+                    const songTitle = (song.name || 'Unknown Title').replace(/&amp;/g, '&');
+                    const singers = song.artists && song.artists.primary ? 
+                        song.artists.primary.map(a => (a.name || 'Unknown').replace(/&amp;/g, '&')).join(', ') : "Unknown";
+                    const album = song.album ? (song.album.name || 'N/A').replace(/&amp;/g, '&') : "N/A";
+                    const imageUrl = song.image && song.image[1] ? song.image[1].url : '';
+                    // Note: downloadUrl may not be available in this API; using a placeholder or encrypted URL if present
+                    const audioUrl = ''; // API doesn't provide direct 320kbps; integrate JioSaavn player if needed
                     div.innerHTML = `
-                        <img src="${song.image && song.image[1] ? song.image[1].url : ''}" alt="cover">
+                        <img src="${imageUrl}" alt="cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjQ0NDIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Py88L3RleHQ+Cjwvc3ZnPgo=';">
                         <div class="song-details">
                             <strong>${songTitle}</strong><br>
                             <span>by ${singers}</span><br>
                             <span>Album: ${album}</span>
                         </div>
-                        <audio controls class="audio-controls" src="${song.downloadUrl && song.downloadUrl[4] ? song.downloadUrl[4].url : ''}"></audio>
+                        ${audioUrl ? `<audio controls class="audio-controls" src="${audioUrl}"></audio>` : '<p style="color: #999; font-size: 0.8em;">Audio preview not available</p>'}
                     `;
                     resultsDiv.appendChild(div);
                 });
@@ -89,6 +107,13 @@
                 console.error("Fetch error:", err);
             }
         }
+
+        // Allow Enter key to search
+        document.getElementById("query").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                searchSongs();
+            }
+        });
     </script>
 </body>
 </html>
