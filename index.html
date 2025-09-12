@@ -36,6 +36,7 @@
         .song-details strong { font-size: 1.1em; color: #333; }
         .song-details span { font-size: 0.9em; color: #666; }
         .audio-controls { margin-top: 10px; }
+        .error { color: red; text-align: center; }
     </style>
 </head>
 <body>
@@ -45,10 +46,8 @@
             <input type="text" id="query" placeholder="Enter artist or song name...">
             <button onclick="searchSongs()">Search</button>
         </div>
-
         <div class="results" id="results"></div>
     </div>
-
     <script>
         async function searchSongs() {
             const query = document.getElementById("query").value;
@@ -56,27 +55,23 @@
             resultsDiv.innerHTML = "<p>Searching...</p>";
 
             try {
-                // Using a public CORS proxy to bypass the browser's CORS policy.
-                const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                const apiUrl = `https://jiosaavn.rajputhemant.dev/search?query=${encodeURIComponent(query)}`;
-                
-                const res = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                const apiUrl = `/api/search?query=${encodeURIComponent(query)}`;
+                const res = await fetch(apiUrl);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
                 const data = await res.json();
-                
                 resultsDiv.innerHTML = "";
-
                 if (!data.data || data.data.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-
                 data.data.forEach(song => {
                     const div = document.createElement("div");
                     div.className = "song";
-                    const songTitle = song.title.replace(/&amp;/g, '&'); // Fix for HTML entities
+                    const songTitle = song.title.replace(/&amp;/g, '&');
                     const singers = song.more_info?.singers?.replace(/&amp;/g, '&') || "Unknown";
                     const album = song.more_info?.album?.replace(/&amp;/g, '&') || "N/A";
-                    
                     div.innerHTML = `
                         <img src="${song.image[1].link}" alt="cover">
                         <div class="song-details">
@@ -89,8 +84,8 @@
                     resultsDiv.appendChild(div);
                 });
             } catch (err) {
-                resultsDiv.innerHTML = "<p>Error fetching data. Check console.</p>";
-                console.error(err);
+                resultsDiv.innerHTML = `<p class="error">Error fetching data: ${err.message}. Check console for details.</p>`;
+                console.error("Fetch error:", err);
             }
         }
     </script>
