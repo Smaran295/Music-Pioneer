@@ -3,6 +3,10 @@
     {
       "source": "/api/search",
       "destination": "https://jiosaavn.rajputhemant.dev/search"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
