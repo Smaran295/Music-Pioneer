@@ -60,26 +60,27 @@
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
-                const data = await res.json();
+                const text = await res.text();
+                const data = text ? JSON.parse(text) : {};
                 resultsDiv.innerHTML = "";
-                if (!data.data || data.data.length === 0) {
+                if (!data.data || !data.data.results || data.data.results.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-                data.data.forEach(song => {
+                data.data.results.forEach(song => {
                     const div = document.createElement("div");
                     div.className = "song";
-                    const songTitle = song.title.replace(/&amp;/g, '&');
-                    const singers = song.more_info?.singers?.replace(/&amp;/g, '&') || "Unknown";
-                    const album = song.more_info?.album?.replace(/&amp;/g, '&') || "N/A";
+                    const songTitle = song.name.replace(/&amp;/g, '&');
+                    const singers = song.artists && song.artists.primary ? song.artists.primary.map(a => a.name.replace(/&amp;/g, '&')).join(', ') : "Unknown";
+                    const album = song.album ? song.album.name.replace(/&amp;/g, '&') : "N/A";
                     div.innerHTML = `
-                        <img src="${song.image[1].link}" alt="cover">
+                        <img src="${song.image && song.image[1] ? song.image[1].url : ''}" alt="cover">
                         <div class="song-details">
                             <strong>${songTitle}</strong><br>
                             <span>by ${singers}</span><br>
                             <span>Album: ${album}</span>
                         </div>
-                        <audio controls class="audio-controls" src="${song.downloadUrl?.[4]?.link || ""}"></audio>
+                        <audio controls class="audio-controls" src="${song.downloadUrl && song.downloadUrl[4] ? song.downloadUrl[4].url : ''}"></audio>
                     `;
                     resultsDiv.appendChild(div);
                 });
