@@ -3,34 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Music Pioneer</title>
+    <meta name="description" content="Discover and search songs with Music Pioneer.">
+    <meta name="keywords" content="music, songs, search, jiosaavn, pioneer">
+    <meta property="og:title" content="Music Pioneer">
+    <meta property="og:image" content="https://yourdomain.com/preview.jpg">
     <style>
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298); /* Deep blue gradient background */
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            transition: background 0.3s;
+        }
+        .light-mode {
+            background: linear-gradient(135deg, #87ceeb, #e0e0e0);
         }
         .container {
             max-width: 900px;
             width: 100%;
             padding: 30px;
-            background: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: background 0.3s, color 0.3s;
+        }
+        .light-mode .container {
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
         }
         h2 {
             text-align: center;
-            color: #ffd700; /* Gold for title */
+            color: #ffd700;
             font-size: 2.5em;
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
+        .light-mode h2 { color: #2a5298; }
         .search-bar {
             display: flex;
             justify-content: center;
@@ -39,20 +53,20 @@
         input {
             padding: 12px;
             width: 350px;
-            border: 2px solid #4a90e2; /* Light blue border */
+            border: 2px solid #4a90e2;
             border-radius: 25px;
             font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
         }
-        input:focus {
-            border-color: #ffd700; /* Gold on focus */
-        }
+        input:focus { border-color: #ffd700; }
+        .light-mode input { border-color: #2a5298; }
+        .light-mode input:focus { border-color: #1e3c72; }
         button {
             padding: 12px 20px;
             margin-left: 10px;
             border: none;
-            background: #4a90e2; /* Light blue button */
+            background: #4a90e2;
             color: white;
             border-radius: 25px;
             cursor: pointer;
@@ -60,9 +74,11 @@
             transition: background 0.3s, transform 0.2s;
         }
         button:hover {
-            background: #357abd; /* Darker blue on hover */
+            background: #357abd;
             transform: scale(1.05);
         }
+        .light-mode button { background: #2a5298; }
+        .light-mode button:hover { background: #1e3c72; }
         .results { margin-top: 20px; }
         .song {
             display: flex;
@@ -73,6 +89,7 @@
             background: rgba(255, 255, 255, 0.15);
             transition: transform 0.3s, box-shadow 0.3s;
         }
+        .light-mode .song { background: rgba(255, 255, 255, 0.3); }
         .song:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
@@ -83,16 +100,19 @@
             border-radius: 10px;
             margin-right: 15px;
             object-fit: cover;
+            loading: lazy;
         }
         .song-details { flex-grow: 1; color: #e0e0e0; }
+        .light-mode .song-details { color: #333; }
         .song-details strong { font-size: 1.2em; color: #ffd700; }
+        .light-mode .song-details strong { color: #2a5298; }
         .song-details span { font-size: 0.95em; }
         .player-controls {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .play-btn, .mute-btn {
+        .play-btn, .mute-btn, .fav-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -100,7 +120,8 @@
             color: #ffd700;
             transition: color 0.3s;
         }
-        .play-btn:hover, .mute-btn:hover { color: #4a90e2; }
+        .light-mode .play-btn, .light-mode .mute-btn, .light-mode .fav-btn { color: #2a5298; }
+        .play-btn:hover, .mute-btn:hover, .fav-btn:hover { color: #4a90e2; }
         .progress {
             width: 200px;
             height: 5px;
@@ -108,6 +129,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .light-mode .progress { background: #b0b0b0; }
         .progress::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 10px;
@@ -116,21 +138,67 @@
             border-radius: 50%;
             cursor: pointer;
         }
+        .light-mode .progress::-webkit-slider-thumb { background: #2a5298; }
         .error { color: #ff6b6b; text-align: center; font-size: 1.1em; }
-        .loading { text-align: center; color: #b0c4de; font-size: 1.1em; }
+        .light-mode .error { color: #ff4500; }
+        .loading {
+            text-align: center;
+            color: #b0c4de;
+            font-size: 1.2em;
+        }
+        .light-mode .loading { color: #666; }
+        .loading span { animation: blink 1s infinite; }
+        .loading span:nth-child(2) { animation-delay: 0.2s; }
+        .loading span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 50% { opacity: 0; } }
+        #trending { margin-top: 20px; color: #e0e0e0; text-align: center; }
+        .light-mode #trending { color: #333; }
+        #trending h3 { color: #ffd700; }
+        .light-mode #trending h3 { color: #2a5298; }
+        .contact { text-align: right; margin-top: 10px; }
+        .light-mode .contact { color: #333; }
+        .contact a { color: #4a90e2; text-decoration: none; }
+        .light-mode .contact a { color: #1e3c72; }
+        .contact a:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            input { width: 200px; }
+            .song { flex-direction: column; text-align: center; }
+            .song img { margin-bottom: 10px; }
+            .player-controls { justify-content: center; margin-top: 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <button onclick="toggleTheme()" style="position: absolute; top: 20px; right: 20px; background: #4a90e2; color: white; border-radius: 50%; width: 40px; height: 40px;">🌙</button>
         <h2>🎵 Music Pioneer</h2>
         <div class="search-bar">
             <input type="text" id="query" placeholder="Enter artist or song name...">
             <button onclick="searchSongs()">Search</button>
         </div>
+        <div id="trending">
+            <h3>Trending Now</h3>
+            <p>1. Deva Deva - Arijit Singh</p>
+            <p>2. Kesariya - Pritam</p>
+            <p>3. Raataan Lambiyan - Tanishk Bagchi</p>
+        </div>
         <div class="results" id="results"></div>
+        <div class="contact">
+            <a href="mailto:contact@musicpioneer.com">Contact Us</a>
+        </div>
     </div>
     <script>
-        const audioElements = new Map(); // Store audio elements by song index
+        const audioElements = new Map();
+        let timeoutId;
+
+        function debounce(func, delay) {
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
 
         async function searchSongs() {
             const query = document.getElementById("query").value.trim();
@@ -139,7 +207,7 @@
                 resultsDiv.innerHTML = "<p class='error'>Please enter a search term.</p>";
                 return;
             }
-            resultsDiv.innerHTML = "<p class='loading'>Searching...</p>";
+            resultsDiv.innerHTML = "<p class='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
 
             try {
                 const apiUrl = `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`;
@@ -163,7 +231,7 @@
                     return;
                 }
                 data.data.results.forEach((song, index) => {
-                    if (index >= 10) return; // Limit to 10 results
+                    if (index >= 10) return;
                     const div = document.createElement("div");
                     div.className = "song";
                     const songTitle = (song.name || 'Unknown Title').replace(/&amp;/g, '&');
@@ -171,7 +239,7 @@
                         song.artists.primary.map(a => (a.name || 'Unknown').replace(/&amp;/g, '&')).join(', ') : "Unknown";
                     const album = song.album ? (song.album.name || 'N/A').replace(/&amp;/g, '&') : "N/A";
                     const imageUrl = song.image && song.image[1] ? song.image[1].url : '';
-                    const songUrl = song.url || ''; // Link to JioSaavn player
+                    const songUrl = song.url || '';
                     div.innerHTML = `
                         <img src="${imageUrl}" alt="cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjQ0NDIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Py88L3RleHQ+Cjwvc3ZnPgo=';">
                         <div class="song-details">
@@ -183,17 +251,17 @@
                             <button class="play-btn" data-index="${index}" onclick="togglePlay(${index}, this)">▶</button>
                             <button class="mute-btn" data-index="${index}" onclick="toggleMute(${index}, this)">🔊</button>
                             <input type="range" class="progress" min="0" max="100" value="0" data-index="${index}" oninput="seekAudio(${index}, this.value)">
+                            <button class="fav-btn" data-index="${index}" onclick="toggleFavorite(${index}, this)">❤️</button>
                             <a href="${songUrl}" target="_blank" style="color: #4a90e2; text-decoration: none; font-size: 0.9em;">Play on JioSaavn</a>
                         </div>
                     `;
                     resultsDiv.appendChild(div);
 
-                    // Create and store audio element (using JioSaavn URL as placeholder; actual audio requires API key or official player)
-                    const audio = new Audio(songUrl || ''); // Note: Direct audio URL not provided; use song.url as fallback
+                    const audio = new Audio(songUrl || ''); // Placeholder; actual audio needs official API
                     audioElements.set(index, audio);
                 });
             } catch (err) {
-                resultsDiv.innerHTML = `<p class="error">Error fetching data: ${err.message}. Check console for details.</p>`;
+                resultsDiv.innerHTML = `<p class='error'>Error fetching data: ${err.message}. Check console for details.</p>`;
                 console.error("Fetch error:", err);
             }
         }
@@ -227,6 +295,26 @@
             }
         }
 
+        function toggleFavorite(index, btn) {
+            let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            const song = data.data.results[index];
+            const songId = song.id;
+            if (favorites.includes(songId)) {
+                favorites = favorites.filter(id => id !== songId);
+                btn.style.color = '#ffd700';
+            } else {
+                favorites.push(songId);
+                btn.style.color = '#ff6b6b';
+            }
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const button = document.querySelector('button[onclick="toggleTheme()"]');
+            button.textContent = document.body.classList.contains('light-mode') ? '🌞' : '🌙';
+        }
+
         // Update progress bar as audio plays
         audioElements.forEach((audio, index) => {
             audio.addEventListener('timeupdate', () => {
@@ -237,6 +325,11 @@
                 }
             });
         });
+
+        // Debounced search on input
+        document.getElementById("query").addEventListener("input", debounce(() => {
+            searchSongs();
+        }, 500));
 
         // Allow Enter key to search
         document.getElementById("query").addEventListener("keypress", function(event) {
