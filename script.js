@@ -1,4 +1,4 @@
-const API_BASE = "https://YOUR_VERCEL_APP.vercel.app"; 
+const API_BASE = "https:musicpioneer.vercel.app"; 
 
 async function getSpotifyToken() {
   const res = await fetch(`${API_BASE}/api/spotify`);
