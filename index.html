@@ -200,6 +200,7 @@
     <script>
         const audioElements = new Map();
         let timeoutId;
+        const API_BASE = 'https://your-jiosaavn-api.vercel.app'; // Replace with your deployed instance URL
 
         function debounce(func, delay) {
             return function (...args) {
@@ -218,7 +219,7 @@
             resultsDiv.innerHTML = "<p class='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
 
             try {
-                const apiUrl = `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`;
+                const apiUrl = `${API_BASE}/api/search?query=${encodeURIComponent(query)}`;
                 console.log(`Fetching from: ${apiUrl}`);
                 const res = await fetch(apiUrl, { headers: { 'Accept': 'application/json' } });
                 console.log(`Response status: ${res.status}`);
@@ -234,20 +235,21 @@
                     throw new Error(`JSON parse error: ${parseErr.message}`);
                 }
                 resultsDiv.innerHTML = "";
-                if (!data.data || !data.data.results || data.data.results.length === 0) {
+                if (!data.data || data.data.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-                data.data.results.forEach((song, index) => {
+                data.data.forEach((song, index) => {
                     if (index >= 10) return;
                     const div = document.createElement("div");
                     div.className = "song";
-                    const songTitle = (song.name || 'Unknown Title').replace(/&amp;/g, '&');
-                    const singers = song.artists && song.artists.primary ? 
-                        song.artists.primary.map(a => (a.name || 'Unknown').replace(/&amp;/g, '&')).join(', ') : "Unknown";
-                    const album = song.album ? (song.album.name || 'N/A').replace(/&amp;/g, '&') : "N/A";
-                    const imageUrl = song.image && song.image[1] ? song.image[1].url : '';
-                    const songUrl = song.url || '';
+                    const songTitle = (song.title || 'Unknown Title').replace(/&amp;/g, '&');
+                    const singers = (song.singers || 'Unknown').replace(/&amp;/g, '&');
+                    const album = (song.album || 'N/A').replace(/&amp;/g, '&');
+                    const imageUrl = song.image ? song.image[2]?.link || song.image[1]?.link || '' : ''; // Prefer 500x500
+                    const downloadUrls = song.download_url || [];
+                    const audioUrl = downloadUrls.find(urlObj => urlObj.quality === '320')?.link || downloadUrls[downloadUrls.length - 1]?.link || ''; // Highest quality
+                    const songUrl = song.web_url || ''; // Fallback link
                     div.innerHTML = `
                         <img src="${imageUrl}" alt="cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjQ0NDIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Py88L3RleHQ+Cjwvc3ZnPgo=';">
                         <div class="song-details">
@@ -260,12 +262,12 @@
                             <button class="mute-btn" data-index="${index}" onclick="toggleMute(${index}, this)">🔊</button>
                             <input type="range" class="progress" min="0" max="100" value="0" data-index="${index}" oninput="seekAudio(${index}, this.value)">
                             <button class="fav-btn" data-index="${index}" onclick="toggleFavorite(${index}, this)">❤️</button>
-                            <a href="${songUrl}" target="_blank" style="color: #00FFFF; text-decoration: none; font-size: 0.9em;">Play on JioSaavn</a>
+                            <a href="${songUrl}" target="_blank" style="color: #00FFFF; text-decoration: none; font-size: 0.9em;">More on JioSaavn</a>
                         </div>
                     `;
                     resultsDiv.appendChild(div);
 
-                    const audio = new Audio(songUrl || ''); // Placeholder; needs official API for audio
+                    const audio = new Audio(audioUrl || songUrl || '');
                     audioElements.set(index, audio);
                 });
             } catch (err) {
@@ -276,7 +278,7 @@
 
         function togglePlay(index, btn) {
             const audio = audioElements.get(index);
-            if (audio) {
+            if (audio && audio.src) {
                 if (audio.paused) {
                     audio.play().catch(err => console.error("Play error:", err));
                     btn.textContent = "⏸";
@@ -284,6 +286,8 @@
                     audio.pause();
                     btn.textContent = "▶";
                 }
+            } else {
+                console.warn("No audio source available for this song.");
             }
         }
 
@@ -305,8 +309,8 @@
 
         function toggleFavorite(index, btn) {
             let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-            const song = data.data.results[index];
-            const songId = song.id;
+            const song = data.data[index]; // Assumes 'data' from searchSongs scope
+            const songId = song.id || song.perma_url;
             if (favorites.includes(songId)) {
                 favorites = favorites.filter(id => id !== songId);
                 btn.style.color = '#00FFFF';
@@ -324,15 +328,15 @@
         }
 
         // Update progress bar as audio plays
-        audioElements.forEach((audio, index) => {
-            audio.addEventListener('timeupdate', () => {
+        setInterval(() => {
+            audioElements.forEach((audio, index) => {
                 const progress = document.querySelector(`.progress[data-index="${index}"]`);
                 if (progress && audio.duration) {
                     const value = (audio.currentTime / audio.duration) * 100;
                     progress.value = value;
                 }
             });
-        });
+        }, 500);
 
         // Debounced search on input
         document.getElementById("query").addEventListener("input", debounce(() => {
