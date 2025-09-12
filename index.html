@@ -12,7 +12,7 @@
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            background: #000000; /* Solid black background */
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -20,31 +20,31 @@
             transition: background 0.3s;
         }
         .light-mode {
-            background: linear-gradient(135deg, #87ceeb, #e0e0e0);
+            background: #e0f7fa; /* Light cyan background for light mode */
         }
         .container {
             max-width: 900px;
             width: 100%;
             padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+            backdrop-filter: blur(5px);
             border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 206, 209, 0.3); /* Darker cyan border */
             transition: background 0.3s, color 0.3s;
         }
         .light-mode .container {
-            background: rgba(255, 255, 255, 0.8);
-            color: #333;
+            background: rgba(0, 206, 209, 0.1); /* Light cyan tint */
+            color: #000000;
         }
         h2 {
             text-align: center;
-            color: #ffd700;
+            color: #00FFFF; /* Bright cyan for title */
             font-size: 2.5em;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
-        .light-mode h2 { color: #2a5298; }
+        .light-mode h2 { color: #00CED1; /* Darker cyan for light mode */ }
         .search-bar {
             display: flex;
             justify-content: center;
@@ -53,32 +53,40 @@
         input {
             padding: 12px;
             width: 350px;
-            border: 2px solid #4a90e2;
+            border: 2px solid #00FFFF; /* Cyan border */
             border-radius: 25px;
             font-size: 16px;
             outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #00FFFF;
             transition: border-color 0.3s;
         }
-        input:focus { border-color: #ffd700; }
-        .light-mode input { border-color: #2a5298; }
-        .light-mode input:focus { border-color: #1e3c72; }
+        input::placeholder { color: rgba(0, 255, 255, 0.5); }
+        input:focus { border-color: #00CED1; /* Darker cyan on focus */ }
+        .light-mode input {
+            border-color: #00CED1;
+            background: rgba(0, 206, 209, 0.1);
+            color: #000000;
+        }
+        .light-mode input::placeholder { color: rgba(0, 206, 209, 0.5); }
+        .light-mode input:focus { border-color: #00FFFF; }
         button {
             padding: 12px 20px;
             margin-left: 10px;
             border: none;
-            background: #4a90e2;
-            color: white;
+            background: #00FFFF; /* Cyan button */
+            color: #000000;
             border-radius: 25px;
             cursor: pointer;
             font-size: 16px;
             transition: background 0.3s, transform 0.2s;
         }
         button:hover {
-            background: #357abd;
+            background: #00CED1; /* Darker cyan on hover */
             transform: scale(1.05);
         }
-        .light-mode button { background: #2a5298; }
-        .light-mode button:hover { background: #1e3c72; }
+        .light-mode button { background: #00CED1; }
+        .light-mode button:hover { background: #00FFFF; }
         .results { margin-top: 20px; }
         .song {
             display: flex;
@@ -86,13 +94,13 @@
             padding: 15px;
             margin-bottom: 15px;
             border-radius: 15px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 255, 255, 0.1); /* Light cyan tint */
             transition: transform 0.3s, box-shadow 0.3s;
         }
-        .light-mode .song { background: rgba(255, 255, 255, 0.3); }
+        .light-mode .song { background: rgba(0, 206, 209, 0.2); }
         .song:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
         .song img {
             max-height: 80px;
@@ -102,10 +110,10 @@
             object-fit: cover;
             loading: lazy;
         }
-        .song-details { flex-grow: 1; color: #e0e0e0; }
-        .light-mode .song-details { color: #333; }
-        .song-details strong { font-size: 1.2em; color: #ffd700; }
-        .light-mode .song-details strong { color: #2a5298; }
+        .song-details { flex-grow: 1; color: #00FFFF; }
+        .light-mode .song-details { color: #000000; }
+        .song-details strong { font-size: 1.2em; color: #00CED1; }
+        .light-mode .song-details strong { color: #00FFFF; }
         .song-details span { font-size: 0.95em; }
         .player-controls {
             display: flex;
@@ -117,48 +125,48 @@
             border: none;
             cursor: pointer;
             font-size: 1.5em;
-            color: #ffd700;
+            color: #00FFFF;
             transition: color 0.3s;
         }
-        .light-mode .play-btn, .light-mode .mute-btn, .light-mode .fav-btn { color: #2a5298; }
-        .play-btn:hover, .mute-btn:hover, .fav-btn:hover { color: #4a90e2; }
+        .light-mode .play-btn, .light-mode .mute-btn, .light-mode .fav-btn { color: #00CED1; }
+        .play-btn:hover, .mute-btn:hover, .fav-btn:hover { color: #00CED1; }
         .progress {
             width: 200px;
             height: 5px;
-            background: #e0e0e0;
+            background: rgba(0, 255, 255, 0.3);
             border-radius: 5px;
             cursor: pointer;
         }
-        .light-mode .progress { background: #b0b0b0; }
+        .light-mode .progress { background: rgba(0, 206, 209, 0.5); }
         .progress::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 10px;
             height: 10px;
-            background: #ffd700;
+            background: #00FFFF;
             border-radius: 50%;
             cursor: pointer;
         }
-        .light-mode .progress::-webkit-slider-thumb { background: #2a5298; }
+        .light-mode .progress::-webkit-slider-thumb { background: #00CED1; }
         .error { color: #ff6b6b; text-align: center; font-size: 1.1em; }
         .light-mode .error { color: #ff4500; }
         .loading {
             text-align: center;
-            color: #b0c4de;
+            color: #00CED1;
             font-size: 1.2em;
         }
-        .light-mode .loading { color: #666; }
+        .light-mode .loading { color: #00FFFF; }
         .loading span { animation: blink 1s infinite; }
         .loading span:nth-child(2) { animation-delay: 0.2s; }
         .loading span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes blink { 50% { opacity: 0; } }
-        #trending { margin-top: 20px; color: #e0e0e0; text-align: center; }
-        .light-mode #trending { color: #333; }
-        #trending h3 { color: #ffd700; }
-        .light-mode #trending h3 { color: #2a5298; }
+        #trending { margin-top: 20px; color: #00FFFF; text-align: center; }
+        .light-mode #trending { color: #000000; }
+        #trending h3 { color: #00CED1; }
+        .light-mode #trending h3 { color: #00FFFF; }
         .contact { text-align: right; margin-top: 10px; }
-        .light-mode .contact { color: #333; }
-        .contact a { color: #4a90e2; text-decoration: none; }
-        .light-mode .contact a { color: #1e3c72; }
+        .light-mode .contact { color: #000000; }
+        .contact a { color: #00FFFF; text-decoration: none; }
+        .light-mode .contact a { color: #00CED1; }
         .contact a:hover { text-decoration: underline; }
 
         @media (max-width: 600px) {
@@ -172,7 +180,7 @@
 </head>
 <body>
     <div class="container">
-        <button onclick="toggleTheme()" style="position: absolute; top: 20px; right: 20px; background: #4a90e2; color: white; border-radius: 50%; width: 40px; height: 40px;">🌙</button>
+        <button onclick="toggleTheme()" style="position: absolute; top: 20px; right: 20px; background: #00FFFF; color: #000000; border-radius: 50%; width: 40px; height: 40px;">🌙</button>
         <h2>🎵 Music Pioneer</h2>
         <div class="search-bar">
             <input type="text" id="query" placeholder="Enter artist or song name...">
@@ -252,12 +260,12 @@
                             <button class="mute-btn" data-index="${index}" onclick="toggleMute(${index}, this)">🔊</button>
                             <input type="range" class="progress" min="0" max="100" value="0" data-index="${index}" oninput="seekAudio(${index}, this.value)">
                             <button class="fav-btn" data-index="${index}" onclick="toggleFavorite(${index}, this)">❤️</button>
-                            <a href="${songUrl}" target="_blank" style="color: #4a90e2; text-decoration: none; font-size: 0.9em;">Play on JioSaavn</a>
+                            <a href="${songUrl}" target="_blank" style="color: #00FFFF; text-decoration: none; font-size: 0.9em;">Play on JioSaavn</a>
                         </div>
                     `;
                     resultsDiv.appendChild(div);
 
-                    const audio = new Audio(songUrl || ''); // Placeholder; actual audio needs official API
+                    const audio = new Audio(songUrl || ''); // Placeholder; needs official API for audio
                     audioElements.set(index, audio);
                 });
             } catch (err) {
@@ -301,10 +309,10 @@
             const songId = song.id;
             if (favorites.includes(songId)) {
                 favorites = favorites.filter(id => id !== songId);
-                btn.style.color = '#ffd700';
+                btn.style.color = '#00FFFF';
             } else {
                 favorites.push(songId);
-                btn.style.color = '#ff6b6b';
+                btn.style.color = '#00CED1';
             }
             localStorage.setItem('favorites', JSON.stringify(favorites));
         }
