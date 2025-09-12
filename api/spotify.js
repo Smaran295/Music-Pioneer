@@ -1,10 +1,9 @@
 export default async function handler(req, res) {
-  // Allow CORS
+  // Allow CORS (important for GitHub Pages frontend)
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -23,14 +22,14 @@ export default async function handler(req, res) {
       body: "grant_type=client_credentials",
     });
 
+    const tokenData = await tokenRes.json();
+
     if (!tokenRes.ok) {
-      const err = await tokenRes.text();
-      return res.status(500).json({ error: "Failed to fetch Spotify token", details: err });
+      return res.status(500).json({ error: "Spotify token fetch failed", details: tokenData });
     }
 
-    const tokenData = await tokenRes.json();
     return res.status(200).json(tokenData);
-  } catch (error) {
-    return res.status(500).json({ error: "Internal server error", details: error.message });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 }
