@@ -248,6 +248,7 @@
             font-size: 18px;
             cursor: pointer;
             transition: color 0.2s;
+            z-index: 1;
         }
         .like-btn.liked { color: var(--accent); }
         .like-btn:hover { color: var(--accent); }
@@ -710,7 +711,7 @@
                             <strong>${title}</strong>
                             <span>${subtitle}</span>
                         </div>
-                        <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
+                        <button class="like-btn" data-id="${id}" onclick="toggleLike(event)"><i class="far fa-heart"></i></button>
                     `;
                 } else {
                     div.innerHTML = `
@@ -719,16 +720,16 @@
                             <strong>${title}</strong>
                             <span>${subtitle}</span>
                         </div>
-                        <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
+                        <button class="like-btn" data-id="${id}" onclick="toggleLike(event)"><i class="far fa-heart"></i></button>
                     `;
                 }
-                div.onclick = async (e) => {
-                    if (!e.target.closest('.like-btn')) {
+                div.addEventListener('click', async (e) => {
+                    if (!e.target.classList.contains('like-btn')) {
+                        currentIndex = queue.length; // Set to the new item
                         await addToQueue('', title, subtitle, imageUrl, id);
-                        playQueue(); // Ensure playback starts immediately
-                        console.log(`Clicked: ${title}, URL: ${queue[queue.length - 1].url}`); // Debug log
+                        playQueue();
                     }
-                };
+                });
                 container.appendChild(div);
             });
             if (items.length === 0) container.innerHTML = "<p class='no-results'>No results found.</p>";
@@ -780,7 +781,7 @@
                             <strong>${liked.title}</strong>
                             <span>${liked.artists}</span>
                         </div>
-                        <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
+                        <button class="like-btn liked" data-id="${liked.id}" onclick="toggleLike(event)"><i class="fas fa-heart"></i></button>
                     `;
                 } else {
                     div.innerHTML = `
@@ -789,31 +790,31 @@
                             <strong>${liked.title}</strong>
                             <span>${liked.artists}</span>
                         </div>
-                        <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
+                        <button class="like-btn liked" data-id="${liked.id}" onclick="toggleLike(event)"><i class="fas fa-heart"></i></button>
                     `;
                 }
-                div.onclick = async (e) => {
-                    if (!e.target.closest('.like-btn')) {
+                div.addEventListener('click', async (e) => {
+                    if (!e.target.classList.contains('like-btn')) {
+                        currentIndex = queue.length; // Set to the new item
                         await addToQueue(liked.url, liked.title, liked.artists, liked.image, liked.id);
-                        playQueue(); // Ensure playback starts immediately
-                        console.log(`Clicked Liked: ${liked.title}, URL: ${liked.url}`); // Debug log
+                        playQueue();
                     }
-                };
+                });
                 likedDiv.appendChild(div);
             });
         }
 
         // Toggle Like
-        async function toggleLike(id, event) {
+        function toggleLike(event) {
             event.stopPropagation();
+            const id = event.target.closest('.like-btn').getAttribute('data-id');
             const index = likedSongs.findIndex(s => s.id === id);
             if (index > -1) {
                 likedSongs.splice(index, 1);
                 event.target.closest('.like-btn').classList.remove('liked');
                 event.target.innerHTML = '<i class="far fa-heart"></i>';
             } else {
-                try {
-                    const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
+                fetchWithRetry(`${API_BASE}/api/songs/${id}`).then(data => {
                     const song = data.data[0] || {};
                     const title = song.name || 'Unknown';
                     const artists = (song.artists?.primary?.map(a => a.name).join(', ')) || 'Unknown';
@@ -822,9 +823,7 @@
                     likedSongs.push({ id, title, artists, image, url });
                     event.target.closest('.like-btn').classList.add('liked');
                     event.target.innerHTML = '<i class="fas fa-heart"></i>';
-                } catch (err) {
-                    alert('Unable to like song: ' + err.message);
-                }
+                }).catch(err => alert('Unable to like song: ' + err.message));
             }
             localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
             if (document.getElementById('library').style.display !== 'none') loadLikedSongs();
@@ -864,9 +863,7 @@
                         </div>
                     `;
                 }
-                div.onclick = () => {
-                    alert(`Loading playlist: ${name}`);
-                };
+                div.onclick = () => alert(`Loading playlist: ${name}`);
                 playlistsDiv.appendChild(div);
             });
         }
@@ -874,20 +871,9 @@
         // Add to Queue (async to fetch URL if missing)
         async function addToQueue(url, title, artists, image, id = Date.now().toString()) {
             if (!url && id) {
-                try {
-                    const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
-                    const song = data.data[0] || {};
-                    url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
-                    if (!url) {
-                        console.warn(`No valid URL found for song ID: ${id}`);
-                        alert('No playable URL available for this song.');
-                        return;
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch song URL:', err);
-                    alert('Unable to add song: ' + err.message);
-                    return;
-                }
+                const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
+                const song = data.data[0] || {};
+                url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
             }
             queue.push({ id, url, title, artists, image });
             localStorage.setItem('musicQueue', JSON.stringify(queue));
@@ -909,37 +895,37 @@
 
         // Play Queue
         function playQueue() {
-            if (currentIndex >= 0 && currentIndex < queue.length) {
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
-                }
-                const song = queue[currentIndex];
-                if (!song.url) {
-                    document.getElementById('nowPlayingTitle').textContent = "No playable audio for this track";
-                    document.getElementById('nowPlayingArtist').textContent = "";
-                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
-                    return;
-                }
-                currentAudio = new Audio(song.url);
-                currentAudio.crossOrigin = "anonymous";
-                document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
-                currentAudio.play().catch(err => {
-                    document.getElementById('nowPlayingTitle').textContent = "Unable to play this song";
-                    document.getElementById('nowPlayingArtist').textContent = "";
-                    alert(`Playback failed: ${err.message}. Check console for details.`);
-                    console.error(`Playback error for ${song.title}:`, err);
-                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
-                }).then(() => {
-                    document.getElementById('nowPlaying').style.display = 'flex';
-                    document.getElementById('nowPlayingTitle').textContent = song.title;
-                    document.getElementById('nowPlayingArtist').textContent = song.artists;
-                    document.getElementById('nowPlayingImg').src = song.image;
-                    document.title = `Music Pioneer - ${song.title}`;
-                    updateProgress();
-                    updateQueuePanel();
-                });
+            if (currentIndex < 0 || currentIndex >= queue.length) {
+                currentIndex = queue.length - 1; // Default to the last added song
             }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            const song = queue[currentIndex];
+            if (!song.url) {
+                document.getElementById('nowPlayingTitle').textContent = "No playable audio";
+                document.getElementById('nowPlayingArtist').textContent = "";
+                document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                return;
+            }
+            currentAudio = new Audio(song.url);
+            currentAudio.crossOrigin = "anonymous";
+            currentAudio.play().then(() => {
+                document.getElementById('nowPlaying').style.display = 'flex';
+                document.getElementById('nowPlayingTitle').textContent = song.title;
+                document.getElementById('nowPlayingArtist').textContent = song.artists;
+                document.getElementById('nowPlayingImg').src = song.image;
+                document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                document.title = `Music Pioneer - ${song.title}`;
+                updateProgress();
+                updateQueuePanel();
+            }).catch(err => {
+                document.getElementById('nowPlayingTitle').textContent = "Playback failed";
+                document.getElementById('nowPlayingArtist').textContent = "";
+                document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                console.error(`Playback error for ${song.title}:`, err);
+            });
         }
 
         // Toggle Play
@@ -948,7 +934,6 @@
                 if (currentAudio.paused) {
                     currentAudio.play().catch(err => {
                         document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
-                        alert("Unable to play this track: " + err.message);
                         console.error("Play error:", err);
                     });
                     document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
