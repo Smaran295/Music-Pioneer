@@ -119,9 +119,9 @@
             border-radius: 12px;
             margin-bottom: 24px;
         }
-        .section h2 { 
-            color: var(--accent); 
-            margin-bottom: 20px; 
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
             font-size: 24px;
             display: flex;
             align-items: center;
@@ -183,8 +183,8 @@
             overflow: hidden;
             position: relative;
         }
-        .song-card:hover, .trending-card:hover, .playlist-card:hover, .album-card:hover, .artist-card:hover { 
-            transform: translateY(-4px); 
+        .song-card:hover, .trending-card:hover, .playlist-card:hover, .album-card:hover, .artist-card:hover {
+            transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(0,0,0,0.3);
         }
         .song-card img, .trending-card img, .playlist-card img, .album-card img, .artist-card img {
@@ -197,14 +197,14 @@
         .card-details {
             margin-top: 8px;
         }
-        .card-details strong { 
-            display: block; 
-            color: var(--text-primary); 
+        .card-details strong {
+            display: block;
+            color: var(--text-primary);
             font-size: 14px;
             margin-bottom: 4px;
         }
-        .card-details span { 
-            color: var(--text-secondary); 
+        .card-details span {
+            color: var(--text-secondary);
             font-size: 12px;
         }
         .like-btn {
@@ -431,7 +431,6 @@
                 <!-- Trending will be populated by JS -->
             </div>
         </div>
-
         <!-- Search Section -->
         <div id="search" class="section" style="display:none;">
             <h2><i class="fas fa-search"></i> Search</h2>
@@ -446,7 +445,6 @@
             </div>
             <div class="results" id="results"></div>
         </div>
-
         <!-- Library Section -->
         <div id="library" class="section" style="display:none;">
             <h2><i class="fas fa-heart"></i> Liked Songs</h2>
@@ -454,7 +452,6 @@
                 <!-- Liked songs populated by JS from localStorage -->
             </div>
         </div>
-
         <!-- Playlists Section -->
         <div id="playlists" class="section" style="display:none;">
             <h2><i class="fas fa-list"></i> Playlists</h2>
@@ -466,7 +463,6 @@
                 <!-- User playlists populated by JS -->
             </div>
         </div>
-
         <!-- Albums Section -->
         <div id="albums" class="section" style="display:none;">
             <h2><i class="fas fa-compact-disc"></i> Albums</h2>
@@ -474,7 +470,6 @@
                 <!-- Albums populated by JS -->
             </div>
         </div>
-
         <!-- Artists Section -->
         <div id="artists" class="section" style="display:none;">
             <h2><i class="fas fa-user-friends"></i> Artists</h2>
@@ -483,7 +478,6 @@
             </div>
         </div>
     </div>
-
     <!-- Player Bar -->
     <div class="player-bar" id="playerBar">
         <div class="now-playing" id="nowPlaying" style="display:none;">
@@ -517,7 +511,6 @@
         </div>
         <button class="queue-btn" onclick="toggleQueue()"><i class="fas fa-list"></i></button>
     </div>
-
     <!-- Queue Panel -->
     <div class="queue-panel" id="queuePanel">
         <div class="queue-header">
@@ -526,7 +519,6 @@
         </div>
         <div class="queue-list" id="queueList"></div>
     </div>
-
     <script>
         let currentAudio = null;
         let queue = JSON.parse(localStorage.getItem('musicQueue')) || [];
@@ -538,8 +530,7 @@
         let isMuted = false;
         let currentTab = 'songs';
         let timeoutId;
-        const API_BASE = 'https://annonymous-sage.vercel.app';  // User's deployed API
-
+        const API_BASE = 'https://annonymous-sage.vercel.app'; // User's deployed API
         // Debounce function
         function debounce(func, delay) {
             return function (...args) {
@@ -547,12 +538,10 @@
                 timeoutId = setTimeout(() => func.apply(this, args), delay);
             };
         }
-
         // Toggle Sidebar
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
-
         // Show Section
         function showSection(section) {
             document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
@@ -565,15 +554,13 @@
             if (section === 'albums') loadAlbums();
             if (section === 'artists') loadArtists();
         }
-
         // Switch Search Tab
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            searchSongs();  // Re-search with new tab
+            searchSongs(); // Re-search with new tab
         }
-
         // Fetch with Retry
         async function fetchWithRetry(url, retries = 3, delay = 2000) {
             for (let i = 0; i < retries; i++) {
@@ -589,7 +576,6 @@
                 }
             }
         }
-
         // Load Trending (Home)
         async function loadTrending() {
             const trendingDiv = document.getElementById('trending');
@@ -602,7 +588,6 @@
                 renderPlaceholderCards(trendingDiv, 6, 'trending-card');
             }
         }
-
         // Search Songs/Albums/Artists
         async function searchSongs() {
             const query = document.getElementById('query').value.trim();
@@ -622,7 +607,6 @@
                 resultsDiv.innerHTML = `<p class='no-results'>Error: ${err.message}</p>`;
             }
         }
-
         // Load Albums
         async function loadAlbums() {
             const albumsDiv = document.getElementById('albumsList');
@@ -634,7 +618,6 @@
                 albumsDiv.innerHTML = "<p class='no-results'>Albums not available.</p>";
             }
         }
-
         // Load Artists
         async function loadArtists() {
             const artistsDiv = document.getElementById('artistsList');
@@ -646,23 +629,15 @@
                 artistsDiv.innerHTML = "<p class='no-results'>Artists not available.</p>";
             }
         }
-
         // Render Cards
         function renderCards(data, container, className, limit = 10) {
             container.innerHTML = '';
             const items = data.data?.results || data.data || [];
             items.slice(0, limit).forEach((item, index) => {
                 const title = item.name || item.title || 'Unknown';
-                const subtitle = item.primaryArtists || item.album?.name || item.name || 'Unknown';
-                let imageUrl =
-                    (item.image && typeof item.image === 'string' && item.image) ||
-                    (item.image && Array.isArray(item.image) && item.image[item.image.length - 1]?.link) ||
-                    'https://via.placeholder.com/200?text=No+Image';
+                const subtitle = (item.artists?.primary?.map(a => a.name).join(', ')) || item.primaryArtists || item.album?.name || 'Unknown';
+                const imageUrl = (item.image && item.image[2]?.url) || (item.image && item.image[item.image.length - 1]?.url) || 'https://via.placeholder.com/200?text=No+Image';
                 const id = item.id;
-                const audioUrl =
-                    (item.downloadUrl && item.downloadUrl.find(u => u.quality === '320kbps')?.link) ||
-                    item.encryptedMediaUrl ||
-                    '';
                 const div = document.createElement('div');
                 div.className = className;
                 div.innerHTML = `
@@ -673,12 +648,15 @@
                     </div>
                     <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
                 `;
-                div.onclick = (e) => { if (!e.target.closest('.like-btn')) addToQueue(audioUrl, title, subtitle, imageUrl); };
+                div.onclick = async (e) => {
+                    if (!e.target.closest('.like-btn')) {
+                        await addToQueue('', title, subtitle, imageUrl, id);
+                    }
+                };
                 container.appendChild(div);
             });
             if (items.length === 0) container.innerHTML = "<p class='no-results'>No results found.</p>";
         }
-
         // Placeholder Cards
         function renderPlaceholderCards(container, count, className) {
             for (let i = 0; i < count; i++) {
@@ -695,7 +673,6 @@
                 container.appendChild(div);
             }
         }
-
         // Load Liked Songs
         function loadLikedSongs() {
             const likedDiv = document.getElementById('likedSongs');
@@ -715,13 +692,16 @@
                     </div>
                     <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
                 `;
-                div.onclick = (e) => { if (!e.target.closest('.like-btn')) addToQueue(liked.url, liked.title, liked.artists, liked.image); };
+                div.onclick = async (e) => {
+                    if (!e.target.closest('.like-btn')) {
+                        await addToQueue(liked.url, liked.title, liked.artists, liked.image, liked.id);
+                    }
+                };
                 likedDiv.appendChild(div);
             });
         }
-
         // Toggle Like
-        function toggleLike(id, event) {
+        async function toggleLike(id, event) {
             event.stopPropagation();
             const index = likedSongs.findIndex(s => s.id === id);
             if (index > -1) {
@@ -729,14 +709,24 @@
                 event.target.closest('.like-btn').classList.remove('liked');
                 event.target.innerHTML = '<i class="far fa-heart"></i>';
             } else {
-                likedSongs.push({ id, title: 'Liked Song', artists: 'Artist', image: 'https://via.placeholder.com/200', url: '' });
-                event.target.closest('.like-btn').classList.add('liked');
-                event.target.innerHTML = '<i class="fas fa-heart"></i>';
+                // Fetch full song data for liking
+                try {
+                    const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
+                    const song = data.data[0] || {};
+                    const title = song.name || 'Unknown';
+                    const artists = (song.artists?.primary?.map(a => a.name).join(', ')) || 'Unknown';
+                    const image = (song.image && song.image[2]?.url) || 'https://via.placeholder.com/200';
+                    const url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
+                    likedSongs.push({ id, title, artists, image, url });
+                    event.target.closest('.like-btn').classList.add('liked');
+                    event.target.innerHTML = '<i class="fas fa-heart"></i>';
+                } catch (err) {
+                    alert('Unable to like song: ' + err.message);
+                }
             }
             localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
             if (document.getElementById('library').style.display !== 'none') loadLikedSongs();
         }
-
         // Create Playlist
         function createPlaylist() {
             const name = document.getElementById('playlistName').value.trim();
@@ -746,7 +736,6 @@
             document.getElementById('playlistName').value = '';
             loadPlaylists();
         }
-
         // Load Playlists
         function loadPlaylists() {
             const playlistsDiv = document.getElementById('userPlaylists');
@@ -767,15 +756,24 @@
                 playlistsDiv.appendChild(div);
             });
         }
-
-        // Add to Queue
-        function addToQueue(url, title, artists, image, id = Date.now().toString()) {
+        // Add to Queue (async to fetch URL if missing)
+        async function addToQueue(url, title, artists, image, id = Date.now().toString()) {
+            if (!url && id) {
+                try {
+                    const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
+                    const song = data.data[0] || {};
+                    url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
+                } catch (err) {
+                    console.error('Failed to fetch song URL:', err);
+                    alert('Unable to add song: No playable URL found.');
+                    return;
+                }
+            }
             queue.push({ id, url, title, artists, image });
             localStorage.setItem('musicQueue', JSON.stringify(queue));
             if (currentIndex === -1) playNext();
             updateQueuePanel();
         }
-
         // Play Next/Previous
         function playNext() {
             if (isShuffling) currentIndex = Math.floor(Math.random() * queue.length);
@@ -789,7 +787,6 @@
             else if (isRepeating) currentIndex = queue.length - 1;
             playQueue();
         }
-
         // Play Queue
         function playQueue() {
             if (currentIndex >= 0 && currentIndex < queue.length) {
@@ -823,7 +820,6 @@
                 });
             }
         }
-
         // Toggle Play
         function togglePlay() {
             if (currentAudio) {
@@ -839,14 +835,12 @@
                 }
             }
         }
-
         // Toggle Mute
         function toggleMute() {
             isMuted = !isMuted;
             if (currentAudio) currentAudio.muted = isMuted;
             document.getElementById('muteBtn').innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
         }
-
         // Toggle Shuffle/Repeat
         function toggleShuffle() {
             isShuffling = !isShuffling;
@@ -857,7 +851,6 @@
             document.getElementById('repeatBtn').classList.toggle('active', isRepeating);
             document.getElementById('repeatBtn').innerHTML = isRepeating ? '<i class="fas fa-redo-alt"></i>' : '<i class="fas fa-redo"></i>';
         }
-
         // Seek and Volume
         function seekAudio(value) {
             if (currentAudio && currentAudio.duration) {
@@ -867,40 +860,37 @@
         function setVolume(value) {
             if (currentAudio) currentAudio.volume = value;
         }
-
         // Update Progress
         function updateProgress() {
             if (currentAudio) {
                 const progress = document.getElementById('progress');
                 const currentTimeEl = document.getElementById('currentTime');
                 const durationEl = document.getElementById('duration');
-                const update = () => {
-                    if (!currentAudio.paused && !isNaN(currentAudio.duration)) {
+                currentAudio.addEventListener('loadedmetadata', () => {
+                    durationEl.textContent = formatTime(currentAudio.duration);
+                });
+                currentAudio.addEventListener('timeupdate', () => {
+                    if (!isNaN(currentAudio.duration)) {
                         const value = (currentAudio.currentTime / currentAudio.duration) * 100;
                         progress.value = value;
                         currentTimeEl.textContent = formatTime(currentAudio.currentTime);
                         durationEl.textContent = formatTime(currentAudio.duration);
                     }
                     if (currentAudio.ended) playNext();
-                };
-                currentAudio.addEventListener('timeupdate', update);
-                const interval = setInterval(update, 1000);
-                currentAudio.addEventListener('ended', () => clearInterval(interval));
+                });
             }
         }
-
         // Format Time
         function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
-
         // Toggle Queue Panel
         function toggleQueue() {
             document.getElementById('queuePanel').classList.toggle('active');
         }
-
         // Update Queue Panel
         function updateQueuePanel() {
             const queueList = document.getElementById('queueList');
@@ -919,11 +909,9 @@
                 queueList.appendChild(item);
             });
         }
-
         // Event Listeners
         document.getElementById('query').addEventListener('input', debounce(searchSongs, 500));
         document.getElementById('query').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchSongs(); });
-
         // Initial Load
         loadTrending();
         updateQueuePanel();
