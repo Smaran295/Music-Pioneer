@@ -458,7 +458,7 @@
         <!-- Home Section -->
         <div id="home" class="section">
             <h2><i class="fas fa-home"></i> Home</h2>
-            <div class="trending" id="trending">
+            <div class="trending view-medium" id="trending">
                 <!-- Trending will be populated by JS -->
             </div>
         </div>
@@ -726,6 +726,7 @@
                     if (!e.target.closest('.like-btn')) {
                         await addToQueue('', title, subtitle, imageUrl, id);
                         playQueue(); // Ensure playback starts immediately
+                        console.log(`Clicked: ${title}, URL: ${queue[queue.length - 1].url}`); // Debug log
                     }
                 };
                 container.appendChild(div);
@@ -795,6 +796,7 @@
                     if (!e.target.closest('.like-btn')) {
                         await addToQueue(liked.url, liked.title, liked.artists, liked.image, liked.id);
                         playQueue(); // Ensure playback starts immediately
+                        console.log(`Clicked Liked: ${liked.title}, URL: ${liked.url}`); // Debug log
                     }
                 };
                 likedDiv.appendChild(div);
@@ -876,9 +878,14 @@
                     const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
                     const song = data.data[0] || {};
                     url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
+                    if (!url) {
+                        console.warn(`No valid URL found for song ID: ${id}`);
+                        alert('No playable URL available for this song.');
+                        return;
+                    }
                 } catch (err) {
                     console.error('Failed to fetch song URL:', err);
-                    alert('Unable to add song: No playable URL found.');
+                    alert('Unable to add song: ' + err.message);
                     return;
                 }
             }
@@ -917,7 +924,13 @@
                 currentAudio = new Audio(song.url);
                 currentAudio.crossOrigin = "anonymous";
                 document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
-                currentAudio.play().then(() => {
+                currentAudio.play().catch(err => {
+                    document.getElementById('nowPlayingTitle').textContent = "Unable to play this song";
+                    document.getElementById('nowPlayingArtist').textContent = "";
+                    alert(`Playback failed: ${err.message}. Check console for details.`);
+                    console.error(`Playback error for ${song.title}:`, err);
+                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                }).then(() => {
                     document.getElementById('nowPlaying').style.display = 'flex';
                     document.getElementById('nowPlayingTitle').textContent = song.title;
                     document.getElementById('nowPlayingArtist').textContent = song.artists;
@@ -925,11 +938,6 @@
                     document.title = `Music Pioneer - ${song.title}`;
                     updateProgress();
                     updateQueuePanel();
-                }).catch(err => {
-                    document.getElementById('nowPlayingTitle').textContent = "Unable to play this song";
-                    document.getElementById('nowPlayingArtist').textContent = "";
-                    alert("Sorry, this track cannot be played due to source restrictions.");
-                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
                 });
             }
         }
@@ -940,7 +948,8 @@
                 if (currentAudio.paused) {
                     currentAudio.play().catch(err => {
                         document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
-                        alert("Unable to play this track.");
+                        alert("Unable to play this track: " + err.message);
+                        console.error("Play error:", err);
                     });
                     document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
                 } else {
