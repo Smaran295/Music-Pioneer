@@ -652,13 +652,19 @@
             container.innerHTML = '';
             const items = data.data?.results || data.data || [];
             items.slice(0, limit).forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = className;
                 const title = item.name || item.title || 'Unknown';
                 const subtitle = item.primaryArtists || item.album?.name || item.name || 'Unknown';
-                const imageUrl = item.image?.[2]?.link || item.image || 'https://via.placeholder.com/200?text=No+Image';
+                let imageUrl =
+                    (item.image && typeof item.image === 'string' && item.image) ||
+                    (item.image && Array.isArray(item.image) && item.image[item.image.length - 1]?.link) ||
+                    'https://via.placeholder.com/200?text=No+Image';
                 const id = item.id;
-                const audioUrl = item.downloadUrl?.find(u => u.quality === '320kbps')?.link || item.encryptedMediaUrl || '';
+                const audioUrl =
+                    (item.downloadUrl && item.downloadUrl.find(u => u.quality === '320kbps')?.link) ||
+                    item.encryptedMediaUrl ||
+                    '';
+                const div = document.createElement('div');
+                div.className = className;
                 div.innerHTML = `
                     <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/200?text=No+Image';">
                     <div class="card-details">
@@ -792,16 +798,29 @@
                     currentAudio = null;
                 }
                 const song = queue[currentIndex];
+                if (!song.url) {
+                    document.getElementById('nowPlayingTitle').textContent = "No playable audio for this track";
+                    document.getElementById('nowPlayingArtist').textContent = "";
+                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                    return;
+                }
                 currentAudio = new Audio(song.url);
+                currentAudio.crossOrigin = "anonymous";
                 document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
-                currentAudio.play().catch(err => console.error('Play error:', err));
-                document.getElementById('nowPlaying').style.display = 'flex';
-                document.getElementById('nowPlayingTitle').textContent = song.title;
-                document.getElementById('nowPlayingArtist').textContent = song.artists;
-                document.getElementById('nowPlayingImg').src = song.image;
-                document.title = `Music Pioneer - ${song.title}`;
-                updateProgress();
-                updateQueuePanel();
+                currentAudio.play().then(() => {
+                    document.getElementById('nowPlaying').style.display = 'flex';
+                    document.getElementById('nowPlayingTitle').textContent = song.title;
+                    document.getElementById('nowPlayingArtist').textContent = song.artists;
+                    document.getElementById('nowPlayingImg').src = song.image;
+                    document.title = `Music Pioneer - ${song.title}`;
+                    updateProgress();
+                    updateQueuePanel();
+                }).catch(err => {
+                    document.getElementById('nowPlayingTitle').textContent = "Unable to play this song";
+                    document.getElementById('nowPlayingArtist').textContent = "";
+                    alert("Sorry, this track cannot be played due to source restrictions.");
+                    document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                });
             }
         }
 
@@ -809,7 +828,10 @@
         function togglePlay() {
             if (currentAudio) {
                 if (currentAudio.paused) {
-                    currentAudio.play().catch(err => console.error('Play error:', err));
+                    currentAudio.play().catch(err => {
+                        document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+                        alert("Unable to play this track.");
+                    });
                     document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
                 } else {
                     currentAudio.pause();
