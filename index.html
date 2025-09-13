@@ -156,6 +156,17 @@
             margin-left: 10px;
         }
         .search-bar button:hover { background: var(--accent-hover); }
+        .view-toggle {
+            margin-bottom: 20px;
+        }
+        .view-toggle select {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+        }
         .tabs {
             display: flex;
             margin-bottom: 20px;
@@ -171,8 +182,16 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .results, .trending, .playlists, .albums, .artists {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
+        }
+        .view-list .results, .view-list .trending, .view-list .playlists, .view-list .albums, .view-list .artists {
+            grid-template-columns: 1fr;
+        }
+        .view-medium .results, .view-medium .trending, .view-medium .playlists, .view-medium .albums, .view-medium .artists {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+        .view-large .results, .view-large .trending, .view-large .playlists, .view-large .albums, .view-large .artists {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         }
         .song-card, .trending-card, .playlist-card, .album-card, .artist-card {
             background: var(--bg-tertiary);
@@ -182,6 +201,17 @@
             transition: all 0.2s ease;
             overflow: hidden;
             position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .view-list .song-card, .view-list .trending-card, .view-list .playlist-card, .view-list .album-card, .view-list .artist-card {
+            flex-direction: row;
+            padding: 10px;
+        }
+        .view-list .song-card img, .view-list .trending-card img, .view-list .playlist-card img, .view-list .album-card img, .view-list .artist-card img {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
         }
         .song-card:hover, .trending-card:hover, .playlist-card:hover, .album-card:hover, .artist-card:hover {
             transform: translateY(-4px);
@@ -189,11 +219,12 @@
         }
         .song-card img, .trending-card img, .playlist-card img, .album-card img, .artist-card img {
             width: 100%;
-            height: 160px;
+            height: 120px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 10px;
         }
+        .view-list .card-details { margin: 0; flex-grow: 1; }
         .card-details {
             margin-top: 8px;
         }
@@ -438,17 +469,24 @@
                 <input type="text" id="query" placeholder="Search for songs, artists, albums...">
                 <button onclick="searchSongs()"><i class="fas fa-search"></i></button>
             </div>
+            <div class="view-toggle">
+                <select id="viewMode" onchange="changeView()">
+                    <option value="medium">Medium Icons</option>
+                    <option value="large">Large Icons</option>
+                    <option value="list">List</option>
+                </select>
+            </div>
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('songs')">Songs</div>
                 <div class="tab" onclick="switchTab('albums')">Albums</div>
                 <div class="tab" onclick="switchTab('artists')">Artists</div>
             </div>
-            <div class="results" id="results"></div>
+            <div class="results view-medium" id="results"></div>
         </div>
         <!-- Library Section -->
         <div id="library" class="section" style="display:none;">
             <h2><i class="fas fa-heart"></i> Liked Songs</h2>
-            <div class="playlists" id="likedSongs">
+            <div class="playlists view-medium" id="likedSongs">
                 <!-- Liked songs populated by JS from localStorage -->
             </div>
         </div>
@@ -459,21 +497,21 @@
                 <input type="text" id="playlistName" placeholder="New playlist name">
                 <button onclick="createPlaylist()">Create</button>
             </div>
-            <div class="playlists" id="userPlaylists">
+            <div class="playlists view-medium" id="userPlaylists">
                 <!-- User playlists populated by JS -->
             </div>
         </div>
         <!-- Albums Section -->
         <div id="albums" class="section" style="display:none;">
             <h2><i class="fas fa-compact-disc"></i> Albums</h2>
-            <div class="albums" id="albumsList">
+            <div class="albums view-medium" id="albumsList">
                 <!-- Albums populated by JS -->
             </div>
         </div>
         <!-- Artists Section -->
         <div id="artists" class="section" style="display:none;">
             <h2><i class="fas fa-user-friends"></i> Artists</h2>
-            <div class="artists" id="artistsList">
+            <div class="artists view-medium" id="artistsList">
                 <!-- Artists populated by JS -->
             </div>
         </div>
@@ -531,6 +569,8 @@
         let currentTab = 'songs';
         let timeoutId;
         const API_BASE = 'https://annonymous-sage.vercel.app'; // User's deployed API
+        let currentView = 'medium';
+
         // Debounce function
         function debounce(func, delay) {
             return function (...args) {
@@ -538,10 +578,12 @@
                 timeoutId = setTimeout(() => func.apply(this, args), delay);
             };
         }
+
         // Toggle Sidebar
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
+
         // Show Section
         function showSection(section) {
             document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
@@ -554,13 +596,29 @@
             if (section === 'albums') loadAlbums();
             if (section === 'artists') loadArtists();
         }
+
         // Switch Search Tab
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            searchSongs(); // Re-search with new tab
+            searchSongs();
         }
+
+        // Change View Mode
+        function changeView() {
+            currentView = document.getElementById('viewMode').value;
+            document.querySelectorAll('.results, .trending, .playlists, .albums, .artists').forEach(el => {
+                el.className = `${el.id} view-${currentView}`;
+            });
+            if (document.getElementById('search').style.display !== 'none') searchSongs();
+            if (document.getElementById('home').style.display !== 'none') loadTrending();
+            if (document.getElementById('library').style.display !== 'none') loadLikedSongs();
+            if (document.getElementById('playlists').style.display !== 'none') loadPlaylists();
+            if (document.getElementById('albums').style.display !== 'none') loadAlbums();
+            if (document.getElementById('artists').style.display !== 'none') loadArtists();
+        }
+
         // Fetch with Retry
         async function fetchWithRetry(url, retries = 3, delay = 2000) {
             for (let i = 0; i < retries; i++) {
@@ -576,6 +634,7 @@
                 }
             }
         }
+
         // Load Trending (Home)
         async function loadTrending() {
             const trendingDiv = document.getElementById('trending');
@@ -588,6 +647,7 @@
                 renderPlaceholderCards(trendingDiv, 6, 'trending-card');
             }
         }
+
         // Search Songs/Albums/Artists
         async function searchSongs() {
             const query = document.getElementById('query').value.trim();
@@ -607,6 +667,7 @@
                 resultsDiv.innerHTML = `<p class='no-results'>Error: ${err.message}</p>`;
             }
         }
+
         // Load Albums
         async function loadAlbums() {
             const albumsDiv = document.getElementById('albumsList');
@@ -618,6 +679,7 @@
                 albumsDiv.innerHTML = "<p class='no-results'>Albums not available.</p>";
             }
         }
+
         // Load Artists
         async function loadArtists() {
             const artistsDiv = document.getElementById('artistsList');
@@ -629,6 +691,7 @@
                 artistsDiv.innerHTML = "<p class='no-results'>Artists not available.</p>";
             }
         }
+
         // Render Cards
         function renderCards(data, container, className, limit = 10) {
             container.innerHTML = '';
@@ -640,39 +703,64 @@
                 const id = item.id;
                 const div = document.createElement('div');
                 div.className = className;
-                div.innerHTML = `
-                    <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/200?text=No+Image';">
-                    <div class="card-details">
-                        <strong>${title}</strong>
-                        <span>${subtitle}</span>
-                    </div>
-                    <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
-                `;
+                if (currentView === 'list') {
+                    div.innerHTML = `
+                        <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/80?text=No+Image';">
+                        <div class="card-details">
+                            <strong>${title}</strong>
+                            <span>${subtitle}</span>
+                        </div>
+                        <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/120?text=No+Image';">
+                        <div class="card-details">
+                            <strong>${title}</strong>
+                            <span>${subtitle}</span>
+                        </div>
+                        <button class="like-btn" onclick="toggleLike('${id}', event)"><i class="far fa-heart"></i></button>
+                    `;
+                }
                 div.onclick = async (e) => {
                     if (!e.target.closest('.like-btn')) {
                         await addToQueue('', title, subtitle, imageUrl, id);
+                        playQueue(); // Ensure playback starts immediately
                     }
                 };
                 container.appendChild(div);
             });
             if (items.length === 0) container.innerHTML = "<p class='no-results'>No results found.</p>";
         }
+
         // Placeholder Cards
         function renderPlaceholderCards(container, count, className) {
+            container.innerHTML = '';
             for (let i = 0; i < count; i++) {
                 const div = document.createElement('div');
                 div.className = className;
-                div.innerHTML = `
-                    <img src="https://via.placeholder.com/200?text=Song+${i+1}" alt="Placeholder">
-                    <div class="card-details">
-                        <strong>Trending Song ${i+1}</strong>
-                        <span>Artist ${i+1}</span>
-                    </div>
-                `;
+                if (currentView === 'list') {
+                    div.innerHTML = `
+                        <img src="https://via.placeholder.com/80?text=Song+${i+1}" alt="Placeholder">
+                        <div class="card-details">
+                            <strong>Trending Song ${i+1}</strong>
+                            <span>Artist ${i+1}</span>
+                        </div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img src="https://via.placeholder.com/120?text=Song+${i+1}" alt="Placeholder">
+                        <div class="card-details">
+                            <strong>Trending Song ${i+1}</strong>
+                            <span>Artist ${i+1}</span>
+                        </div>
+                    `;
+                }
                 div.onclick = () => alert('Placeholder song clicked');
                 container.appendChild(div);
             }
         }
+
         // Load Liked Songs
         function loadLikedSongs() {
             const likedDiv = document.getElementById('likedSongs');
@@ -684,22 +772,35 @@
             likedSongs.forEach(liked => {
                 const div = document.createElement('div');
                 div.className = 'song-card';
-                div.innerHTML = `
-                    <img src="${liked.image}" alt="${liked.title}">
-                    <div class="card-details">
-                        <strong>${liked.title}</strong>
-                        <span>${liked.artists}</span>
-                    </div>
-                    <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
-                `;
+                if (currentView === 'list') {
+                    div.innerHTML = `
+                        <img src="${liked.image}" alt="${liked.title}">
+                        <div class="card-details">
+                            <strong>${liked.title}</strong>
+                            <span>${liked.artists}</span>
+                        </div>
+                        <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img src="${liked.image}" alt="${liked.title}">
+                        <div class="card-details">
+                            <strong>${liked.title}</strong>
+                            <span>${liked.artists}</span>
+                        </div>
+                        <button class="like-btn liked" onclick="toggleLike('${liked.id}', event)"><i class="fas fa-heart"></i></button>
+                    `;
+                }
                 div.onclick = async (e) => {
                     if (!e.target.closest('.like-btn')) {
                         await addToQueue(liked.url, liked.title, liked.artists, liked.image, liked.id);
+                        playQueue(); // Ensure playback starts immediately
                     }
                 };
                 likedDiv.appendChild(div);
             });
         }
+
         // Toggle Like
         async function toggleLike(id, event) {
             event.stopPropagation();
@@ -709,13 +810,12 @@
                 event.target.closest('.like-btn').classList.remove('liked');
                 event.target.innerHTML = '<i class="far fa-heart"></i>';
             } else {
-                // Fetch full song data for liking
                 try {
                     const data = await fetchWithRetry(`${API_BASE}/api/songs/${id}`);
                     const song = data.data[0] || {};
                     const title = song.name || 'Unknown';
                     const artists = (song.artists?.primary?.map(a => a.name).join(', ')) || 'Unknown';
-                    const image = (song.image && song.image[2]?.url) || 'https://via.placeholder.com/200';
+                    const image = (song.image && song.image[2]?.url) || 'https://via.placeholder.com/120';
                     const url = (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.url) || song.media_url || '';
                     likedSongs.push({ id, title, artists, image, url });
                     event.target.closest('.like-btn').classList.add('liked');
@@ -727,6 +827,7 @@
             localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
             if (document.getElementById('library').style.display !== 'none') loadLikedSongs();
         }
+
         // Create Playlist
         function createPlaylist() {
             const name = document.getElementById('playlistName').value.trim();
@@ -736,6 +837,7 @@
             document.getElementById('playlistName').value = '';
             loadPlaylists();
         }
+
         // Load Playlists
         function loadPlaylists() {
             const playlistsDiv = document.getElementById('userPlaylists');
@@ -743,19 +845,30 @@
             Object.keys(playlists).forEach(name => {
                 const div = document.createElement('div');
                 div.className = 'playlist-card';
-                div.innerHTML = `
-                    <img src="https://via.placeholder.com/200?text=${name}" alt="${name}">
-                    <div class="card-details">
-                        <strong>${name}</strong>
-                        <span>${playlists[name].length} songs</span>
-                    </div>
-                `;
+                if (currentView === 'list') {
+                    div.innerHTML = `
+                        <img src="https://via.placeholder.com/80?text=${name}" alt="${name}">
+                        <div class="card-details">
+                            <strong>${name}</strong>
+                            <span>${playlists[name].length} songs</span>
+                        </div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img src="https://via.placeholder.com/120?text=${name}" alt="${name}">
+                        <div class="card-details">
+                            <strong>${name}</strong>
+                            <span>${playlists[name].length} songs</span>
+                        </div>
+                    `;
+                }
                 div.onclick = () => {
                     alert(`Loading playlist: ${name}`);
                 };
                 playlistsDiv.appendChild(div);
             });
         }
+
         // Add to Queue (async to fetch URL if missing)
         async function addToQueue(url, title, artists, image, id = Date.now().toString()) {
             if (!url && id) {
@@ -771,9 +884,8 @@
             }
             queue.push({ id, url, title, artists, image });
             localStorage.setItem('musicQueue', JSON.stringify(queue));
-            if (currentIndex === -1) playNext();
-            updateQueuePanel();
         }
+
         // Play Next/Previous
         function playNext() {
             if (isShuffling) currentIndex = Math.floor(Math.random() * queue.length);
@@ -787,6 +899,7 @@
             else if (isRepeating) currentIndex = queue.length - 1;
             playQueue();
         }
+
         // Play Queue
         function playQueue() {
             if (currentIndex >= 0 && currentIndex < queue.length) {
@@ -820,6 +933,7 @@
                 });
             }
         }
+
         // Toggle Play
         function togglePlay() {
             if (currentAudio) {
@@ -835,12 +949,14 @@
                 }
             }
         }
+
         // Toggle Mute
         function toggleMute() {
             isMuted = !isMuted;
             if (currentAudio) currentAudio.muted = isMuted;
             document.getElementById('muteBtn').innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
         }
+
         // Toggle Shuffle/Repeat
         function toggleShuffle() {
             isShuffling = !isShuffling;
@@ -851,6 +967,7 @@
             document.getElementById('repeatBtn').classList.toggle('active', isRepeating);
             document.getElementById('repeatBtn').innerHTML = isRepeating ? '<i class="fas fa-redo-alt"></i>' : '<i class="fas fa-redo"></i>';
         }
+
         // Seek and Volume
         function seekAudio(value) {
             if (currentAudio && currentAudio.duration) {
@@ -860,6 +977,7 @@
         function setVolume(value) {
             if (currentAudio) currentAudio.volume = value;
         }
+
         // Update Progress
         function updateProgress() {
             if (currentAudio) {
@@ -880,6 +998,7 @@
                 });
             }
         }
+
         // Format Time
         function formatTime(seconds) {
             if (isNaN(seconds)) return '0:00';
@@ -887,10 +1006,12 @@
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
+
         // Toggle Queue Panel
         function toggleQueue() {
             document.getElementById('queuePanel').classList.toggle('active');
         }
+
         // Update Queue Panel
         function updateQueuePanel() {
             const queueList = document.getElementById('queueList');
@@ -909,6 +1030,7 @@
                 queueList.appendChild(item);
             });
         }
+
         // Event Listeners
         document.getElementById('query').addEventListener('input', debounce(searchSongs, 500));
         document.getElementById('query').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchSongs(); });
