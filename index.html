@@ -264,7 +264,7 @@
         let isShuffling = false;
         let isRepeating = false;
         let timeoutId;
-        const API_BASE = 'https://your-deployed-api-url.vercel.app'; // Replace this with your actual Vercel API URL, e.g., 'https://anonymous.vercel.app'
+        const API_BASE = 'https://saavn.dev';
         function debounce(func, delay) {
             return function (...args) {
                 clearTimeout(timeoutId);
@@ -305,23 +305,23 @@
             }
             resultsDiv.innerHTML = "<p class='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
             try {
-                const apiUrl = `${API_BASE}/api/search?query=${encodeURIComponent(query)}`;
+                const apiUrl = `${API_BASE}/api/search/songs?query=${encodeURIComponent(query)}`;
                 console.log(`Fetching from: ${apiUrl}`);
                 const data = await fetchWithRetry(apiUrl);
                 resultsDiv.innerHTML = "";
-                if (!data.data || data.data.length === 0) {
+                if (!data.success || !data.data.results || data.data.results.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-                data.data.forEach((song, index) => {
+                data.data.results.forEach((song, index) => {
                     if (index >= 10) return;
                     const div = document.createElement("div");
                     div.className = "song-card";
-                    const songTitle = (song.title || 'Unknown').replace(/&amp;/g, '&');
-                    const singers = (song.singers || 'Unknown').replace(/&amp;/g, '&');
-                    const album = (song.album || 'N/A').replace(/&amp;/g, '&');
-                    const imageUrl = song.image ? song.image[2]?.link || song.image[1]?.link || '' : '';
-                    const audioUrl = song.download_url?.find(u => u.quality === '320')?.link || song.download_url?.[0]?.link || '';
+                    const songTitle = (song.name || 'Unknown').replace(/&amp;/g, '&');
+                    const singers = (song.artists && song.artists.primary ? song.artists.primary.map(a => a.name).join(', ') : 'Unknown').replace(/&amp;/g, '&');
+                    const album = (song.album && song.album.name || 'N/A').replace(/&amp;/g, '&');
+                    const imageUrl = song.image ? (song.image[2] ? song.image[2].url : '') : (song.artists.primary[0].image[2] ? song.artists.primary[0].image[2].url : '');
+                    const audioUrl = song.downloadUrl ? (song.downloadUrl.find(u => u.quality === '320kbps') ? song.downloadUrl.find(u => u.quality === '320kbps').url : song.downloadUrl[0].url) : '';
                     div.innerHTML = `
                         <img src="${imageUrl}" alt="${songTitle} cover" onerror="this.style.display='none';">
                         <div class="details">
@@ -333,7 +333,7 @@
                     resultsDiv.appendChild(div);
                 });
             } catch (err) {
-                resultsDiv.innerHTML = `<p>Error fetching data: ${err.message}. Check if API is deployed and URL is correct.</p>`;
+                resultsDiv.innerHTML = `<p>Error fetching data: ${err.message}. Check if API is up.</p>`;
                 console.error(err);
             }
         }
@@ -412,7 +412,6 @@
                     }
                     if (currentAudio.ended) playNext();
                 }, 500);
-                // Clear interval when audio changes or ends (optional cleanup)
                 currentAudio.addEventListener('ended', () => clearInterval(interval));
             }
         }
