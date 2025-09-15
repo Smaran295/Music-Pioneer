@@ -4,121 +4,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Pioneer</title>
-    <meta name="description" content="Discover and stream music with Music Pioneer.">
-    <meta name="keywords" content="music, streaming, jiosaavn, pioneer">
-    <meta property="og:title" content="Music Pioneer">
-    <meta property="og:image" content="https://musicpioneer.vercel.app/preview.jpg">
-    <meta property="og:url" content="https://musicpioneer.vercel.app/">
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             background: #121212;
             color: #FFFFFF;
-            height: 100vh;
             margin: 0;
+            height: 100vh;
             overflow: hidden;
         }
-        .loading {
+        #sidebar {
+            width: 200px;
+            background: #1a1a1a;
+            height: 100vh;
+            position: fixed;
+            transition: width 0.3s;
+        }
+        .logo {
+            padding: 20px;
             text-align: center;
+            font-size: 24px;
+            color: #1DB954;
+        }
+        .nav-item {
+            display: block;
+            padding: 15px;
             color: #B3B3B3;
-            font-size: 1.2em;
+            text-decoration: none;
+            border-bottom: 1px solid #333;
         }
-        .loading span {
-            animation: blink 1s infinite;
+        .nav-item:hover, .nav-item.active {
+            background: #333;
+            color: #1DB954;
         }
-        .loading span:nth-child(2) { animation-delay: 0.2s; }
-        .loading span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 50% { opacity: 0; } }
-        .progress::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #1DB954;
-            border-radius: 50%;
+        #mainContent {
+            margin-left: 200px;
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+        .section { display: none; }
+        .section.active { display: block; }
+        h2 { color: #1DB954; margin-bottom: 20px; }
+        .song-card {
+            background: #1a1a1a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
             cursor: pointer;
         }
-        .volume::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #1DB954;
-            border-radius: 50%;
-            cursor: pointer;
+        .song-card:hover { background: #333; }
+        .song-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; }
+        .details strong { color: #1DB954; }
+        .search-bar input { padding: 10px; background: #1a1a1a; border: 1px solid #333; color: white; width: 70%; }
+        .search-bar button { padding: 10px 20px; background: #1DB954; color: black; border: none; cursor: pointer; }
+        #playerBar {
+            position: fixed;
+            bottom: 0;
+            left: 200px;
+            right: 0;
+            height: 60px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .controls button { font-size: 20px; background: none; border: none; color: #B3B3B3; margin: 0 10px; cursor: pointer; }
+        .controls button:hover { color: #1DB954; }
+        #progress, #volume { width: 200px; height: 5px; background: #333; }
+        #currentSong { position: fixed; bottom: 70px; left: 220px; color: #B3B3B3; }
+        .loading { text-align: center; color: #B3B3B3; font-size: 18px; }
+        .hamburger { display: none; position: fixed; top: 10px; left: 10px; font-size: 24px; cursor: pointer; z-index: 1000; }
+        @media (max-width: 768px) {
+            #sidebar { width: 0; }
+            #mainContent { margin-left: 0; }
+            #playerBar { left: 0; }
+            #currentSong { left: 10px; }
+            .hamburger { display: block; color: #B3B3B3; }
         }
     </style>
 </head>
-<body class="flex h-screen">
-    <div class="hamburger fixed top-5 left-5 text-2xl text-gray-400 cursor-pointer lg:hidden" onclick="toggleSidebar()">☰</div>
-    <div id="sidebar" class="w-64 bg-gray-900 h-full fixed transition-all duration-300 lg:w-64 lg:block">
-        <div class="logo p-5 text-center">
-            <span class="text-2xl font-bold text-green-500">Music Pioneer</span>
-        </div>
-        <a href="#" class="nav-item flex items-center p-3 text-gray-400 hover:text-green-500 hover:bg-gray-800 active:text-green-500 active:bg-gray-800" onclick="showSection('home')">
-            <i class="mr-2">🏠</i><span>Home</span>
-        </a>
-        <a href="#" class="nav-item flex items-center p-3 text-gray-400 hover:text-green-500 hover:bg-gray-800" onclick="showSection('search')">
-            <i class="mr-2">🔍</i><span>Search</span>
-        </a>
-        <a href="#" class="nav-item flex items-center p-3 text-gray-400 hover:text-green-500 hover:bg-gray-800" onclick="showSection('library')">
-            <i class="mr-2">📚</i><span>Library</span>
-        </a>
+<body>
+    <div class="hamburger" onclick="toggleSidebar()">☰</div>
+    <div id="sidebar">
+        <div class="logo">Music Pioneer</div>
+        <a href="#" class="nav-item active" onclick="showSection('home')">Home</a>
+        <a href="#" class="nav-item" onclick="showSection('search')">Search</a>
+        <a href="#" class="nav-item" onclick="showSection('library')">Library</a>
     </div>
-    <div id="mainContent" class="flex-1 ml-64 p-5 overflow-y-auto transition-all duration-300 lg:ml-64">
-        <div id="home" class="section">
-            <h2 class="text-2xl text-green-500 mb-4">Home</h2>
-            <div id="trending" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Deva Deva', 'Arijit Singh', 'https://via.placeholder.com/200x200?text=Deva+Deva')">
-                    <img src="https://via.placeholder.com/200x200?text=Trending+1" alt="Trending 1" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
-                    <div class="details mt-2">
-                        <strong class="text-green-500">Deva Deva</strong><br>
-                        <span>Arijit Singh</span>
-                    </div>
-                </div>
-                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Kesariya', 'Pritam', 'https://via.placeholder.com/200x200?text=Kesariya')">
-                    <img src="https://via.placeholder.com/200x200?text=Trending+2" alt="Trending 2" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
-                    <div class="details mt-2">
-                        <strong class="text-green-500">Kesariya</strong><br>
-                        <span>Pritam</span>
-                    </div>
-                </div>
+    <div id="mainContent">
+        <div id="home" class="section active">
+            <h2>Home</h2>
+            <div class="song-card" onclick="playSample('Deva Deva', 'Arijit Singh')">
+                <strong>Deva Deva</strong> - Arijit Singh
+            </div>
+            <div class="song-card" onclick="playSample('Kesariya', 'Pritam')">
+                <strong>Kesariya</strong> - Pritam
             </div>
         </div>
-        <div id="search" class="section hidden">
-            <div class="search-bar flex mb-4">
-                <input type="text" id="query" placeholder="Search for artists, songs, or albums..." class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded-l focus:outline-none">
-                <button onclick="searchSongs()" class="p-2 bg-green-500 text-white rounded-r hover:bg-green-600">Search</button>
+        <div id="search" class="section">
+            <div class="search-bar">
+                <input type="text" id="query" placeholder="Search songs..." onkeypress="if(event.key==='Enter') searchSongs()">
+                <button onclick="searchSongs()">Search</button>
             </div>
-            <div id="results" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+            <div id="results"></div>
         </div>
-        <div id="library" class="section hidden">
-            <h2 class="text-2xl text-green-500 mb-4">Library</h2>
-            <div id="playlists" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="playlist-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Liked Song', 'Various', 'https://via.placeholder.com/200x200?text=Liked+Songs')">
-                    <img src="https://via.placeholder.com/200x200?text=Liked+Songs" alt="Liked Songs" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
-                    <div class="details mt-2">
-                        <strong class="text-green-500">Liked Songs</strong>
-                    </div>
-                </div>
+        <div id="library" class="section">
+            <h2>Library</h2>
+            <div class="song-card" onclick="playSample('Liked Song', 'Various')">
+                <strong>Liked Songs</strong> - Various
             </div>
         </div>
     </div>
-    <div id="currentSong" class="fixed bottom-20 left-72 text-sm text-gray-400 truncate w-48 lg:left-72"></div>
-    <div id="playerBar" class="fixed bottom-0 left-64 right-0 h-20 bg-gray-800 flex items-center p-2 transition-all duration-300 lg:left-64">
-        <div class="controls flex items-center w-full">
-            <button onclick="toggleShuffle()" class="text-2xl text-gray-400 hover:text-green-500 mr-2">🔀</button>
-            <button onclick="playPrevious()" class="text-2xl text-gray-400 hover:text-green-500 mr-2">⏮</button>
-            <button onclick="togglePlay()" id="playBtn" class="text-2xl text-gray-400 hover:text-green-500 mr-2">▶</button>
-            <button onclick="playNext()" class="text-2xl text-gray-400 hover:text-green-500 mr-2">⏭</button>
-            <button onclick="toggleRepeat()" class="text-2xl text-gray-400 hover:text-green-500 mr-2">🔁</button>
-            <div class="progress flex-1 mx-2">
-                <input type="range" min="0" max="100" value="0" id="progress" class="w-full h-1 bg-gray-600 accent-green-500 cursor-pointer" oninput="seekAudio(this.value)">
-            </div>
-            <button onclick="toggleMute()" id="muteBtn" class="text-2xl text-gray-400 hover:text-green-500 mr-2">🔊</button>
-            <div class="volume w-20">
-                <input type="range" min="0" max="1" step="0.01" value="1" id="volume" class="w-full h-1 bg-gray-600 accent-green-500" oninput="setVolume(this.value)">
-            </div>
-        </div>
+    <div id="currentSong"></div>
+    <div id="playerBar">
+        <button onclick="toggleShuffle()">🔀</button>
+        <button onclick="playPrevious()">⏮</button>
+        <button id="playBtn" onclick="togglePlay()">▶</button>
+        <button onclick="playNext()">⏭</button>
+        <button onclick="toggleRepeat()">🔁</button>
+        <input type="range" id="progress" min="0" max="100" value="0" style="flex:1; margin: 0 10px;">
+        <button id="muteBtn" onclick="toggleMute()">🔊</button>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
     </div>
     <script>
         let currentAudio = null;
@@ -128,98 +135,49 @@
         let isRepeating = false;
         let progressInterval;
         const API_BASE = 'https://annonymous-sage.vercel.app';
-        const TEST_AUDIO_URL = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-
-        function debounce(func, delay) {
-            let timeoutId;
-            return function (...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => func.apply(this, args), delay);
-            };
-        }
+        const TEST_AUDIO = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
         function toggleSidebar() {
-            const sidebar = document.getElementById("sidebar");
-            const mainContent = document.getElementById("mainContent");
-            const playerBar = document.getElementById("playerBar");
-            if (sidebar.classList.contains("w-64")) {
-                sidebar.classList.replace("w-64", "w-0");
-                mainContent.classList.replace("ml-64", "ml-0");
-                playerBar.classList.replace("left-64", "left-0");
-            } else {
-                sidebar.classList.replace("w-0", "w-64");
-                mainContent.classList.replace("ml-0", "ml-64");
-                playerBar.classList.replace("left-0", "left-64");
-            }
+            const sidebar = document.getElementById('sidebar');
+            sidebar.style.width = sidebar.style.width === '0px' ? '200px' : '0px';
         }
 
         function showSection(section) {
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(section).classList.remove('hidden');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
-            if (section === 'home') document.querySelector(`[onclick="showSection('home')"]`).classList.add('active');
-        }
-
-        async function fetchWithRetry(url, retries = 2, delay = 1000) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                    const text = await res.text();
-                    const json = JSON.parse(text);
-                    console.log(`Fetch attempt ${i + 1} response: ${JSON.stringify(json).substring(0, 200)}...`);
-                    return json;
-                } catch (err) {
-                    console.error(`Fetch attempt ${i + 1} failed: ${err.message}`);
-                    if (i === retries - 1) throw err;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
+            event.target.classList.add('active');
         }
 
         async function searchSongs() {
-            const query = document.getElementById("query").value.trim();
-            const resultsDiv = document.getElementById("results");
-            if (!query) {
-                resultsDiv.innerHTML = "<p>No search term entered.</p>";
-                return;
-            }
-            resultsDiv.innerHTML = "<p class='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
-
+            const query = document.getElementById('query').value.trim();
+            const results = document.getElementById('results');
+            if (!query) return results.innerHTML = '<p>Enter a search term.</p>';
+            results.innerHTML = '<p class="loading">Loading...</p>';
             try {
-                const apiUrl = `${API_BASE}/api/search?query=${encodeURIComponent(query)}`;
-                console.log(`Fetching from: ${apiUrl}`);
-                const data = await fetchWithRetry(apiUrl);
-                console.log("Full API Response:", data);
-                resultsDiv.innerHTML = "";
-                const songs = data.songs?.results || [];
-                if (songs.length === 0) {
-                    resultsDiv.innerHTML = "<p>No results found.</p>";
-                    return;
-                }
-                songs.forEach((song, index) => {
-                    if (index >= 10) return;
-                    const div = document.createElement("div");
-                    div.className = "song-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform";
-                    const songTitle = (song.title || 'Unknown').replace(/&amp;/g, '&');
-                    const singers = (song.singers || song.primaryArtists || 'Unknown').replace(/&amp;/g, '&');
-                    const album = (song.album || 'N/A').replace(/&amp;/g, '&');
-                    const imageUrl = song.image ? (song.image.find(img => img.quality === '150x150')?.url || song.image[1]?.url || '') : 'https://via.placeholder.com/200x200';
-                    const audioUrl = TEST_AUDIO_URL;
+                const res = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}`);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+                console.log('API Response:', data); // Debug
+                results.innerHTML = '';
+                const songs = data.data?.songs?.results || [];
+                if (songs.length === 0) return results.innerHTML = '<p>No results found.</p>';
+                songs.slice(0, 10).forEach(song => {
+                    const div = document.createElement('div');
+                    div.className = 'song-card';
                     div.innerHTML = `
-                        <img src="${imageUrl}" alt="${songTitle} cover" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
-                        <div class="details mt-2">
-                            <strong class="text-green-500">${songTitle}</strong><br>
-                            <span>${singers} • ${album}</span>
+                        <img src="${song.image?.find(img => img.quality === '150x150')?.url || 'https://via.placeholder.com/100?text=Cover'}" alt="${song.title}" onerror="this.src='https://via.placeholder.com/100?text=Cover'">
+                        <div class="details">
+                            <strong>${song.title || 'Unknown'}</strong><br>
+                            <span>${song.primaryArtists || 'Unknown'} • ${song.album || 'N/A'}</span>
                         </div>
                     `;
-                    div.onclick = () => addToQueue(audioUrl, songTitle, singers, imageUrl);
-                    resultsDiv.appendChild(div);
+                    div.onclick = () => addToQueue(TEST_AUDIO, song.title, song.primaryArtists, song.image?.[1]?.url || '');
+                    results.appendChild(div);
                 });
             } catch (err) {
-                resultsDiv.innerHTML = `<p>Error fetching data: ${err.message}</p>`;
-                console.error("Search error:", err);
+                results.innerHTML = `<p>Error: ${err.message}</p>`;
+                console.error('Search failed:', err);
             }
         }
 
@@ -230,75 +188,61 @@
 
         function playNext() {
             if (queue.length === 0) return;
-            if (isShuffling) {
-                currentIndex = Math.floor(Math.random() * queue.length);
-            } else if (currentIndex + 1 < queue.length) {
-                currentIndex++;
-            } else if (isRepeating) {
-                currentIndex = 0;
-            } else {
-                return;
-            }
+            currentIndex = isShuffling ? Math.floor(Math.random() * queue.length) : (currentIndex + 1) % queue.length;
             playQueue();
         }
 
         function playPrevious() {
             if (queue.length === 0) return;
-            if (currentIndex > 0) currentIndex--;
-            else if (isRepeating) currentIndex = queue.length - 1;
+            currentIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
             playQueue();
         }
 
         function playQueue() {
-            if (currentIndex >= 0 && currentIndex < queue.length) {
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
-                }
-                const { url, title, artists, image } = queue[currentIndex];
-                currentAudio = new Audio(url);
-                document.getElementById("playBtn").textContent = "⏸";
-                currentAudio.addEventListener('error', (e) => console.error('Audio load error:', e));
-                currentAudio.play().catch(err => console.error("Play error:", err));
-                document.title = `Now Playing: ${title} - ${artists}`;
-                document.getElementById("currentSong").textContent = `${title} - ${artists}`;
-                updateProgress();
-            }
+            if (currentIndex < 0 || currentIndex >= queue.length) return;
+            if (currentAudio) currentAudio.pause();
+            const item = queue[currentIndex];
+            currentAudio = new Audio(item.url);
+            document.getElementById('playBtn').textContent = '⏸';
+            currentAudio.volume = document.getElementById('volume').value;
+            currentAudio.play().catch(e => console.error('Play error:', e));
+            document.getElementById('currentSong').textContent = `${item.title} - ${item.artists}`;
+            updateProgress();
+        }
+
+        function playSample(title, artists) {
+            addToQueue(TEST_AUDIO, title, artists, '');
         }
 
         function togglePlay() {
-            if (currentAudio) {
-                if (currentAudio.paused) {
-                    currentAudio.play().catch(err => console.error("Play error:", err));
-                    document.getElementById("playBtn").textContent = "⏸";
-                } else {
-                    currentAudio.pause();
-                    document.getElementById("playBtn").textContent = "▶";
-                }
+            if (!currentAudio) return;
+            if (currentAudio.paused) {
+                currentAudio.play();
+                document.getElementById('playBtn').textContent = '⏸';
+            } else {
+                currentAudio.pause();
+                document.getElementById('playBtn').textContent = '▶';
             }
         }
 
         function toggleMute() {
-            if (currentAudio) {
-                currentAudio.muted = !currentAudio.muted;
-                document.getElementById("muteBtn").textContent = currentAudio.muted ? "🔇" : "🔊";
-            }
+            if (!currentAudio) return;
+            currentAudio.muted = !currentAudio.muted;
+            document.getElementById('muteBtn').textContent = currentAudio.muted ? '🔇' : '🔊';
         }
 
         function toggleShuffle() {
             isShuffling = !isShuffling;
-            document.querySelector('button[onclick="toggleShuffle()"]').style.color = isShuffling ? '#1DB954' : '#B3B3B3';
+            event.target.style.color = isShuffling ? '#1DB954' : '#B3B3B3';
         }
 
         function toggleRepeat() {
             isRepeating = !isRepeating;
-            document.querySelector('button[onclick="toggleRepeat()"]').style.color = isRepeating ? '#1DB954' : '#B3B3B3';
+            event.target.style.color = isRepeating ? '#1DB954' : '#B3B3B3';
         }
 
         function seekAudio(value) {
-            if (currentAudio && currentAudio.duration) {
-                currentAudio.currentTime = (value / 100) * currentAudio.duration;
-            }
+            if (currentAudio && currentAudio.duration) currentAudio.currentTime = (value / 100) * currentAudio.duration;
         }
 
         function setVolume(value) {
@@ -309,24 +253,26 @@
             if (progressInterval) clearInterval(progressInterval);
             if (currentAudio) {
                 progressInterval = setInterval(() => {
-                    const progress = document.getElementById("progress");
-                    if (!currentAudio.paused && !isNaN(currentAudio.duration)) {
-                        const value = (currentAudio.currentTime / currentAudio.duration) * 100;
-                        progress.value = value;
+                    const progress = document.getElementById('progress');
+                    if (!currentAudio.paused && currentAudio.duration) {
+                        progress.value = (currentAudio.currentTime / currentAudio.duration) * 100;
                     }
-                    if (currentAudio.ended) {
-                        playNext();
-                    }
-                }, 500);
+                    if (currentAudio.ended) playNext();
+                }, 1000);
+                currentAudio.addEventListener('timeupdate', () => {
+                    const progress = document.getElementById('progress');
+                    progress.value = (currentAudio.currentTime / currentAudio.duration) * 100 || 0;
+                });
             }
         }
 
+        // Init
+        document.getElementById('progress').oninput = (e) => seekAudio(e.target.value);
+        document.getElementById('volume').oninput = (e) => setVolume(e.target.value);
         showSection('home');
-        document.getElementById("query").addEventListener("input", debounce(() => searchSongs(), 500));
-        document.getElementById("query").addEventListener("keypress", (e) => { if (e.key === "Enter") searchSongs(); });
-        // Debug: Alert to confirm JS loads
-        window.onload = () => alert("Music Pioneer JavaScript loaded! Check console for logs.");
-        console.log("Music Pioneer loaded successfully!");
+        document.getElementById('query').oninput = () => setTimeout(searchSongs, 500); // Debounce
+        alert('Music Pioneer loaded! Search for "kesariya" to test.'); // Online debug
+        console.log('App initialized - API ready.');
     </script>
 </body>
 </html>
