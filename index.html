@@ -3,108 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JioSaavn Search and Player</title>
+    <title>MusicPioneer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
-        #search-container {
-            margin-bottom: 20px;
+        .song-item, .playlist-item, .trending-item {
+            transition: transform 0.2s, background-color 0.2s;
         }
-        #search-input {
-            width: 70%;
-            padding: 10px;
-            font-size: 16px;
-        }
-        #search-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #results {
-            margin-bottom: 20px;
-        }
-        .song-item {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            cursor: pointer;
-        }
-        .song-item:hover {
-            background-color: #f0f0f0;
+        .song-item:hover, .playlist-item:hover, .trending-item:hover {
+            transform: scale(1.02);
+            background-color: #374151;
         }
         #player {
-            width: 100%;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111827;
+            padding: 10px;
+            z-index: 10;
+        }
+        #lyrics-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 20;
+            align-items: center;
+            justify-content: center;
+        }
+        #lyrics-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #playlist-sidebar {
+            transition: transform 0.3s;
+        }
+        #playlist-sidebar.hidden {
+            transform: translateX(100%);
+        }
+        #trending-carousel {
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .trending-item {
+            scroll-snap-align: start;
+        }
+        @media (max-width: 640px) {
+            #playlist-sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                height: 100%;
+                width: 80%;
+                z-index: 15;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
-<body>
-    <h1>JioSaavn Song Search</h1>
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Enter song name or artist...">
-        <button id="search-button" onclick="searchSongs()">Search</button>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-indigo-800 p-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">MusicPioneer</h1>
+                <p class="text-sm text-gray-300">Your music, your vibe</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600">
+                    <svg id="theme-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="sun-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        <path id="moon-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" class="hidden" />
+                    </svg>
+                </button>
+                <button id="menu-toggle" class="sm:hidden p-2 rounded-full bg-gray-700 hover:bg-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto mt-6 px-4">
+        <!-- Trending Songs Carousel -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Trending Songs</h2>
+            <div id="trending-carousel" class="flex gap-4">
+                <div id="trending-loading" class="text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                    <p>Loading trending songs...</p>
+                </div>
+                <div id="trending-results" class="flex gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="flex flex-col sm:flex-row gap-2 mb-6">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search for songs or artists..."
+                class="flex-grow p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+            >
+            <select id="language-filter" class="p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+                <option value="">All Languages</option>
+                <option value="Hindi">Hindi</option>
+                <option value="English">English</option>
+                <option value="Punjabi">Punjabi</option>
+                <option value="Tamil">Tamil</option>
+            </select>
+            <select id="sort-filter" class="p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+                <option value="">Default Sort</option>
+                <option value="popular">Popular</option>
+                <option value="recent">Recent</option>
+            </select>
+            <button
+                id="search-button"
+                onclick="searchSongs()"
+                class="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition"
+            >
+                Search
+            </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="text-center mt-4 hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+            <p>Loading...</p>
+        </div>
+
+        <!-- Search Results -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div id="results" class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="playlist-sidebar" class="w-full sm:w-64 bg-gray-800 p-4 rounded-lg sm:sticky sm:top-4 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">My Playlist</h2>
+                    <button id="toggle-playlist" class="sm:hidden p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="playlist-items"></div>
+            </div>
+        </div>
+
+        <!-- Load More Button -->
+        <div class="text-center mt-6">
+            <button
+                id="load-more"
+                onclick="loadMoreSongs()"
+                class="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition hidden"
+            >
+                Load More
+            </button>
+        </div>
     </div>
-    <div id="results"></div>
-    <audio id="player" controls></audio>
+
+    <!-- Now Playing Card -->
+    <div id="now-playing" class="max-w-6xl mx-auto mt-6 px-4 hidden">
+        <div class="bg-gray-800 p-4 rounded-lg flex gap-4">
+            <img id="now-playing-art" src="https://via.placeholder.com/100" alt="Now Playing" class="w-24 h-24 object-cover rounded">
+            <div class="flex-1">
+                <h3 id="now-playing-title" class="text-lg font-semibold">No song playing</h3>
+                <p id="now-playing-artist" class="text-sm text-gray-400">Select a song to play</p>
+                <p id="now-playing-album" class="text-sm text-gray-500"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lyrics Modal -->
+    <div id="lyrics-modal" class="hidden">
+        <div id="lyrics-content" class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-xl font-semibold mb-4">Lyrics</h2>
+            <div id="lyrics-text" class="text-gray-300"></div>
+            <button
+                onclick="closeLyricsModal()"
+                class="mt-4 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600"
+            >
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Player -->
+    <div id="player" class="flex items-center gap-4">
+        <img id="player-art" src="https://via.placeholder.com/50" alt="Now Playing" class="w-12 h-12 object-cover rounded">
+        <div class="flex-1">
+            <p id="player-title" class="text-sm font-semibold">No song playing</p>
+            <p id="player-artist" class="text-xs text-gray-300">Select a song to play</p>
+        </div>
+        <audio id="audio-player" controls class="flex-1"></audio>
+    </div>
 
     <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+        let isDarkMode = localStorage.getItem('theme') !== 'light';
+        
+        function setTheme(dark) {
+            document.body.classList.toggle('bg-gray-900', dark);
+            document.body.classList.toggle('text-white', dark);
+            document.body.classList.toggle('bg-gray-100', !dark);
+            document.body.classList.toggle('text-gray-800', !dark);
+            sunIcon.classList.toggle('hidden', !dark);
+            moonIcon.classList.toggle('hidden', dark);
+            localStorage.setItem('theme', dark ? 'dark' : 'light');
+        }
+        setTheme(isDarkMode);
+        themeToggle.onclick = () => setTheme(isDarkMode = !isDarkMode);
+
+        // Mobile Menu
+        const menuToggle = document.getElementById('menu-toggle');
+        const playlistSidebar = document.getElementById('playlist-sidebar');
+        menuToggle.onclick = () => playlistSidebar.classList.toggle('hidden');
+        document.getElementById('toggle-playlist')?.onclick = () => playlistSidebar.classList.toggle('hidden');
+        document.getElementById('search-input').addEventListener('click', () => playlistSidebar.classList.add('hidden'));
+
+        // Playlist Management
+        let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+        function savePlaylist() {
+            localStorage.setItem('playlist', JSON.stringify(playlist));
+            renderPlaylist();
+        }
+        function addToPlaylist(song) {
+            if (!playlist.find(s => s.id === song.id)) {
+                playlist.push({ id: song.id, name: song.name, artists: song.artists.primary, image: song.image[2]?.url });
+                savePlaylist();
+            }
+        }
+        function removeFromPlaylist(songId) {
+            playlist = playlist.filter(s => s.id !== songId);
+            savePlaylist();
+        }
+        function renderPlaylist() {
+            const playlistDiv = document.getElementById('playlist-items');
+            playlistDiv.innerHTML = playlist.length ? '' : '<p class="text-gray-400">No songs in playlist</p>';
+            playlist.forEach(song => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item bg-gray-700 p-3 rounded flex gap-2 mb-2';
+                item.innerHTML = `
+                    <img src="${song.image || 'https://via.placeholder.com/50'}" alt="${song.name}" class="w-10 h-10 object-cover rounded">
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold">${song.name}</p>
+                        <p class="text-xs text-gray-400">${song.artists.map(a => a.name).join(', ')}</p>
+                    </div>
+                    <button onclick="removeFromPlaylist('${song.id}')" class="text-red-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                item.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path') {
+                        playSongFromId(song.id);
+                    }
+                };
+                playlistDiv.appendChild(item);
+            });
+        }
+        renderPlaylist();
+
+        // Trending Songs
+        const languages = ['Hindi', 'English', 'Punjabi', 'Tamil'];
+        function fetchTrendingSongs() {
+            document.getElementById('trending-loading').style.display = 'block';
+            document.getElementById('trending-results').innerHTML = '';
+            // Simulate trending by fetching from API or use curated list
+            const trendingSongs = [
+                { id: 'abc123', name: 'Zamaana Lage', artists: [{ name: 'Arijit Singh' }], image: [{ quality: '500x500', url: 'https://via.placeholder.com/150' }], language: 'Hindi' },
+                { id: 'def456', name: 'Saiyaara', artists: [{ name: 'Arijit Singh' }], image: [{ quality: '500x500', url: 'https://via.placeholder.com/150' }], language: 'Hindi' },
+                { id: 'ghi789', name: 'Millionaire', artists: [{ name: 'Yo Yo Honey Singh' }], image: [{ quality: '500x500', url: 'https://via.placeholder.com/150' }], language: 'Punjabi' },
+                { id: 'jkl012', name: 'Believer', artists: [{ name: 'Imagine Dragons' }], image: [{ quality: '500x500', url: 'https://via.placeholder.com/150' }], language: 'English' },
+                { id: 'mno345', name: 'Naatu Naatu', artists: [{ name: 'Rahul Sipligunj' }], image: [{ quality: '500x500', url: 'https://via.placeholder.com/150' }], language: 'Tamil' },
+            ]; // Replace with API calls: /search/songs?query=trending {lang}
+            displayTrendingSongs(trendingSongs);
+            document.getElementById('trending-loading').style.display = 'none';
+        }
+        function displayTrendingSongs(songs) {
+            const trendingDiv = document.getElementById('trending-results');
+            songs.forEach(song => {
+                const item = document.createElement('div');
+                item.className = 'trending-item bg-gray-800 p-4 rounded-lg w-48 flex-shrink-0 fade-in';
+                item.innerHTML = `
+                    <img src="${song.image[0]?.url || 'https://via.placeholder.com/150'}" alt="${song.name}" class="w-full h-32 object-cover rounded mb-2">
+                    <h3 class="text-sm font-semibold">${song.name}</h3>
+                    <p class="text-xs text-gray-400">${song.artists.map(a => a.name).join(', ')}</p>
+                    <p class="text-xs text-gray-500">${song.language}</p>
+                `;
+                item.onclick = () => playSongFromId(song.id);
+                trendingDiv.appendChild(item);
+            });
+        }
+        fetchTrendingSongs();
+
+        // Search and Pagination
+        let currentPage = 0;
+        let currentQuery = '';
+        const limit = 20;
+
         function searchSongs() {
             const query = document.getElementById('search-input').value.trim();
+            const language = document.getElementById('language-filter').value;
+            const sort = document.getElementById('sort-filter').value;
             if (!query) {
                 alert('Please enter a search query.');
                 return;
             }
+            currentQuery = query + (language ? ` language:${language}` : '') + (sort ? ` sort:${sort}` : '');
+            currentPage = 0;
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('load-more').classList.add('hidden');
+            fetchSongs();
+        }
 
-            const apiUrl = `https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`;
+        async function fetchSongs(attempt = 1) {
+            document.getElementById('loading-spinner').style.display = 'block';
+            const apiUrl = `https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(currentQuery)}&limit=${limit}&page=${currentPage}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                document.getElementById('loading-spinner').style.display = 'none';
+                if (data.success && data.data && data.data.results) {
+                    displayResults(data.data.results);
+                    if (data.data.total > (currentPage + 1) * limit) {
+                        document.getElementById('load-more').classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('results').innerHTML = '<p class="text-center text-gray-400">No results found.</p>';
+                }
+            } catch (error) {
+                if (attempt < 3) {
+                    setTimeout(() => fetchSongs(attempt + 1), 2000);
+                } else {
+                    document.getElementById('loading-spinner').style.display = 'none';
+                    document.getElementById('results').innerHTML = '<p class="text-center text-red-400">Error fetching results. Please try again.</p>';
+                    console.error('Error:', error);
+                }
+            }
+        }
 
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success && data.data && data.data.results) {
-                        displayResults(data.data.results);
-                    } else {
-                        document.getElementById('results').innerHTML = '<p>No results found or error in response.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    document.getElementById('results').innerHTML = '<p>Error fetching results. Please try again.</p>';
-                });
+        function loadMoreSongs() {
+            currentPage++;
+            fetchSongs();
         }
 
         function displayResults(songs) {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-
             songs.forEach(song => {
                 const songDiv = document.createElement('div');
-                songDiv.className = 'song-item';
+                songDiv.className = 'song-item bg-gray-800 p-4 rounded-lg shadow-md flex gap-4 fade-in';
                 songDiv.innerHTML = `
-                    <strong>${song.name}</strong> - ${song.artists.primary.map(artist => artist.name).join(', ')}<br>
-                    Album: ${song.album.name} | Duration: ${formatDuration(song.duration)} | Language: ${song.language}
+                    <img src="${song.image[2]?.url || 'https://via.placeholder.com/100'}" alt="${song.name}" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1">
+                        <h3 class="font-semibold">${song.name}</h3>
+                        <p class="text-sm text-gray-400">${song.artists.primary.map(artist => artist.name).join(', ')}</p>
+                        <p class="text-sm text-gray-500">Album: ${song.album.name} | ${formatDuration(song.duration)}</p>
+                        <button onclick="event.stopPropagation(); addToPlaylist(${JSON.stringify(song)})" class="text-indigo-400 text-sm">Add to Playlist</button>
+                        ${song.hasLyrics ? `<button onclick="event.stopPropagation(); showLyrics('${song.id}')" class="text-indigo-400 text-sm ml-2">View Lyrics</button>` : ''}
+                    </div>
                 `;
                 songDiv.onclick = () => playSong(song);
                 resultsDiv.appendChild(songDiv);
             });
         }
 
+        // Play Song
         function playSong(song) {
-            const player = document.getElementById('player');
-            // Select the highest quality download URL (assuming last in array is highest, e.g., 320kbps)
+            const player = document.getElementById('audio-player');
+            const playerArt = document.getElementById('player-art');
+            const playerTitle = document.getElementById('player-title');
+            const playerArtist = document.getElementById('player-artist');
+            const nowPlaying = document.getElementById('now-playing');
+            const nowPlayingArt = document.getElementById('now-playing-art');
+            const nowPlayingTitle = document.getElementById('now-playing-title');
+            const nowPlayingArtist = document.getElementById('now-playing-artist');
+            const nowPlayingAlbum = document.getElementById('now-playing-album');
             const downloadUrls = song.downloadUrl || [];
             const highestQualityUrl = downloadUrls.length > 0 ? downloadUrls[downloadUrls.length - 1].url : null;
 
             if (highestQualityUrl) {
                 player.src = highestQualityUrl;
+                playerArt.src = song.image[2]?.url || 'https://via.placeholder.com/50';
+                playerTitle.textContent = song.name;
+                playerArtist.textContent = song.artists.primary.map(a => a.name).join(', ');
+                nowPlaying.classList.remove('hidden');
+                nowPlayingArt.src = song.image[2]?.url || 'https://via.placeholder.com/100';
+                nowPlayingTitle.textContent = song.name;
+                nowPlayingArtist.textContent = song.artists.primary.map(a => a.name).join(', ');
+                nowPlayingAlbum.textContent = `Album: ${song.album.name}`;
                 player.play().catch(error => {
-                    console.error('Error playing audio:', error);
+                    console.error('Playback error:', error);
                     alert('Unable to play the song. It might be restricted or the link expired.');
                 });
             } else {
@@ -112,6 +421,48 @@
             }
         }
 
+        function playSongFromId(songId) {
+            fetch(`https://annonymous-sage.vercel.app/api/songs/${songId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        playSong(data.data);
+                    } else {
+                        alert('Could not load song.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching song.');
+                });
+        }
+
+        // Lyrics
+        function showLyrics(songId) {
+            const modal = document.getElementById('lyrics-modal');
+            const lyricsText = document.getElementById('lyrics-text');
+            lyricsText.innerHTML = '<p class="text-center">Loading lyrics...</p>';
+            modal.style.display = 'flex';
+            fetch(`https://annonymous-sage.vercel.app/api/songs/${songId}?lyrics=true`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.lyrics) {
+                        lyricsText.innerHTML = data.data.lyrics.replace(/\n/g, '<br>');
+                    } else {
+                        lyricsText.innerHTML = '<p class="text-center text-gray-400">Lyrics not available.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching lyrics:', error);
+                    lyricsText.innerHTML = '<p class="text-center text-red-400">Error loading lyrics.</p>';
+                });
+        }
+
+        function closeLyricsModal() {
+            document.getElementById('lyrics-modal').style.display = 'none';
+        }
+
+        // Utility
         function formatDuration(seconds) {
             if (!seconds) return 'N/A';
             const mins = Math.floor(seconds / 60);
