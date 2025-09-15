@@ -11,20 +11,31 @@
     li { margin: 1em 0; background: #fff; padding: 1em; border-radius: 8px; }
     button { margin-left: 1em; }
     #player { margin-top: 2em; }
+    #search-bar { width: 60%; padding: 0.5em; }
+    #search-btn { padding: 0.5em; }
+    #song-list { margin-top: 2em; }
   </style>
 </head>
 <body>
   <h1>Music Pioneer Online Player</h1>
+  <input id="search-bar" type="text" placeholder="Search for a song by title..." />
+  <button id="search-btn">Search</button>
   <ul id="song-list"></ul>
   <div id="player"></div>
 
   <script>
     const API_URL = 'https://annonymous-sage.vercel.app/api/songs';
 
-    async function fetchSongs() {
+    async function fetchSongs(query) {
       try {
-        const res = await fetch(API_URL);
+        // If API supports search queries, update the URL accordingly (e.g., ?q=searchterm)
+        let url = API_URL;
+        if (query) {
+          url += `?q=${encodeURIComponent(query)}`;
+        }
+        const res = await fetch(url);
         const data = await res.json();
+        // Adjust below if your API returns a different format!
         return data.songs || [];
       } catch (e) {
         alert('Failed to fetch songs');
@@ -35,6 +46,10 @@
     function renderSongs(songs) {
       const list = document.getElementById('song-list');
       list.innerHTML = '';
+      if (songs.length === 0) {
+        list.innerHTML = '<li>No songs found.</li>';
+        return;
+      }
       songs.forEach(song => {
         const li = document.createElement('li');
         li.innerHTML = `
@@ -53,7 +68,14 @@
       `;
     }
 
-    fetchSongs().then(renderSongs);
+    document.getElementById('search-btn').onclick = async function() {
+      const query = document.getElementById('search-bar').value.trim();
+      const songs = await fetchSongs(query);
+      renderSongs(songs);
+    };
+
+    // Optionally, load all songs on page load
+    // fetchSongs().then(renderSongs);
   </script>
 </body>
 </html>
