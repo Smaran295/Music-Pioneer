@@ -206,7 +206,7 @@
                     const singers = (song.singers || song.primaryArtists || 'Unknown').replace(/&amp;/g, '&');
                     const album = (song.album || 'N/A').replace(/&amp;/g, '&');
                     const imageUrl = song.image ? (song.image.find(img => img.quality === '150x150')?.url || song.image[1]?.url || '') : 'https://via.placeholder.com/200x200';
-                    const audioUrl = TEST_AUDIO_URL; // Using test URL for now
+                    const audioUrl = TEST_AUDIO_URL;
                     div.innerHTML = `
                         <img src="${imageUrl}" alt="${songTitle} cover" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                         <div class="details mt-2">
@@ -324,6 +324,7 @@
         showSection('home');
         document.getElementById("query").addEventListener("input", debounce(() => searchSongs(), 500));
         document.getElementById("query").addEventListener("keypress", (e) => { if (e.key === "Enter") searchSongs(); });
+        console.log("Music Pioneer loaded successfully!"); // Debug: Confirms JS runs
     </script>
 </body>
 </html>
