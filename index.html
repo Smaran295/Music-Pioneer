@@ -191,7 +191,7 @@
                 const apiUrl = `${API_BASE}/api/search?query=${encodeURIComponent(query)}`;
                 console.log(`Fetching from: ${apiUrl}`);
                 const data = await fetchWithRetry(apiUrl);
-                console.log("Full API Response:", data); // Debug full response
+                console.log("Full API Response:", data);
                 resultsDiv.innerHTML = "";
                 const songs = data.songs?.results || [];
                 if (songs.length === 0) {
@@ -206,7 +206,7 @@
                     const singers = (song.singers || song.primaryArtists || 'Unknown').replace(/&amp;/g, '&');
                     const album = (song.album || 'N/A').replace(/&amp;/g, '&');
                     const imageUrl = song.image ? (song.image.find(img => img.quality === '150x150')?.url || song.image[1]?.url || '') : 'https://via.placeholder.com/200x200';
-                    const audioUrl = TEST_AUDIO_URL; // Fallback to test URL
+                    const audioUrl = TEST_AUDIO_URL; // Using test URL for now
                     div.innerHTML = `
                         <img src="${imageUrl}" alt="${songTitle} cover" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                         <div class="details mt-2">
