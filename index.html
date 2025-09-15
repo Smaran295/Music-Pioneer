@@ -88,9 +88,9 @@
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <div id="sidebar">
         <div class="logo">Music Pioneer</div>
-        <a href="#" class="nav-item active" onclick="showSection('home')">Home</a>
-        <a href="#" class="nav-item" onclick="showSection('search')">Search</a>
-        <a href="#" class="nav-item" onclick="showSection('library')">Library</a>
+        <a href="#" class="nav-item active" onclick="showSection('home'); return false;">Home</a>
+        <a href="#" class="nav-item" onclick="showSection('search'); return false;">Search</a>
+        <a href="#" class="nav-item" onclick="showSection('library'); return false;">Library</a>
     </div>
     <div id="mainContent">
         <div id="home" class="section active">
@@ -118,14 +118,16 @@
     </div>
     <div id="currentSong"></div>
     <div id="playerBar">
-        <button onclick="toggleShuffle()">🔀</button>
-        <button onclick="playPrevious()">⏮</button>
-        <button id="playBtn" onclick="togglePlay()">▶</button>
-        <button onclick="playNext()">⏭</button>
-        <button onclick="toggleRepeat()">🔁</button>
-        <input type="range" id="progress" min="0" max="100" value="0" style="flex:1; margin: 0 10px;">
-        <button id="muteBtn" onclick="toggleMute()">🔊</button>
-        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+        <div class="controls">
+            <button onclick="toggleShuffle()">🔀</button>
+            <button onclick="playPrevious()">⏮</button>
+            <button id="playBtn" onclick="togglePlay()">▶</button>
+            <button onclick="playNext()">⏭</button>
+            <button onclick="toggleRepeat()">🔁</button>
+            <input type="range" id="progress" min="0" max="100" value="0" style="flex:1; margin: 0 10px;">
+            <button id="muteBtn" onclick="toggleMute()">🔊</button>
+            <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+        </div>
     </div>
     <script>
         let currentAudio = null;
@@ -133,9 +135,8 @@
         let currentIndex = -1;
         let isShuffling = false;
         let isRepeating = false;
-        let progressInterval;
         const API_BASE = 'https://annonymous-sage.vercel.app';
-        const TEST_AUDIO = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+        const TEST_AUDIO = 'https://www.w3schools.com/html/horse.mp3'; // Fixed: Reliable cross-origin MP3
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -165,14 +166,15 @@
                 songs.slice(0, 10).forEach(song => {
                     const div = document.createElement('div');
                     div.className = 'song-card';
+                    const imageUrl = song.image?.find(img => img.quality === '150x150')?.url || 'https://via.placeholder.com/100?text=Cover';
                     div.innerHTML = `
-                        <img src="${song.image?.find(img => img.quality === '150x150')?.url || 'https://via.placeholder.com/100?text=Cover'}" alt="${song.title}" onerror="this.src='https://via.placeholder.com/100?text=Cover'">
+                        <img src="${imageUrl}" alt="${song.title}" onerror="this.src='https://via.placeholder.com/100?text=Cover'">
                         <div class="details">
                             <strong>${song.title || 'Unknown'}</strong><br>
                             <span>${song.primaryArtists || 'Unknown'} • ${song.album || 'N/A'}</span>
                         </div>
                     `;
-                    div.onclick = () => addToQueue(TEST_AUDIO, song.title, song.primaryArtists, song.image?.[1]?.url || '');
+                    div.onclick = () => addToQueue(TEST_AUDIO, song.title, song.primaryArtists, imageUrl);
                     results.appendChild(div);
                 });
             } catch (err) {
@@ -183,6 +185,7 @@
 
         function addToQueue(url, title, artists, image) {
             queue.push({ url, title, artists, image });
+            console.log('Added to queue:', title); // Debug
             if (currentIndex === -1) playNext();
         }
 
@@ -200,14 +203,31 @@
 
         function playQueue() {
             if (currentIndex < 0 || currentIndex >= queue.length) return;
-            if (currentAudio) currentAudio.pause();
             const item = queue[currentIndex];
+            console.log('Playing:', item.title, 'URL:', item.url); // Debug
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             currentAudio = new Audio(item.url);
+            currentAudio.volume = parseFloat(document.getElementById('volume').value);
             document.getElementById('playBtn').textContent = '⏸';
-            currentAudio.volume = document.getElementById('volume').value;
-            currentAudio.play().catch(e => console.error('Play error:', e));
             document.getElementById('currentSong').textContent = `${item.title} - ${item.artists}`;
-            updateProgress();
+            // Fixed: Load and wait for metadata before play
+            currentAudio.addEventListener('loadedmetadata', () => {
+                console.log('Audio loaded, playing...'); // Debug
+                currentAudio.play().catch(err => {
+                    console.error('Play failed:', err); // Debug
+                    document.getElementById('playBtn').textContent = '▶';
+                });
+            }, { once: true });
+            currentAudio.load();
+            // Fixed: Single timeupdate listener
+            currentAudio.addEventListener('timeupdate', updateProgressBar);
+            currentAudio.addEventListener('ended', () => {
+                if (isRepeating) playQueue();
+                else playNext();
+            });
         }
 
         function playSample(title, artists) {
@@ -217,7 +237,7 @@
         function togglePlay() {
             if (!currentAudio) return;
             if (currentAudio.paused) {
-                currentAudio.play();
+                currentAudio.play().catch(err => console.error('Toggle play failed:', err));
                 document.getElementById('playBtn').textContent = '⏸';
             } else {
                 currentAudio.pause();
@@ -241,29 +261,21 @@
             event.target.style.color = isRepeating ? '#1DB954' : '#B3B3B3';
         }
 
+        function updateProgressBar() {
+            const progress = document.getElementById('progress');
+            if (currentAudio.duration) {
+                progress.value = (currentAudio.currentTime / currentAudio.duration) * 100;
+            }
+        }
+
         function seekAudio(value) {
-            if (currentAudio && currentAudio.duration) currentAudio.currentTime = (value / 100) * currentAudio.duration;
+            if (currentAudio && currentAudio.duration) {
+                currentAudio.currentTime = (value / 100) * currentAudio.duration;
+            }
         }
 
         function setVolume(value) {
-            if (currentAudio) currentAudio.volume = value;
-        }
-
-        function updateProgress() {
-            if (progressInterval) clearInterval(progressInterval);
-            if (currentAudio) {
-                progressInterval = setInterval(() => {
-                    const progress = document.getElementById('progress');
-                    if (!currentAudio.paused && currentAudio.duration) {
-                        progress.value = (currentAudio.currentTime / currentAudio.duration) * 100;
-                    }
-                    if (currentAudio.ended) playNext();
-                }, 1000);
-                currentAudio.addEventListener('timeupdate', () => {
-                    const progress = document.getElementById('progress');
-                    progress.value = (currentAudio.currentTime / currentAudio.duration) * 100 || 0;
-                });
-            }
+            if (currentAudio) currentAudio.volume = parseFloat(value);
         }
 
         // Init
@@ -271,8 +283,8 @@
         document.getElementById('volume').oninput = (e) => setVolume(e.target.value);
         showSection('home');
         document.getElementById('query').oninput = () => setTimeout(searchSongs, 500); // Debounce
-        alert('Music Pioneer loaded! Search for "kesariya" to test.'); // Online debug
-        console.log('App initialized - API ready.');
+        alert('Music Pioneer loaded! Search for "kesariya" and click a result to play.');
+        console.log('App initialized - Ready to play.');
     </script>
 </body>
 </html>
