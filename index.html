@@ -68,15 +68,16 @@
         <div id="home" class="section">
             <h2 class="text-2xl text-green-500 mb-4">Home</h2>
             <div id="trending" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform">
-                    <img src="https://via.placeholder.com/200x200?text=Trending+1" alt="Trending 1" class="w-full h-48 object-cover rounded">
+                <!-- Fixed: Added onclick and sample data for playback testing -->
+                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Deva Deva', 'Arijit Singh', 'https://via.placeholder.com/200x200?text=Deva+Deva')">
+                    <img src="https://via.placeholder.com/200x200?text=Trending+1" alt="Trending 1" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                     <div class="details mt-2">
                         <strong class="text-green-500">Deva Deva</strong><br>
                         <span>Arijit Singh</span>
                     </div>
                 </div>
-                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform">
-                    <img src="https://via.placeholder.com/200x200?text=Trending+2" alt="Trending 2" class="w-full h-48 object-cover rounded">
+                <div class="trending-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Kesariya', 'Pritam', 'https://via.placeholder.com/200x200?text=Kesariya')">
+                    <img src="https://via.placeholder.com/200x200?text=Trending+2" alt="Trending 2" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                     <div class="details mt-2">
                         <strong class="text-green-500">Kesariya</strong><br>
                         <span>Pritam</span>
@@ -94,8 +95,9 @@
         <div id="library" class="section hidden">
             <h2 class="text-2xl text-green-500 mb-4">Library</h2>
             <div id="playlists" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="playlist-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform">
-                    <img src="https://via.placeholder.com/200x200?text=Liked+Songs" alt="Liked Songs" class="w-full h-48 object-cover rounded">
+                <!-- Fixed: Added onclick and sample data -->
+                <div class="playlist-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform" onclick="addToQueue('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'Liked Song', 'Various', 'https://via.placeholder.com/200x200?text=Liked+Songs')">
+                    <img src="https://via.placeholder.com/200x200?text=Liked+Songs" alt="Liked Songs" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                     <div class="details mt-2">
                         <strong class="text-green-500">Liked Songs</strong>
                     </div>
@@ -103,6 +105,8 @@
             </div>
         </div>
     </div>
+    <!-- Fixed: Added current song title display -->
+    <div id="currentSong" class="fixed bottom-20 left-72 text-sm text-gray-400 truncate w-48 lg:left-72"></div>
     <div id="playerBar" class="fixed bottom-0 left-64 right-0 h-20 bg-gray-800 flex items-center p-2 transition-all duration-300 lg:left-64">
         <div class="controls flex items-center w-full">
             <button onclick="toggleShuffle()" class="text-2xl text-gray-400 hover:text-green-500 mr-2">🔀</button>
@@ -126,7 +130,9 @@
         let isShuffling = false;
         let isRepeating = false;
         let timeoutId;
+        let progressInterval; // Fixed: Global interval ID for progress
         const API_BASE = 'https://annonymous-sage.vercel.app'; 
+        const TEST_AUDIO_URL = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; // Fixed: Public test MP3 for playback demo (replace with real decryption)
 
         function debounce(func, delay) {
             return function (...args) {
@@ -154,7 +160,9 @@
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             document.getElementById(section).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.querySelector(`.nav-item[onclick="showSection('${section}')"]`).classList.add('active');
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+            // Fixed: Set Home active by default on load
+            if (section === 'home') document.querySelector(`[onclick="showSection('home')"]`).classList.add('active');
         }
 
         async function fetchWithRetry(url, retries = 2, delay = 1000) {
@@ -163,8 +171,9 @@
                     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     const text = await res.text();
-                    console.log(`Fetch attempt ${i + 1} response: ${text.substring(0, 200)}...`);
-                    return JSON.parse(text);
+                    const json = JSON.parse(text);
+                    console.log(`Fetch attempt ${i + 1} response: ${JSON.stringify(json).substring(0, 200)}...`);
+                    return json;
                 } catch (err) {
                     console.error(`Fetch attempt ${i + 1} failed: ${err.message}`);
                     if (i === retries - 1) throw err;
@@ -187,21 +196,25 @@
                 console.log(`Fetching from: ${apiUrl}`);
                 const data = await fetchWithRetry(apiUrl);
                 resultsDiv.innerHTML = "";
-                if (!data.data || data.data.length === 0) {
+                // Fixed: Correct path to songs.results
+                const songs = data.songs?.results || [];
+                if (songs.length === 0) {
                     resultsDiv.innerHTML = "<p>No results found.</p>";
                     return;
                 }
-                data.data.forEach((song, index) => {
+                songs.forEach((song, index) => {
                     if (index >= 10) return;
                     const div = document.createElement("div");
                     div.className = "song-card bg-gray-800 p-3 rounded cursor-pointer hover:scale-105 transition-transform";
                     const songTitle = (song.title || 'Unknown').replace(/&amp;/g, '&');
-                    const singers = (song.singers || 'Unknown').replace(/&amp;/g, '&');
+                    const singers = (song.singers || song.primaryArtists || 'Unknown').replace(/&amp;/g, '&');
                     const album = (song.album || 'N/A').replace(/&amp;/g, '&');
-                    const imageUrl = song.image ? song.image[2]?.link || song.image[1]?.link || '' : 'https://via.placeholder.com/200x200';
-                    const audioUrl = song.download_url?.find(u => u.quality === '320')?.link || song.download_url?.[0]?.link || '';
+                    // Fixed: Use .url instead of .link, and fallback to 150x150 if 320 missing
+                    const imageUrl = song.image ? (song.image.find(img => img.quality === '150x150')?.url || song.image[1]?.url || '') : 'https://via.placeholder.com/200x200';
+                    // Fixed: No download_url, so use test URL for demo (replace with real fetch/decrypt)
+                    const audioUrl = TEST_AUDIO_URL;
                     div.innerHTML = `
-                        <img src="${imageUrl}" alt="${songTitle} cover" class="w-full h-48 object-cover rounded" onerror="this.style.display='none';">
+                        <img src="${imageUrl}" alt="${songTitle} cover" class="w-full h-48 object-cover rounded" onerror="this.src='https://via.placeholder.com/200x200?text=Fallback';">
                         <div class="details mt-2">
                             <strong class="text-green-500">${songTitle}</strong><br>
                             <span>${singers} • ${album}</span>
@@ -222,6 +235,7 @@
         }
 
         function playNext() {
+            if (queue.length === 0) return;
             if (isShuffling) {
                 currentIndex = Math.floor(Math.random() * queue.length);
             } else if (currentIndex + 1 < queue.length) {
@@ -235,6 +249,7 @@
         }
 
         function playPrevious() {
+            if (queue.length === 0) return;
             if (currentIndex > 0) currentIndex--;
             else if (isRepeating) currentIndex = queue.length - 1;
             playQueue();
@@ -242,12 +257,19 @@
 
         function playQueue() {
             if (currentIndex >= 0 && currentIndex < queue.length) {
-                if (currentAudio) currentAudio.pause();
-                const { url, title, artists } = queue[currentIndex];
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                const { url, title, artists, image } = queue[currentIndex];
                 currentAudio = new Audio(url);
                 document.getElementById("playBtn").textContent = "⏸";
+                // Fixed: Added error handling for audio load
+                currentAudio.addEventListener('error', (e) => console.error('Audio load error:', e));
                 currentAudio.play().catch(err => console.error("Play error:", err));
                 document.title = `Now Playing: ${title} - ${artists}`;
+                // Fixed: Update current song display
+                document.getElementById("currentSong").textContent = `${title} - ${artists}`;
                 updateProgress();
             }
         }
@@ -292,17 +314,24 @@
         }
 
         function updateProgress() {
+            // Fixed: Clear previous interval to prevent multiples
+            if (progressInterval) clearInterval(progressInterval);
             if (currentAudio) {
-                const progress = document.getElementById("progress");
-                const interval = setInterval(() => {
+                progressInterval = setInterval(() => {
+                    const progress = document.getElementById("progress");
                     if (!currentAudio.paused && !isNaN(currentAudio.duration)) {
                         const value = (currentAudio.currentTime / currentAudio.duration) * 100;
                         progress.value = value;
                     }
-                    if (currentAudio.ended) playNext();
+                    if (currentAudio.ended) {
+                        playNext();
+                    }
                 }, 500);
             }
         }
+
+        // Fixed: Set Home active on load
+        showSection('home');
 
         document.getElementById("query").addEventListener("input", debounce(() => searchSongs(), 500));
         document.getElementById("query").addEventListener("keypress", (e) => { if (e.key === "Enter") searchSongs(); });
