@@ -1,115 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Music Pioneer Search & Play</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2em; background: #f4f4f4; }
-    h1 { color: #2d3a4e; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 1em 0; background: #fff; padding: 1em; border-radius: 8px; }
-    button { margin-left: 1em; }
-    #player { margin-top: 2em; }
-    #search-bar { width: 60%; padding: 0.5em; }
-    #search-btn { padding: 0.5em; }
-    #song-list { margin-top: 2em; }
-    .error { color: red; }
-    #debug { margin-top:2em; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Music Pioneer Search & Play</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #181818; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: 40px auto; background: #222; border-radius: 12px; padding: 24px; }
+        h1 { color: #1db954; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 1em; }
+        .search-bar input { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; }
+        .search-bar button { padding: 12px 24px; border: none; border-radius: 6px; background: #1db954; color: #fff; cursor: pointer; font-size: 16px; }
+        .search-bar button:hover { background: #1ed760; }
+        .results { margin: 1em 0; }
+        .song-card { background: #282828; border-radius: 8px; margin-bottom: 12px; padding: 12px; display: flex; align-items: center; gap: 16px; }
+        .song-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .song-info { flex: 1; }
+        .song-info strong { display: block; color: #fff; font-size: 16px; }
+        .song-info span { color: #b3b3b3; font-size: 14px; }
+        .song-card button { background: #1db954; border: none; color: #fff; border-radius: 6px; padding: 8px 16px; cursor: pointer; margin-left: 10px; font-size: 15px; }
+        .song-card button:hover { background: #1ed760; }
+        .player { margin-top: 2em; text-align: center; }
+        .error { color: #ff4444; margin: 1em 0; }
+        .loading { color: #b3b3b3; margin: 1em 0; }
+    </style>
 </head>
 <body>
-  <h1>Music Pioneer - Search & Play</h1>
-  <input id="search-bar" type="text" placeholder="Search for a song..." />
-  <button id="search-btn">Search</button>
-  <ul id="song-list"></ul>
-  <div id="player"></div>
-  <div id="debug"></div>
+    <div class="container">
+        <h1>Music Pioneer</h1>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for songs, artists, albums..." />
+            <button onclick="searchSongs()">Search</button>
+        </div>
+        <div class="results" id="results"></div>
+        <div class="player" id="player"></div>
+        <div id="debug"></div>
+    </div>
+    <script>
+        const API_BASE = 'https://annonymous-sage.vercel.app';
 
-  <script>
-    const API_BASE = 'https://annonymous-sage.vercel.app';
-
-    async function searchSongs(query) {
-      try {
-        const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        document.getElementById('debug').innerHTML = `<pre>API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
-        // Try common keys for a list of songs
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data.results)) return data.results;
-        if (Array.isArray(data.songs)) return data.songs;
-        for (const key in data) {
-          if (Array.isArray(data[key])) return data[key];
+        async function searchSongs() {
+            const query = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('results');
+            const playerDiv = document.getElementById('player');
+            playerDiv.innerHTML = '';
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a search term.</div>';
+                return;
+            }
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+            try {
+                const res = await fetch(`${API_BASE}/api/search/songs?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                document.getElementById('debug').innerHTML = `<pre>API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
+                const songs = data.data?.results || data.results || data.songs || [];
+                resultsDiv.innerHTML = '';
+                if (!Array.isArray(songs) || songs.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">No songs found.</div>';
+                    return;
+                }
+                songs.forEach(song => {
+                    const title = song.name || song.title || 'Unknown Title';
+                    const artists = song.primaryArtists || song.artist || (song.artists ? song.artists.map(a=>a.name).join(', ') : 'Unknown Artist');
+                    const image = (song.image && song.image[2] && song.image[2].link) || song.image || 'https://via.placeholder.com/60?text=No+Image';
+                    // Try all possible audio fields
+                    const audioUrl =
+                        (song.downloadUrl && song.downloadUrl.find(u => u.quality === '320kbps')?.link) ||
+                        song.media_url ||
+                        song.encryptedMediaUrl ||
+                        song.url ||
+                        song.stream ||
+                        song.link ||
+                        '';
+                    const card = document.createElement('div');
+                    card.className = 'song-card';
+                    card.innerHTML = `
+                        <img src="${image}" alt="${title}" />
+                        <div class="song-info">
+                            <strong>${title}</strong>
+                            <span>${artists}</span>
+                        </div>
+                        <button onclick="playSong('${audioUrl.replace(/'/g,"\\'")}', '${title.replace(/'/g,"\\'")}', '${artists.replace(/'/g,"\\'")}', '${image.replace(/'/g,"\\'")}')">Play</button>
+                    `;
+                    resultsDiv.appendChild(card);
+                });
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            }
         }
-        return [];
-      } catch (e) {
-        document.getElementById('debug').innerHTML = `<div class="error">Error: ${e}</div>`;
-        return [];
-      }
-    }
 
-    function renderSongs(songs) {
-      const list = document.getElementById('song-list');
-      list.innerHTML = '';
-      if (!songs || songs.length === 0) {
-        list.innerHTML = '<li>No songs found.</li>';
-        return;
-      }
-      songs.forEach((song, idx) => {
-        // Try to find common properties
-        const id = song.id || song._id || idx;
-        const title = song.title || song.name || song.song || song.track || `Song ${idx+1}`;
-        const artist = song.artist || song.singer || song.band || '';
-        // Some APIs give streamable URL, some require POST to /api/songs with id or link
-        // We'll show Play button for both
-        const url = song.url || song.audio || song.stream || song.file || song.songUrl || '';
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${title}</strong> ${artist ? `by ${artist}` : ''}
-          <button onclick="playSong('${id}', '${url}', '${title}')">Play</button>
-        `;
-        list.appendChild(li);
-      });
-    }
+        window.playSong = function(url, title, artists, image) {
+            const playerDiv = document.getElementById('player');
+            if (!url || !url.startsWith('http') || url.endsWith('.html')) {
+                playerDiv.innerHTML = '<div class="error">No playable stream found for this song.</div>';
+                return;
+            }
+            playerDiv.innerHTML = `
+                <img src="${image}" alt="${title}" style="width:90px; height:90px; border-radius:10px; margin-bottom:10px;">
+                <div><strong>${title}</strong> <span style="color:#b3b3b3;">${artists}</span></div>
+                <audio controls autoplay src="${url}" style="width:100%;margin-top:10px;"></audio>
+            `;
+        };
 
-    // Try to play via direct URL, else fetch from your API using ID or link
-    window.playSong = async function(id, url, title) {
-      const player = document.getElementById('player');
-      player.innerHTML = "Loading...";
-      let playUrl = url;
-      if (!playUrl) {
-        // If url is missing, try to fetch it via POST to /api/songs
-        try {
-          const res = await fetch(`${API_BASE}/api/songs`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
-          });
-          const data = await res.json();
-          document.getElementById('debug').innerHTML += `<pre>Play API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
-          playUrl = data.url || data.audio || data.songUrl || '';
-        } catch (e) {
-          player.innerHTML = `<div class="error">Error fetching song: ${e}</div>`;
-          return;
-        }
-      }
-      if (playUrl) {
-        player.innerHTML = `
-          <h3>Now Playing: ${title}</h3>
-          <audio controls autoplay src="${playUrl}" style="width:100%"></audio>
-        `;
-      } else {
-        player.innerHTML = `<div class="error">No playable song found!</div>`;
-      }
-    };
-
-    document.getElementById('search-btn').onclick = async function() {
-      const query = document.getElementById('search-bar').value.trim();
-      if (!query) return;
-      const songs = await searchSongs(query);
-      renderSongs(songs);
-      document.getElementById('player').innerHTML = '';
-    };
-  </script>
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchSongs();
+        });
+    </script>
 </body>
 </html>
