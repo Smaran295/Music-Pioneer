@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Music Pioneer Demo Search & Play</title>
+  <title>Music Pioneer Search & Play</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; background: #f4f4f4; }
@@ -16,75 +16,100 @@
     #song-list { margin-top: 2em; }
     .error { color: red; }
     #debug { margin-top:2em; }
-    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h1>Music Pioneer Song Search & Play</h1>
-  <input id="search-bar" type="text" placeholder="Search for a song by title..." />
+  <h1>Music Pioneer - Search & Play</h1>
+  <input id="search-bar" type="text" placeholder="Search for a song..." />
   <button id="search-btn">Search</button>
   <ul id="song-list"></ul>
   <div id="player"></div>
   <div id="debug"></div>
 
   <script>
-    // Demo: Replace this array with your actual song data (title and link)
-    // These links must be valid and accepted by your API!
-    const songs = [
-      { title: "Sample Song 1", link: "https://samplelib.com/lib/preview/mp3/sample-3s.mp3" },
-      { title: "Sample Song 2", link: "https://samplelib.com/lib/preview/mp3/sample-6s.mp3" }
-      // Add your own song links that work with your API!
-    ];
+    const API_BASE = 'https://annonymous-sage.vercel.app';
 
-    function renderSongs(filteredSongs) {
+    async function searchSongs(query) {
+      try {
+        const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        document.getElementById('debug').innerHTML = `<pre>API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
+        // Try common keys for a list of songs
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data.songs)) return data.songs;
+        for (const key in data) {
+          if (Array.isArray(data[key])) return data[key];
+        }
+        return [];
+      } catch (e) {
+        document.getElementById('debug').innerHTML = `<div class="error">Error: ${e}</div>`;
+        return [];
+      }
+    }
+
+    function renderSongs(songs) {
       const list = document.getElementById('song-list');
       list.innerHTML = '';
-      if (!filteredSongs || filteredSongs.length === 0) {
+      if (!songs || songs.length === 0) {
         list.innerHTML = '<li>No songs found.</li>';
         return;
       }
-      filteredSongs.forEach((song, idx) => {
+      songs.forEach((song, idx) => {
+        // Try to find common properties
+        const id = song.id || song._id || idx;
+        const title = song.title || song.name || song.song || song.track || `Song ${idx+1}`;
+        const artist = song.artist || song.singer || song.band || '';
+        // Some APIs give streamable URL, some require POST to /api/songs with id or link
+        // We'll show Play button for both
+        const url = song.url || song.audio || song.stream || song.file || song.songUrl || '';
         const li = document.createElement('li');
         li.innerHTML = `
-          <strong>${song.title}</strong>
-          <button onclick="fetchAndPlaySong('${song.link.replace(/'/g, "\\'")}', '${song.title.replace(/'/g, "\\'")}')">Play</button>
+          <strong>${title}</strong> ${artist ? `by ${artist}` : ''}
+          <button onclick="playSong('${id}', '${url}', '${title}')">Play</button>
         `;
         list.appendChild(li);
       });
     }
 
-    window.fetchAndPlaySong = async function(link, title) {
-      document.getElementById('player').innerHTML = "Loading...";
-      try {
-        const res = await fetch('https://annonymous-sage.vercel.app/api/songs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ link })
-        });
-        const data = await res.json();
-        document.getElementById('debug').innerHTML = `<pre>API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
-        if (data.success && (data.url || data.audio || data.songUrl)) {
-          const audioUrl = data.url || data.audio || data.songUrl;
-          document.getElementById('player').innerHTML = `
-            <h3>Now Playing: ${title}</h3>
-            <audio controls autoplay src="${audioUrl}" style="width:100%"></audio>
-          `;
-        } else {
-          document.getElementById('player').innerHTML = `<div class="error">No playable song found!</div>`;
+    // Try to play via direct URL, else fetch from your API using ID or link
+    window.playSong = async function(id, url, title) {
+      const player = document.getElementById('player');
+      player.innerHTML = "Loading...";
+      let playUrl = url;
+      if (!playUrl) {
+        // If url is missing, try to fetch it via POST to /api/songs
+        try {
+          const res = await fetch(`${API_BASE}/api/songs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+          });
+          const data = await res.json();
+          document.getElementById('debug').innerHTML += `<pre>Play API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
+          playUrl = data.url || data.audio || data.songUrl || '';
+        } catch (e) {
+          player.innerHTML = `<div class="error">Error fetching song: ${e}</div>`;
+          return;
         }
-      } catch (e) {
-        document.getElementById('player').innerHTML = `<div class="error">Error fetching song: ${e}</div>`;
+      }
+      if (playUrl) {
+        player.innerHTML = `
+          <h3>Now Playing: ${title}</h3>
+          <audio controls autoplay src="${playUrl}" style="width:100%"></audio>
+        `;
+      } else {
+        player.innerHTML = `<div class="error">No playable song found!</div>`;
       }
     };
 
-    document.getElementById('search-btn').onclick = function() {
-      const query = document.getElementById('search-bar').value.trim().toLowerCase();
-      const filtered = songs.filter(song => song.title.toLowerCase().includes(query));
-      renderSongs(filtered);
+    document.getElementById('search-btn').onclick = async function() {
+      const query = document.getElementById('search-bar').value.trim();
+      if (!query) return;
+      const songs = await searchSongs(query);
+      renderSongs(songs);
+      document.getElementById('player').innerHTML = '';
     };
-
-    // Show all songs on page load
-    renderSongs(songs);
   </script>
 </body>
 </html>
