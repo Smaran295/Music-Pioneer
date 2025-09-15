@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Music Pioneer Online Player</title>
+  <title>Universal Music Pioneer Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; background: #f4f4f4; }
@@ -14,31 +14,41 @@
     #search-bar { width: 60%; padding: 0.5em; }
     #search-btn { padding: 0.5em; }
     #song-list { margin-top: 2em; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h1>Music Pioneer Online Player</h1>
+  <h1>Universal Music Pioneer Player</h1>
   <input id="search-bar" type="text" placeholder="Search for a song by title..." />
   <button id="search-btn">Search</button>
   <ul id="song-list"></ul>
   <div id="player"></div>
+  <div id="debug" style="margin-top:2em;"></div>
 
   <script>
     const API_URL = 'https://annonymous-sage.vercel.app/api/songs';
 
     async function fetchSongs(query) {
       try {
-        // If API supports search queries, update the URL accordingly (e.g., ?q=searchterm)
         let url = API_URL;
         if (query) {
           url += `?q=${encodeURIComponent(query)}`;
         }
         const res = await fetch(url);
         const data = await res.json();
-        // Adjust below if your API returns a different format!
-        return data.songs || [];
+        document.getElementById('debug').innerHTML = `<pre>API Response:\n${JSON.stringify(data, null, 2)}</pre>`;
+
+        // Try to find the array of songs in the response
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.songs)) return data.songs;
+        if (Array.isArray(data.results)) return data.results;
+        // Fallback: scan object for first array
+        for (const key in data) {
+          if (Array.isArray(data[key])) return data[key];
+        }
+        return [];
       } catch (e) {
-        alert('Failed to fetch songs');
+        document.getElementById('debug').innerHTML = `<div class="error">Failed to fetch songs: ${e}</div>`;
         return [];
       }
     }
@@ -46,18 +56,27 @@
     function renderSongs(songs) {
       const list = document.getElementById('song-list');
       list.innerHTML = '';
-      if (songs.length === 0) {
+      if (!songs || songs.length === 0) {
         list.innerHTML = '<li>No songs found.</li>';
         return;
       }
-      songs.forEach(song => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${song.title}</strong> by ${song.artist || 'Unknown'}
-          <button onclick="playSong('${song.url}', '${song.title}')">Play</button>
-        `;
-        list.appendChild(li);
+      songs.forEach((song, idx) => {
+        // Try common keys for url and title
+        const url = song.url || song.audio || song.songUrl || song.stream || song.file || '';
+        const title = song.title || song.name || song.song || song.track || `Song ${idx + 1}`;
+        const artist = song.artist || song.singer || song.band || '';
+        if (url) {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>${title}</strong> ${artist ? `by ${artist}` : ''}
+            <button onclick="playSong('${url}', '${title}')">Play</button>
+          `;
+          list.appendChild(li);
+        }
       });
+      if (list.innerHTML === '') {
+        list.innerHTML = '<li>No playable songs found in API response.</li>';
+      }
     }
 
     window.playSong = function(url, title) {
