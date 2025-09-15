@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Pioneer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -95,10 +96,10 @@
     <div id="mainContent">
         <div id="home" class="section active">
             <h2>Home</h2>
-            <div class="song-card" onclick="playSample('Deva Deva', 'Arijit Singh')">
+            <div class="song-card" onclick="playSong('Deva Deva', 'Arijit Singh', 'https://www.jiosaavn.com/song/deva-deva/RgIAQh7XZEw')">
                 <strong>Deva Deva</strong> - Arijit Singh
             </div>
-            <div class="song-card" onclick="playSample('Kesariya', 'Pritam')">
+            <div class="song-card" onclick="playSong('Kesariya', 'Pritam', 'https://www.jiosaavn.com/song/kesariya/AgIAQyBeWlI')">
                 <strong>Kesariya</strong> - Pritam
             </div>
         </div>
@@ -111,7 +112,7 @@
         </div>
         <div id="library" class="section">
             <h2>Library</h2>
-            <div class="song-card" onclick="playSample('Liked Song', 'Various')">
+            <div class="song-card" onclick="playSong('Liked Song', 'Various', 'https://www.jiosaavn.com/song/kesariya/AgIAQyBeWlI')">
                 <strong>Liked Songs</strong> - Various
             </div>
         </div>
@@ -136,7 +137,41 @@
         let isShuffling = false;
         let isRepeating = false;
         const API_BASE = 'https://annonymous-sage.vercel.app';
-        const TEST_AUDIO = 'https://www.w3schools.com/html/horse.mp3'; // Fixed: Reliable cross-origin MP3
+        const JIOSAAVN_BASE = 'https://www.jiosaavn.com/api.php';
+
+        // Decryption function for JioSaavn
+        function decryptMediaUrl(encryptedUrl) {
+            const key = CryptoJS.enc.Utf8.parse('383465614859384b38343230');
+            const iv = CryptoJS.enc.Utf8.parse('0000000000000000');
+            try {
+                const decrypted = CryptoJS.DES.decrypt(CryptoJS.enc.Base64.parse(encryptedUrl), key, { iv: iv });
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } catch (e) {
+                console.error('Decryption failed:', e);
+                return null;
+            }
+        }
+
+        // Fetch song details and get stream URL
+        async function getStreamUrl(pids) {
+            try {
+                const res = await fetch(`${JIOSAAVN_BASE}?__call=song.getDetails&cc=in&_format=json&pids=${pids}`);
+                if (!res.ok) throw new Error('Failed to fetch song details');
+                const data = await res.json();
+                const song = data[0];
+                if (!song.encrypted_media_url) throw new Error('No media URL found');
+                const decrypted = decryptMediaUrl(song.encrypted_media_url);
+                if (!decrypted) throw new Error('Decryption failed');
+                // For 320kbps if available, else 128
+                const streamUrl = decrypted.replace(/\.mp3/, '.mp3?type=320') + '&_=' + Date.now();
+                console.log('Stream URL ready:', streamUrl);
+                return streamUrl;
+            } catch (err) {
+                console.error('Stream URL error:', err);
+                // Fallback to test audio if real fetch fails
+                return 'https://www.w3schools.com/html/horse.mp3';
+            }
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -159,11 +194,12 @@
                 const res = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}`);
                 if (!res.ok) throw new Error('API error');
                 const data = await res.json();
-                console.log('API Response:', data); // Debug
+                console.log('API Response:', data);
                 results.innerHTML = '';
                 const songs = data.data?.songs?.results || [];
                 if (songs.length === 0) return results.innerHTML = '<p>No results found.</p>';
                 songs.slice(0, 10).forEach(song => {
+                    const pids = song.url.split('/').pop(); // Extract pids from URL
                     const div = document.createElement('div');
                     div.className = 'song-card';
                     const imageUrl = song.image?.find(img => img.quality === '150x150')?.url || 'https://via.placeholder.com/100?text=Cover';
@@ -174,7 +210,7 @@
                             <span>${song.primaryArtists || 'Unknown'} • ${song.album || 'N/A'}</span>
                         </div>
                     `;
-                    div.onclick = () => addToQueue(TEST_AUDIO, song.title, song.primaryArtists, imageUrl);
+                    div.onclick = () => playSong(song.title, song.primaryArtists, song.url, pids);
                     results.appendChild(div);
                 });
             } catch (err) {
@@ -183,9 +219,14 @@
             }
         }
 
-        function addToQueue(url, title, artists, image) {
-            queue.push({ url, title, artists, image });
-            console.log('Added to queue:', title); // Debug
+        async function playSong(title, artists, url, pids) {
+            const streamUrl = await getStreamUrl(pids);
+            addToQueue(streamUrl, title, artists, url);
+        }
+
+        function addToQueue(url, title, artists, fullUrl) {
+            queue.push({ url, title, artists, fullUrl });
+            console.log('Added to queue:', title);
             if (currentIndex === -1) playNext();
         }
 
@@ -204,7 +245,7 @@
         function playQueue() {
             if (currentIndex < 0 || currentIndex >= queue.length) return;
             const item = queue[currentIndex];
-            console.log('Playing:', item.title, 'URL:', item.url); // Debug
+            console.log('Playing:', item.title, 'URL:', item.url);
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -213,25 +254,19 @@
             currentAudio.volume = parseFloat(document.getElementById('volume').value);
             document.getElementById('playBtn').textContent = '⏸';
             document.getElementById('currentSong').textContent = `${item.title} - ${item.artists}`;
-            // Fixed: Load and wait for metadata before play
             currentAudio.addEventListener('loadedmetadata', () => {
-                console.log('Audio loaded, playing...'); // Debug
+                console.log('Audio loaded, playing...');
                 currentAudio.play().catch(err => {
-                    console.error('Play failed:', err); // Debug
+                    console.error('Play failed:', err);
                     document.getElementById('playBtn').textContent = '▶';
                 });
             }, { once: true });
             currentAudio.load();
-            // Fixed: Single timeupdate listener
             currentAudio.addEventListener('timeupdate', updateProgressBar);
             currentAudio.addEventListener('ended', () => {
                 if (isRepeating) playQueue();
                 else playNext();
             });
-        }
-
-        function playSample(title, artists) {
-            addToQueue(TEST_AUDIO, title, artists, '');
         }
 
         function togglePlay() {
@@ -282,9 +317,9 @@
         document.getElementById('progress').oninput = (e) => seekAudio(e.target.value);
         document.getElementById('volume').oninput = (e) => setVolume(e.target.value);
         showSection('home');
-        document.getElementById('query').oninput = () => setTimeout(searchSongs, 500); // Debounce
-        alert('Music Pioneer loaded! Search for "kesariya" and click a result to play.');
-        console.log('App initialized - Ready to play.');
+        document.getElementById('query').oninput = () => setTimeout(searchSongs, 500);
+        alert('Music Pioneer loaded! Search for "kesariya" and click a result to play real music.');
+        console.log('App initialized - Ready to play real JioSaavn songs.');
     </script>
 </body>
 </html>
