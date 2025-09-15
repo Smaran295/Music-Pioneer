@@ -324,7 +324,9 @@
         showSection('home');
         document.getElementById("query").addEventListener("input", debounce(() => searchSongs(), 500));
         document.getElementById("query").addEventListener("keypress", (e) => { if (e.key === "Enter") searchSongs(); });
-        console.log("Music Pioneer loaded successfully!"); // Debug: Confirms JS runs
+        // Debug: Alert to confirm JS loads
+        window.onload = () => alert("Music Pioneer JavaScript loaded! Check console for logs.");
+        console.log("Music Pioneer loaded successfully!");
     </script>
 </body>
 </html>
