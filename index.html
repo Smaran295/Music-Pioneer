@@ -3354,7 +3354,16 @@ document.addEventListener("DOMContentLoaded", function() {
   const albumResults = document.getElementById("albumResults");
   const topResult = document.getElementById("topResult");
   const browseCategories = document.getElementById("browseCategories");
-  const SEARCH_URL = "https://annonymous-sage.vercel.app/search?q="; // API base
+  
+// Multiple possible endpoints to try
+const SEARCH_ENDPOINTS = [
+  "https://annonymous-sage.vercel.app/search?q=",
+  "https://annonymous-sage.vercel.app/api/search?q=",
+  "https://annonymous-sage.vercel.app/search/songs?q=",
+  "https://annonymous-sage.vercel.app/api/search/songs?q=",
+  "https://annonymous-sage.vercel.app/search/all?q="
+];
+
 
   function safeHtml(text) {
     if (!text) return "";
@@ -3480,7 +3489,27 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!q) return;
     songResults && (songResults.innerHTML = '<p class="text-gray-400">Searching...</p>');
     try {
-      const res = await fetch(SEARCH_URL + encodeURIComponent(q));
+      let data = null;
+      let lastError = null;
+      for (let base of SEARCH_ENDPOINTS) {
+        try {
+          const res = await fetch(base + encodeURIComponent(q));
+          if (res.ok) {
+            data = await res.json();
+            console.log("✅ Working endpoint:", base, data);
+            break;
+          } else {
+            console.warn("❌ Failed endpoint:", base, res.status);
+          }
+        } catch (err) {
+          console.warn("⚠️ Error endpoint:", base, err);
+          lastError = err;
+        }
+      }
+      if (!data) {
+        throw new Error("All endpoints failed. " + (lastError ? lastError.message : "Unknown error"));
+      }
+      const json = data;
       if (!res.ok) throw new Error("Network response not ok: " + res.status);
       const json = await res.json();
       console.info("API Response for /search?q=" + q, json);
