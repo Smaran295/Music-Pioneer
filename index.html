@@ -3146,7 +3146,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ---------- Top Hits (Home) ---------- */
 async function loadTopHits() {
-  const data = await apiFetch("/search?q=top");
+  const data = await apiFetch("/api/search/songs?query=top");
   const container = $("homeOnlyContent");
   if (!container) return;
   container.innerHTML = "";
@@ -3202,7 +3202,7 @@ if (searchInput) {
 }
 
 async function performSearch(query) {
-  const data = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
+  const data = await apiFetch(`/api/search/songs?query=${encodeURIComponent(query)}`);
   const resultsEl = $("songResults");
   if (!resultsEl) return;
   resultsEl.innerHTML = "";
@@ -3240,7 +3240,7 @@ async function performSearch(query) {
 
 /* ---------- Playlists / Library ---------- */
 async function loadLikedSongs() {
-  const data = await apiFetch("/search?q=liked");
+  const data = await apiFetch("/api/search/songs?query=liked");
   const list = $("likedSongsList");
   if (!list) return;
   list.innerHTML = "";
@@ -3263,7 +3263,7 @@ async function loadLikedSongs() {
 }
 
 async function loadRecentlyPlayed() {
-  const data = await apiFetch("/search?q=recent");
+  const data = await apiFetch("/api/search/songs?query=recent");
   const list = $("recentlyPlayedList");
   if (!list) return;
   list.innerHTML = "";
@@ -3286,7 +3286,7 @@ async function loadRecentlyPlayed() {
 }
 
 async function loadYourPlaylists() {
-  const data = await apiFetch("/search?q=playlist");
+  const data = await apiFetch("/api/search/songs?query=playlist");
   const list = $("yourPlaylistList");
   if (!list) return;
   list.innerHTML = "";
@@ -3304,7 +3304,7 @@ async function loadYourPlaylists() {
 }
 
 async function loadPlaylistSongs(playlistId) {
-  const data = await apiFetch(`/search?q=playlist_${playlistId}`);
+  const data = await apiFetch(`/api/search/songs?query=playlist_${playlistId}`);
   const list = $("yourPlaylistList");
   if (!list) return;
   // render songs in selected playlist (replace list)
@@ -3344,224 +3344,5 @@ function playSingle(src, id) {
   audio.play().catch(err => console.error('Play failed:', err));
 }
 </script>
-
-<!-- API connector (non-invasive) -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  const searchInput = document.getElementById("mainSearchInput");
-  const songResults = document.getElementById("songResults");
-  const artistResults = document.getElementById("artistResults");
-  const albumResults = document.getElementById("albumResults");
-  const topResult = document.getElementById("topResult");
-  const browseCategories = document.getElementById("browseCategories");
-  
-// Multiple possible endpoints to try
-const SEARCH_ENDPOINTS = [
-  "https://annonymous-sage.vercel.app/search?q=",
-  "https://annonymous-sage.vercel.app/api/search?q=",
-  "https://annonymous-sage.vercel.app/search/songs?q=",
-  "https://annonymous-sage.vercel.app/api/search/songs?q=",
-  "https://annonymous-sage.vercel.app/search/all?q="
-];
-
-
-  function safeHtml(text) {
-    if (!text) return "";
-    return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-
-  function normalizeResponse(data) {
-    // Try common envelopes and normalize to array of tracks with common fields
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    const keys = ["results","data","songs","tracks","items","hits"];
-    for (const k of keys) {
-      if (data[k] && Array.isArray(data[k])) return data[k];
-    }
-    // if object with single track
-    if (data.track) return [data.track];
-    // fallback: try to find any array value
-    for (const k in data) {
-      if (Array.isArray(data[k])) return data[k];
-    }
-    return [];
-  }
-
-  function renderTop(track) {
-    if (!topResult) return;
-    topResult.innerHTML = `
-      <div class="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer max-w-md">
-        <div class="flex items-center space-x-4">
-          <img src="${safeHtml(track.cover || track.image || '')}" alt="" class="w-16 h-16 rounded">
-          <div>
-            <h4 class="font-bold">${safeHtml(track.title || track.name || '')}</h4>
-            <p class="text-sm text-gray-400">${safeHtml(track.artist || track.primary_artist || track.singer || '')}</p>
-          </div>
-          <div class="ml-auto">
-            <button class="play-btn inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white" data-src="${safeHtml(track.audio || track.url || track.streamUrl || track.preview || '')}">▶</button>
-          </div>
-        </div>
-      </div>
-    `;
-    attachPlayButtons(topResult);
-  }
-
-  function renderList(tracks) {
-    if (!songResults) return;
-    songResults.innerHTML = "";
-    if (!tracks || tracks.length === 0) {
-      songResults.innerHTML = `<p class="text-gray-400">No songs found.</p>`;
-      return;
-    }
-    tracks.forEach((t, idx) => {
-      const src = safeHtml(t.audio || t.url || t.streamUrl || t.preview || '');
-      const title = safeHtml(t.title || t.name || '');
-      const artist = safeHtml(t.artist || t.primary_artist || t.singer || '');
-      const duration = safeHtml(t.duration || t.length || t.time || '');
-      const cover = safeHtml(t.cover || t.image || '');
-      const row = document.createElement("div");
-      row.className = "bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer";
-      row.innerHTML = `
-        <div class="flex items-center space-x-4">
-          <img src="${cover}" class="w-12 h-12 rounded" alt="">
-          <div>
-            <h4 class="font-semibold">${title}</h4>
-            <p class="text-sm text-gray-400">${artist}</p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-400">${duration}</span>
-          <button class="play-btn bg-primary px-3 py-1 rounded text-sm" data-src="${src}" data-idx="${idx}">▶️ Play</button>
-        </div>
-      `;
-      songResults.appendChild(row);
-    });
-    attachPlayButtons(songResults);
-  }
-
-  function attachPlayButtons(container) {
-    const buttons = container.querySelectorAll(".play-btn");
-    buttons.forEach(btn => {
-      // avoid attaching multiple times
-      if (btn.dataset._attached) return;
-      btn.dataset._attached = "1";
-      btn.addEventListener("click", function(e) {
-        const src = this.getAttribute("data-src") || "";
-        if (!src) {
-          console.warn("No stream URL on this item");
-          alert("Sorry, this track has no playable stream URL.");
-          return;
-        }
-        // Prefer existing global playSingle if present (your original player)
-        try {
-          if (typeof window.playSingle === "function") {
-            // some implementations accept (src, id) — pass src and idx if available
-            const idx = this.getAttribute("data-idx") || "";
-            window.playSingle(src, idx);
-            return;
-          }
-        } catch(err) {
-          console.warn("playSingle call failed:", err);
-        }
-        // Fallback: try to find an existing audio element or player control
-        const existingAudio = document.querySelector("audio");
-        if (existingAudio) {
-          existingAudio.src = src;
-          existingAudio.play().catch(e => console.warn("Audio play failed:", e));
-          return;
-        }
-        // Final fallback: create invisible audio and play (non-persistent)
-        try {
-          const a = new Audio(src);
-          a.play().catch(e => {
-            console.warn("Fallback audio play failed:", e);
-            alert("Playback failed: " + e.message);
-          });
-        } catch (err) {
-          console.warn("Could not play audio:", err);
-          alert("Playback failed.");
-        }
-      });
-    });
-  }
-
-  async function doSearch(q) {
-    if (!q) return;
-    songResults && (songResults.innerHTML = '<p class="text-gray-400">Searching...</p>');
-    try {
-      let data = null;
-      let lastError = null;
-      for (let base of SEARCH_ENDPOINTS) {
-        try {
-          const res = await fetch(base + encodeURIComponent(q));
-          if (res.ok) {
-            data = await res.json();
-            console.log("✅ Working endpoint:", base, data);
-            break;
-          } else {
-            console.warn("❌ Failed endpoint:", base, res.status);
-          }
-        } catch (err) {
-          console.warn("⚠️ Error endpoint:", base, err);
-          lastError = err;
-        }
-      }
-      if (!data) {
-        throw new Error("All endpoints failed. " + (lastError ? lastError.message : "Unknown error"));
-      }
-      const json = data;
-      if (!res.ok) throw new Error("Network response not ok: " + res.status);
-      const json = await res.json();
-      console.info("API Response for /search?q=" + q, json);
-      const tracks = normalizeResponse(json);
-      if (tracks.length === 0) {
-        // fallback to existing local data if present
-        if (window.musicData && Array.isArray(window.musicData)) {
-          const local = window.musicData.filter(it => {
-            const s = (it.title||it.name||"").toLowerCase();
-            const a = (it.artist||"").toLowerCase();
-            return s.includes(q.toLowerCase()) || a.includes(q.toLowerCase());
-          });
-          renderTop(local[0] || {});
-          renderList(local);
-        } else {
-          renderTop({});
-          renderList([]);
-        }
-      } else {
-        renderTop(tracks[0] || {});
-        renderList(tracks);
-      }
-      browseCategories && browseCategories.classList.add("hidden");
-      const searchResultsElem = document.getElementById("searchResults");
-      searchResultsElem && searchResultsElem.classList.remove("hidden");
-    } catch (err) {
-      console.error("Search error:", err);
-      if (songResults) songResults.innerHTML = `<p class="text-red-500">Search failed: ${err.message}</p>`;
-    }
-  }
-
-  // debounce helper
-  function debounce(fn, delay){ let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
-
-  if (searchInput) {
-    searchInput.addEventListener("keypress", function(e){
-      if (e.key === "Enter") {
-        const q = searchInput.value.trim();
-        if (q) doSearch(q);
-      }
-    });
-    // also add input debounce
-    searchInput.addEventListener("input", debounce(function(e){
-      const q = searchInput.value.trim();
-      if (q.length >= 2) doSearch(q);
-    }, 350));
-  }
-
-  // Expose doSearch for quick console test
-  window._mp_doSearch = doSearch;
-});
-</script>
-
 </body>
 </html>
