@@ -1981,59 +1981,21 @@
                 searchResults.classList.remove('hidden');
 
                 // Filter results based on query
-                
-                // Filter results based on query
-                let filteredSongs = [];
-                try {
-                  // Try API search first
-                  const apiData = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
-                  if (apiData) {
-                    // apiFetch may return an array or a single object or an object with songs/results
-                    let items = [];
-                    if (Array.isArray(apiData)) items = apiData;
-                    else if (Array.isArray(apiData.songs)) items = apiData.songs;
-                    else if (Array.isArray(apiData.results)) items = apiData.results;
-                    else if (apiData && apiData.id) items = [apiData];
-
-                    if (items && items.length) {
-                      filteredSongs = items.map(item => {
-                        const url = item.url || item.streamUrl || item.file || item.path || "";
-                        return {
-                          id: item.id || item._id || item.trackId || "",
-                          title: item.title || item.name || item.song_name || "Untitled",
-                          artist: item.artist || item.artist_name || item.singer || "Unknown Artist",
-                          album: item.album || item.album_name || "",
-                          duration: item.duration || item.length || item.time || "",
-                          emoji: item.emoji || "🎵",
-                          streamUrl: url,
-                          url: url
-                        };
-                      });
-                    }
-                  }
-                } catch (e) {
-                  console.warn("API search error:", e);
-                }
-
-                // If API returned nothing, fallback to local search
-                if (!filteredSongs || filteredSongs.length === 0) {
-                    filteredSongs = musicData.songs.filter(song => 
-                        song.title.toLowerCase().includes(query.toLowerCase()) ||
-                        song.artist.toLowerCase().includes(query.toLowerCase()) ||
-                        song.album.toLowerCase().includes(query.toLowerCase())
-                    );
-                }
+                const filteredSongs = musicData.songs.filter(song => 
+                    song.title.toLowerCase().includes(query.toLowerCase()) ||
+                    song.artist.toLowerCase().includes(query.toLowerCase()) ||
+                    song.album.toLowerCase().includes(query.toLowerCase())
+                );
 
                 const filteredArtists = musicData.artists.filter(artist =>
-                    artist.name.toLowerCase().includes(query.toLowerCase()) ||
-                    (artist.genre || "").toLowerCase().includes(query.toLowerCase())
+                    artist.name.toLowerCase().includes(query.toLowerCase())
                 );
 
                 const filteredAlbums = musicData.albums.filter(album =>
                     album.title.toLowerCase().includes(query.toLowerCase()) ||
                     album.artist.toLowerCase().includes(query.toLowerCase())
                 );
-                
+
                 // Display top result
                 if (filteredSongs.length > 0) {
                     const topSong = filteredSongs[0];
@@ -3239,9 +3201,42 @@ if (searchInput) {
   });
 }
 
+async function performSearch(query) {
+  const data = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
+  const resultsEl = $("songResults");
+  if (!resultsEl) return;
+  resultsEl.innerHTML = "";
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    resultsEl.innerHTML = `<div class="text-gray-400 p-2">No results for "${query}".</div>`;
+    return;
+  }
+  data.forEach(song => {
+    const row = document.createElement("div");
+    row.className = "p-2 bg-gray-800 rounded-lg flex justify-between hover:bg-gray-700 cursor-pointer";
+    row.innerHTML = `
+      <div>
+        <div class="font-semibold">${song.title || "Untitled"}</div>
+        <div class="text-sm text-gray-400">${song.artist || ""}</div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-400">${song.duration || ""}</span>
+        <button class="p-2 hover:bg-gray-600 rounded-full play-btn" data-src="${song.streamUrl || song.url || ""}" data-id="${song.id || ""}">▶️</button>
+      </div>
+    `;
+    resultsEl.appendChild(row);
+  });
 
-// duplicate async performSearch removed (consolidated above)
+  resultsEl.querySelectorAll(".play-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const src = btn.getAttribute("data-src");
+      playSingle(src, btn.getAttribute("data-id"));
+      e.stopPropagation();
+    });
+  });
 
+  $("searchResults") && $("searchResults").classList.remove("hidden");
+  $("browseCategories") && $("browseCategories").classList.add("hidden");
+}
 
 /* ---------- Playlists / Library ---------- */
 async function loadLikedSongs() {
@@ -3349,5 +3344,195 @@ function playSingle(src, id) {
   audio.play().catch(err => console.error('Play failed:', err));
 }
 </script>
+
+<!-- API connector (non-invasive) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("mainSearchInput");
+  const songResults = document.getElementById("songResults");
+  const artistResults = document.getElementById("artistResults");
+  const albumResults = document.getElementById("albumResults");
+  const topResult = document.getElementById("topResult");
+  const browseCategories = document.getElementById("browseCategories");
+  const SEARCH_URL = "https://annonymous-sage.vercel.app/api/search?q="; // API base
+
+  function safeHtml(text) {
+    if (!text) return "";
+    return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function normalizeResponse(data) {
+    // Try common envelopes and normalize to array of tracks with common fields
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    const keys = ["results","data","songs","tracks","items","hits"];
+    for (const k of keys) {
+      if (data[k] && Array.isArray(data[k])) return data[k];
+    }
+    // if object with single track
+    if (data.track) return [data.track];
+    // fallback: try to find any array value
+    for (const k in data) {
+      if (Array.isArray(data[k])) return data[k];
+    }
+    return [];
+  }
+
+  function renderTop(track) {
+    if (!topResult) return;
+    topResult.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer max-w-md">
+        <div class="flex items-center space-x-4">
+          <img src="${safeHtml(track.cover || track.image || '')}" alt="" class="w-16 h-16 rounded">
+          <div>
+            <h4 class="font-bold">${safeHtml(track.title || track.name || '')}</h4>
+            <p class="text-sm text-gray-400">${safeHtml(track.artist || track.primary_artist || track.singer || '')}</p>
+          </div>
+          <div class="ml-auto">
+            <button class="play-btn inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white" data-src="${safeHtml(track.audio || track.url || track.streamUrl || track.preview || '')}">▶</button>
+          </div>
+        </div>
+      </div>
+    `;
+    attachPlayButtons(topResult);
+  }
+
+  function renderList(tracks) {
+    if (!songResults) return;
+    songResults.innerHTML = "";
+    if (!tracks || tracks.length === 0) {
+      songResults.innerHTML = `<p class="text-gray-400">No songs found.</p>`;
+      return;
+    }
+    tracks.forEach((t, idx) => {
+      const src = safeHtml(t.audio || t.url || t.streamUrl || t.preview || '');
+      const title = safeHtml(t.title || t.name || '');
+      const artist = safeHtml(t.artist || t.primary_artist || t.singer || '');
+      const duration = safeHtml(t.duration || t.length || t.time || '');
+      const cover = safeHtml(t.cover || t.image || '');
+      const row = document.createElement("div");
+      row.className = "bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer";
+      row.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <img src="${cover}" class="w-12 h-12 rounded" alt="">
+          <div>
+            <h4 class="font-semibold">${title}</h4>
+            <p class="text-sm text-gray-400">${artist}</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-400">${duration}</span>
+          <button class="play-btn bg-primary px-3 py-1 rounded text-sm" data-src="${src}" data-idx="${idx}">▶️ Play</button>
+        </div>
+      `;
+      songResults.appendChild(row);
+    });
+    attachPlayButtons(songResults);
+  }
+
+  function attachPlayButtons(container) {
+    const buttons = container.querySelectorAll(".play-btn");
+    buttons.forEach(btn => {
+      // avoid attaching multiple times
+      if (btn.dataset._attached) return;
+      btn.dataset._attached = "1";
+      btn.addEventListener("click", function(e) {
+        const src = this.getAttribute("data-src") || "";
+        if (!src) {
+          console.warn("No stream URL on this item");
+          alert("Sorry, this track has no playable stream URL.");
+          return;
+        }
+        // Prefer existing global playSingle if present (your original player)
+        try {
+          if (typeof window.playSingle === "function") {
+            // some implementations accept (src, id) — pass src and idx if available
+            const idx = this.getAttribute("data-idx") || "";
+            window.playSingle(src, idx);
+            return;
+          }
+        } catch(err) {
+          console.warn("playSingle call failed:", err);
+        }
+        // Fallback: try to find an existing audio element or player control
+        const existingAudio = document.querySelector("audio");
+        if (existingAudio) {
+          existingAudio.src = src;
+          existingAudio.play().catch(e => console.warn("Audio play failed:", e));
+          return;
+        }
+        // Final fallback: create invisible audio and play (non-persistent)
+        try {
+          const a = new Audio(src);
+          a.play().catch(e => {
+            console.warn("Fallback audio play failed:", e);
+            alert("Playback failed: " + e.message);
+          });
+        } catch (err) {
+          console.warn("Could not play audio:", err);
+          alert("Playback failed.");
+        }
+      });
+    });
+  }
+
+  async function doSearch(q) {
+    if (!q) return;
+    songResults && (songResults.innerHTML = '<p class="text-gray-400">Searching...</p>');
+    try {
+      const res = await fetch(SEARCH_URL + encodeURIComponent(q));
+      if (!res.ok) throw new Error("Network response not ok: " + res.status);
+      const json = await res.json();
+      console.info("API Response for /search?q=" + q, json);
+      const tracks = normalizeResponse(json);
+      if (tracks.length === 0) {
+        // fallback to existing local data if present
+        if (window.musicData && Array.isArray(window.musicData)) {
+          const local = window.musicData.filter(it => {
+            const s = (it.title||it.name||"").toLowerCase();
+            const a = (it.artist||"").toLowerCase();
+            return s.includes(q.toLowerCase()) || a.includes(q.toLowerCase());
+          });
+          renderTop(local[0] || {});
+          renderList(local);
+        } else {
+          renderTop({});
+          renderList([]);
+        }
+      } else {
+        renderTop(tracks[0] || {});
+        renderList(tracks);
+      }
+      browseCategories && browseCategories.classList.add("hidden");
+      const searchResultsElem = document.getElementById("searchResults");
+      searchResultsElem && searchResultsElem.classList.remove("hidden");
+    } catch (err) {
+      console.error("Search error:", err);
+      if (songResults) songResults.innerHTML = `<p class="text-red-500">Search failed: ${err.message}</p>`;
+    }
+  }
+
+  // debounce helper
+  function debounce(fn, delay){ let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
+
+  if (searchInput) {
+    searchInput.addEventListener("keypress", function(e){
+      if (e.key === "Enter") {
+        const q = searchInput.value.trim();
+        if (q) doSearch(q);
+      }
+    });
+    // also add input debounce
+    searchInput.addEventListener("input", debounce(function(e){
+      const q = searchInput.value.trim();
+      if (q.length >= 2) doSearch(q);
+    }, 350));
+  }
+
+  // Expose doSearch for quick console test
+  window._mp_doSearch = doSearch;
+});
+</script>
+
 </body>
 </html>
