@@ -3073,38 +3073,51 @@ async function apiFetch(path, opts={}) {
     }
     const json = await res.json();
     console.log("API Response for", path, json);
-    // Normalizer: if an array of items, map to normalized songs where applicable
+
     function normalize(raw) {
       if (!raw) return null;
       return {
-        id: raw.id || raw._id || raw.trackId || "",
-        title: raw.title || raw.name || raw.song_name || "Untitled",
-        artist: raw.artist || raw.artist_name || raw.singer || raw.band || "Unknown Artist",
-        album: raw.album || raw.album_name || "",
-        duration: raw.duration || raw.length || raw.time || "",
-        url: raw.streamUrl || raw.url || raw.file || raw.path || ""
+        id: raw.id || raw._id || raw.trackId || raw.track_id || "",
+        title: raw.title || raw.name || raw.song_name || raw.track || "Untitled",
+        artist: raw.artist || raw.artist_name || raw.singer || raw.band || raw.primary_artists || "Unknown Artist",
+        album: raw.album || raw.album_name || raw.collection || "",
+        duration: raw.duration || raw.length || raw.time || raw.duration_ms || raw.duration_sec || "",
+        url: raw.streamUrl || raw.url || raw.file || raw.path || raw.audio || raw.source || ""
       };
     }
+
+    // If API returns arrays directly
     if (Array.isArray(json)) {
-      return json.map(item => {
-        const n = normalize(item);
-        return Object.assign({}, item, n);
-      });
+      return json.map(item => Object.assign({}, item, normalize(item)));
+    }
+    // Common envelope fields
+    if (json && Array.isArray(json.results)) {
+      return json.results.map(item => Object.assign({}, item, normalize(item)));
+    }
+    if (json && Array.isArray(json.data)) {
+      return json.data.map(item => Object.assign({}, item, normalize(item)));
     }
     if (json && Array.isArray(json.songs)) {
       return json.songs.map(item => Object.assign({}, item, normalize(item)));
     }
+    if (json && Array.isArray(json.tracks)) {
+      return json.tracks.map(item => Object.assign({}, item, normalize(item)));
+    }
+    if (json && Array.isArray(json.items)) {
+      return json.items.map(item => Object.assign({}, item, normalize(item)));
+    }
+
+    // If it's an object with a single song payload
     if (typeof json === 'object') {
       return Object.assign({}, json, normalize(json));
     }
-    return json;
+
+    return null;
   } catch (e) {
     console.error("Network error fetching", path, e);
     return null;
   }
 }
-
-
 /* ---------- UI Navigation ---------- */
 function showOnly(sectionId) {
   const sections = [
@@ -3345,104 +3358,7 @@ function playSingle(src, id) {
 }
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("mainSearchInput");
-  const searchResults = document.getElementById("searchResults");
-  const browseCategories = document.getElementById("browseCategories");
-  const songResults = document.getElementById("songResults");
-  const artistResults = document.getElementById("artistResults");
-  const albumResults = document.getElementById("albumResults");
-  const topResult = document.getElementById("topResult");
 
-  // Create global audio player (bottom fixed)
-  const audioPlayer = document.createElement("audio");
-  audioPlayer.controls = true;
-  audioPlayer.className = "fixed bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 bg-gray-900 rounded-lg shadow-lg z-50";
-  document.body.appendChild(audioPlayer);
-
-  async function fetchSongs(query) {
-    try {
-      const res = await fetch(`https://annonymous-sage.vercel.app/api/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error("Network response was not ok");
-      const data = await res.json();
-
-      // Clear old results
-      songResults.innerHTML = "";
-      artistResults.innerHTML = "";
-      albumResults.innerHTML = "";
-      topResult.innerHTML = "";
-
-      if (!data.results || data.results.length === 0) {
-        songResults.innerHTML = "<p class='text-gray-400'>No songs found.</p>";
-        return;
-      }
-
-      // Top Result
-      const first = data.results[0];
-      topResult.innerHTML = `
-        <div class="flex items-center space-x-4">
-          <img src="${first.cover || ''}" alt="" class="w-16 h-16 rounded">
-          <div>
-            <h4 class="font-bold">${first.title}</h4>
-            <p class="text-sm text-gray-400">${first.artist}</p>
-          </div>
-        </div>
-      `;
-
-      // Songs
-      data.results.forEach(song => {
-        const div = document.createElement("div");
-        div.className = "bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer";
-
-        div.innerHTML = `
-          <div class="flex items-center space-x-4">
-            <img src="${song.cover || ''}" class="w-12 h-12 rounded" alt="">
-            <div>
-              <h4 class="font-semibold">${song.title}</h4>
-              <p class="text-sm text-gray-400">${song.artist}</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-4">
-            <span class="text-sm text-gray-400">${song.duration || ""}</span>
-            <button class="playBtn bg-primary px-3 py-1 rounded text-sm">▶️ Play</button>
-          </div>
-        `;
-
-        // Play song
-        div.querySelector(".playBtn").addEventListener("click", () => {
-          if (song.audio) {
-            audioPlayer.src = song.audio;
-            audioPlayer.play();
-          } else {
-            alert("No audio stream available for this song.");
-          }
-        });
-
-        songResults.appendChild(div);
-      });
-
-      // Artists & Albums placeholders (API does not provide separate fields)
-      artistResults.innerHTML = "<p class='text-gray-400'>Artist data not provided by API.</p>";
-      albumResults.innerHTML = "<p class='text-gray-400'>Album data not provided by API.</p>";
-
-      // Toggle sections
-      browseCategories.classList.add("hidden");
-      searchResults.classList.remove("hidden");
-    } catch (err) {
-      console.error("Error fetching:", err);
-      songResults.innerHTML = `<p class="text-red-500">Failed to fetch songs. Try again.</p>`;
-    }
-  }
-
-  // Listen for Enter key in search
-  searchInput.addEventListener("keypress", e => {
-    if (e.key === "Enter" && searchInput.value.trim()) {
-      fetchSongs(searchInput.value.trim());
-    }
-  });
-});
-</script>
 
 </body>
 </html>
