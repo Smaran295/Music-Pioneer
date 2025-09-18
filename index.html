@@ -3052,226 +3052,269 @@
         });
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98064ce294402e39',t:'MTc1ODA4Nzk1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-
-<!-- API + Player Integration Script (UPDATED) -->
+<!-- API + Player Integration Script -->
 <script>
-/*
-  Improvements made:
-  - Robust apiFetch with timeout, JSON/content-type checks and CORS-friendly headers.
-  - API health check; if unreachable, app will fall back to bundled sample data so UI features still work.
-  - All data-loading functions handle null/empty responses gracefully.
-  - Added simple debug console toggle and status indicator in DOM (if #apiStatus exists).
-  Note: This client cannot bypass server CORS — your server must allow requests from the origin.
-*/
 const API_BASE = "https://annonymous-sage.vercel.app";
-const DEFAULT_TIMEOUT = 8000; // ms
-
-// Simple sample dataset used as fallback when API is unreachable
-const SAMPLE_DATA = {
-  topHits: [
-    { id: "s1", title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", emoji: "🌟", streamUrl: "" },
-    { id: "s2", title: "Shape of You", artist: "Ed Sheeran", duration: "3:53", emoji: "💖", streamUrl: "" }
-  ],
-  playlists: [
-    { id: "p1", title: "Your Own Playlist", songs: [
-      { id: "s1", title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", streamUrl: "" }
-    ] }
-  ],
-  account: { name: "Music Pioneer", email: "musicpioneer@email.com" },
-  search: { songs: [], artists: [], albums: [] }
-};
-
-// minimal helper
+let audio = new Audio();
+let currentTrack = null;
+let currentList = [];
+let currentIndex = 0;
 const $ = id => document.getElementById(id);
 
-// apiFetch with timeout and JSON validation
-async function apiFetch(path, opts = {}) {
-  // If path looks like full URL, don't prefix
-  const url = path.startsWith("http") ? path : API_BASE + path;
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
-  const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
+// Utility to safely fetch JSON
+
+// Utility to safely fetch JSON and normalize song objects
+async function apiFetch(path, opts={}) {
   try {
-    const res = await fetch(url, Object.assign({}, opts, { signal: controller.signal, headers }));
-    clearTimeout(id);
-    // If server returns 204 No Content, return null
-    if (res.status === 204) return null;
-    const ct = res.headers.get("content-type") || "";
-    if (ct.includes("application/json")) {
-      return await res.json();
-    } else {
-      // Try plain text as fallback
-      const text = await res.text();
-      try { return JSON.parse(text); } catch (e) { return text; }
+    const res = await fetch(API_BASE + path, opts);
+    if (!res.ok) {
+      console.warn("API fetch failed:", path, res.status);
+      return null;
     }
+    const json = await res.json();
+    console.log("API Response for", path, json);
+    // Normalizer: if an array of items, map to normalized songs where applicable
+    function normalize(raw) {
+      if (!raw) return null;
+      return {
+        id: raw.id || raw._id || raw.trackId || "",
+        title: raw.title || raw.name || raw.song_name || "Untitled",
+        artist: raw.artist || raw.artist_name || raw.singer || raw.band || "Unknown Artist",
+        album: raw.album || raw.album_name || "",
+        duration: raw.duration || raw.length || raw.time || "",
+        url: raw.streamUrl || raw.url || raw.file || raw.path || ""
+      };
+    }
+    if (Array.isArray(json)) {
+      return json.map(item => {
+        const n = normalize(item);
+        return Object.assign({}, item, n);
+      });
+    }
+    if (json && Array.isArray(json.songs)) {
+      return json.songs.map(item => Object.assign({}, item, normalize(item)));
+    }
+    if (typeof json === 'object') {
+      return Object.assign({}, json, normalize(json));
+    }
+    return json;
   } catch (e) {
-    clearTimeout(id);
-    console.warn("apiFetch error for", url, e);
+    console.error("Network error fetching", path, e);
     return null;
   }
 }
 
-// Check API health (tries /health, /, or returns false)
-async function checkApiHealth() {
-  const candidates = ["/health", "/", "/status", "/api/health"];
-  for (const p of candidates) {
-    const data = await apiFetch(p);
-    if (data !== null) return true;
-  }
-  return false;
+
+/* ---------- UI Navigation ---------- */
+function showOnly(sectionId) {
+  const sections = [
+    "homeContent","searchContent","likedSongsContent","recentlyPlayedContent",
+    "yourPlaylistContent","accountContent","profileContent","settingsContent","libraryContent"
+  ];
+  sections.forEach(s => {
+    const el = $(s);
+    if (!el) return;
+    if (s === sectionId) el.classList.remove("hidden");
+    else el.classList.add("hidden");
+  });
 }
 
-// Global app state
-let API_AVAILABLE = false;
-let musicData = { songs: [], artists: [], albums: [] };
+// Sidebar navigation wiring
+document.addEventListener("click", (e) => {
+  const target = e.target.closest && e.target.closest("a,button");
+  if (!target) return;
+  if (target.id === "likedSongsLink") { e.preventDefault(); loadLikedSongs(); showOnly("likedSongsContent"); }
+  if (target.id === "recentlyPlayedLink") { e.preventDefault(); loadRecentlyPlayed(); showOnly("recentlyPlayedContent"); }
+  if (target.id === "yourPlaylistLink") { e.preventDefault(); loadYourPlaylists(); showOnly("yourPlaylistContent"); }
+  if (target.textContent && target.textContent.trim() === "Home") { e.preventDefault(); showOnly("homeContent"); }
+  if (target.textContent && target.textContent.trim() === "Search") { e.preventDefault(); showOnly("searchContent"); }
+  if (target.textContent && target.textContent.trim() === "Your Library") { e.preventDefault(); showOnly("libraryContent"); }
+});
 
-// Initialize app: check API and load initial data
-async function initApp() {
-  // Show status if element present
-  try {
-    const statusEl = $("apiStatus");
-    if (statusEl) statusEl.textContent = "Checking API...";
-  } catch(e){}
-
-  API_AVAILABLE = await checkApiHealth();
-  console.log("API_AVAILABLE:", API_AVAILABLE);
-
-  if (API_AVAILABLE) {
-    // Try load essential data
-    await loadTopHits();
-    await loadAccount();
-    await loadPlaylists();
-    // Try to populate sample local dataset for search fallback
-    await loadMusicCatalog(); // will attempt /catalog or /music
-    try { $("apiStatus") && ($("apiStatus").textContent = "API: Online"); } catch(e){}
-  } else {
-    // Fallback: use SAMPLE_DATA to keep UI interactive
-    musicData.songs = SAMPLE_DATA.topHits.slice();
-    musicData.artists = SAMPLE_DATA.artists || [];
-    musicData.albums = SAMPLE_DATA.albums || [];
-    populateTopHitsFromData(SAMPLE_DATA.topHits);
-    populatePlaylistsFromData(SAMPLE_DATA.playlists);
-    populateAccount(SAMPLE_DATA.account);
-    try { $("apiStatus") && ($("apiStatus").textContent = "API: Unreachable — Using fallback data"); } catch(e){}
+// Get Started button toggles
+document.addEventListener("DOMContentLoaded", () => {
+  const getStartedBtn = $("getStartedBtn");
+  if (getStartedBtn) {
+    getStartedBtn.addEventListener("click", () => {
+      document.getElementById("landingPage").classList.add("hidden");
+      document.getElementById("mainApp").classList.remove("hidden");
+      loadTopHits();
+      loadAccount();
+    });
   }
-}
+});
 
-// Try to load a music catalog for client-side search/filtering
-async function loadMusicCatalog() {
-  // endpoints to try
-  const tries = ["/catalog", "/music", "/songs", "/search/index"];
-  for (const t of tries) {
-    const res = await apiFetch(t);
-    if (res && (Array.isArray(res.songs) || Array.isArray(res))) {
-      // normalize
-      const songs = Array.isArray(res) ? res : (res.songs || []);
-      musicData.songs = songs;
-      musicData.artists = res.artists || [];
-      musicData.albums = res.albums || [];
-      console.log("Loaded catalog from", t);
-      return;
-    }
-  }
-  console.log("No catalog loaded from API; continuing with fallback/sample data");
-}
-
-// Load top hits from API
+/* ---------- Top Hits (Home) ---------- */
 async function loadTopHits() {
-  const data = await apiFetch("/top-hits");
-  if (!data || !Array.isArray(data)) {
-    console.warn("Top hits empty or invalid, using sample data");
-    populateTopHitsFromData(SAMPLE_DATA.topHits);
-    return;
-  }
-  populateTopHitsFromData(data);
-}
-
-function populateTopHitsFromData(data) {
+  const data = await apiFetch("/search?q=top");
   const container = $("homeOnlyContent");
   if (!container) return;
   container.innerHTML = "";
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    container.innerHTML = `<p class="text-gray-400">No top hits available.</p>`;
+    return;
+  }
   data.forEach((song, idx) => {
     const item = document.createElement("div");
     item.className = "bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer hover-scale";
     item.innerHTML = `
       <div class="flex items-center space-x-4">
         <span class="text-primary font-bold text-lg w-6">${idx+1}</span>
-        <div class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded flex items-center justify-center text-lg">${song.emoji||'🎵'}</div>
+        <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded flex items-center justify-center text-lg">🎶</div>
         <div>
-          <h4 class="font-semibold">${song.title||song.name||'Untitled'}</h4>
-          <p class="text-sm text-gray-400">${song.artist||song.album||''}</p>
+          <h4 class="font-semibold">${song.title || "Untitled"}</h4>
+          <p class="text-sm text-gray-400">${song.artist || "Unknown"}</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors like-btn" title="Like">❤</button>
-        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors add-btn" title="Add to Playlist">＋</button>
-        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors download-btn" title="Download">⬇</button>
-        <span class="text-sm text-gray-400">${song.duration||''}</span>
-        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors play-btn" title="Play">▶</button>
+        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors play-btn" data-src="${song.streamUrl || song.url || ""}" data-id="${song.id || ""}" title="Play">▶️</button>
+        <span class="text-sm text-gray-400">${song.duration || ""}</span>
       </div>
     `;
-    // wire play button
-    item.querySelector(".play-btn").addEventListener("click", (e)=> {
-      e.stopPropagation();
-      playSingle(song.streamUrl || song.url || song.audio || "");
-    });
     container.appendChild(item);
   });
-}
 
-// Load playlists
-async function loadPlaylists() {
-  const data = await apiFetch("/playlists");
-  if (!data) {
-    console.warn("Playlists not available; using sample");
-    populatePlaylistsFromData(SAMPLE_DATA.playlists);
-    return;
-  }
-  populatePlaylistsFromData(data);
-}
-
-function populatePlaylistsFromData(data) {
-  // Render playlists list in sidebar or page (simple demonstration)
-  const listEl = $("yourPlaylistList");
-  if (!listEl) return;
-  // if data is array -> use it; if object with playlists -> try playlists property
-  const playlists = Array.isArray(data) ? data : (data.playlists || []);
-  listEl.innerHTML = playlists.map(pl => `
-    <div class="p-2 rounded hover:bg-gray-800 transition-colors">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="font-semibold">${pl.title||pl.name}</div>
-          <div class="text-xs text-gray-400">${(pl.songs && pl.songs.length) ? pl.songs.length + ' songs' : ''}</div>
-        </div>
-        <div>
-          <button class="px-3 py-1 bg-primary rounded text-sm open-pl" data-id="${pl.id}">Open</button>
-        </div>
-      </div>
-    </div>
-  `).join("");
-  // add click handlers
-  listEl.querySelectorAll(".open-pl").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await loadPlaylistSongs(id);
-      showOnly("yourPlaylistContent");
+  // attach play button handlers
+  container.querySelectorAll(".play-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const src = btn.getAttribute("data-src");
+      const id = btn.getAttribute("data-id");
+      playSingle(src, id);
+      e.stopPropagation();
     });
   });
 }
 
-// Load playlist songs by id
-async function loadPlaylistSongs(playlistId) {
-  if (!playlistId) return;
-  const data = await apiFetch(`/playlists/${playlistId}`);
+/* ---------- Search ---------- */
+const searchInput = $("mainSearchInput");
+if (searchInput) {
+  let searchTimer = null;
+  searchInput.addEventListener("input", (e) => {
+    const q = e.target.value.trim();
+    clearTimeout(searchTimer);
+    if (!q) {
+      $("searchResults") && $("searchResults").classList.add("hidden");
+      $("browseCategories") && $("browseCategories").classList.remove("hidden");
+      return;
+    }
+    searchTimer = setTimeout(() => performSearch(q), 250);
+  });
+}
+
+async function performSearch(query) {
+  const data = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
+  const resultsEl = $("songResults");
+  if (!resultsEl) return;
+  resultsEl.innerHTML = "";
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    resultsEl.innerHTML = `<div class="text-gray-400 p-2">No results for "${query}".</div>`;
+    return;
+  }
+  data.forEach(song => {
+    const row = document.createElement("div");
+    row.className = "p-2 bg-gray-800 rounded-lg flex justify-between hover:bg-gray-700 cursor-pointer";
+    row.innerHTML = `
+      <div>
+        <div class="font-semibold">${song.title || "Untitled"}</div>
+        <div class="text-sm text-gray-400">${song.artist || ""}</div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-400">${song.duration || ""}</span>
+        <button class="p-2 hover:bg-gray-600 rounded-full play-btn" data-src="${song.streamUrl || song.url || ""}" data-id="${song.id || ""}">▶️</button>
+      </div>
+    `;
+    resultsEl.appendChild(row);
+  });
+
+  resultsEl.querySelectorAll(".play-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const src = btn.getAttribute("data-src");
+      playSingle(src, btn.getAttribute("data-id"));
+      e.stopPropagation();
+    });
+  });
+
+  $("searchResults") && $("searchResults").classList.remove("hidden");
+  $("browseCategories") && $("browseCategories").classList.add("hidden");
+}
+
+/* ---------- Playlists / Library ---------- */
+async function loadLikedSongs() {
+  const data = await apiFetch("/search?q=liked");
+  const list = $("likedSongsList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!data || data.length === 0) {
+    list.innerHTML = `<div class="p-4 text-gray-400">No liked songs yet.</div>`;
+    return;
+  }
+  data.forEach((song, i) => {
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800";
+    row.innerHTML = `
+      <div class="col-span-1">${i+1}</div>
+      <div class="col-span-5">${song.title}</div>
+      <div class="col-span-3">${song.album || "-"}</div>
+      <div class="col-span-2">${song.addedAt || "-"}</div>
+      <div class="col-span-1">${song.duration || "-"}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function loadRecentlyPlayed() {
+  const data = await apiFetch("/search?q=recent");
+  const list = $("recentlyPlayedList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!data || data.length === 0) {
+    list.innerHTML = `<div class="p-4 text-gray-400">No recently played songs.</div>`;
+    return;
+  }
+  data.forEach((song, i) => {
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800";
+    row.innerHTML = `
+      <div class="col-span-1">${i+1}</div>
+      <div class="col-span-5">${song.title}</div>
+      <div class="col-span-3">${song.album || "-"}</div>
+      <div class="col-span-2">${song.playedAt || "-"}</div>
+      <div class="col-span-1">${song.duration || "-"}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function loadYourPlaylists() {
+  const data = await apiFetch("/search?q=playlist");
   const list = $("yourPlaylistList");
   if (!list) return;
+  list.innerHTML = "";
+  if (!data || data.length === 0) {
+    list.innerHTML = `<div class="p-4 text-gray-400">No playlists yet.</div>`;
+    return;
+  }
+  data.forEach((pl, i) => {
+    const item = document.createElement("div");
+    item.className = "p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer";
+    item.innerHTML = `<div class="font-semibold">${pl.name}</div><div class="text-sm text-gray-400">${pl.count || 0} songs</div>`;
+    item.addEventListener("click", () => loadPlaylistSongs(pl.id));
+    list.appendChild(item);
+  });
+}
+
+async function loadPlaylistSongs(playlistId) {
+  const data = await apiFetch(`/search?q=playlist_${playlistId}`);
+  const list = $("yourPlaylistList");
+  if (!list) return;
+  // render songs in selected playlist (replace list)
   list.innerHTML = `<div class="mb-4"><button class="px-4 py-2 bg-primary rounded" id="backToPlaylists">Back to playlists</button></div>`;
-  const songs = (data && data.songs) ? data.songs : (data || []);
-  songs.forEach((song) => {
+  const songs = data && data.songs ? data.songs : [];
+  songs.forEach((song,i) => {
     const row = document.createElement("div");
     row.className = "flex items-center justify-between p-2 bg-gray-900/30 rounded mb-2";
     row.innerHTML = `<div><div class="font-semibold">${song.title}</div><div class="text-sm text-gray-400">${song.artist||""}</div></div>
-      <div><button class="p-2 play-btn" data-src="${song.streamUrl||song.url||''}">▶️</button></div>`;
+    <div><button class="p-2 play-btn" data-src="${song.streamUrl||song.url||''}">▶️</button></div>`;
     list.appendChild(row);
   });
   document.getElementById("backToPlaylists")?.addEventListener("click", loadYourPlaylists);
@@ -3280,132 +3323,27 @@ async function loadPlaylistSongs(playlistId) {
   });
 }
 
-// Load account
+/* ---------- Account & Profile ---------- */
 async function loadAccount() {
   const data = await apiFetch("/account");
-  if (!data) {
-    populateAccount(SAMPLE_DATA.account);
-    return;
-  }
-  populateAccount(data);
-}
-
-function populateAccount(data) {
+  if (!data) return;
+  // populate accountContent
   const acct = $("accountContent");
   if (!acct) return;
   acct.querySelector("h3")?.textContent && (acct.querySelector("h3").textContent = "Account Overview");
   acct.querySelector(".p-6 .font-bold") && (acct.querySelector(".p-6 .font-bold").textContent = data.name || "Music Pioneer");
+  // simple population where possible
   acct.querySelector("p.text-gray-400") && (acct.querySelector("p.text-gray-400").textContent = data.email || "");
 }
 
-// Search helper using API if available, else client-side filter
-async function performSearch(query) {
-  const searchResults = $("searchResults");
-  const browseCategories = $("browseCategories");
-  if (!query || !query.trim()) {
-    searchResults?.classList.add('hidden');
-    browseCategories?.classList.remove('hidden');
-    return;
-  }
-  browseCategories?.classList.add('hidden');
-  searchResults?.classList.remove('hidden');
-
-  if (API_AVAILABLE) {
-    // try API search endpoint(s)
-    const res = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
-    if (res && (res.songs || res.artists || res.albums)) {
-      renderSearchResults(res);
-      return;
-    }
-  }
-  // client-side fallback
-  const q = query.toLowerCase();
-  const filteredSongs = (musicData.songs || []).filter(s => (s.title||"").toLowerCase().includes(q) || (s.artist||"").toLowerCase().includes(q));
-  const filteredArtists = (musicData.artists || []).filter(a => (a.name||"").toLowerCase().includes(q));
-  const filteredAlbums = (musicData.albums || []).filter(al => (al.title||"").toLowerCase().includes(q) || (al.artist||"").toLowerCase().includes(q));
-  renderSearchResults({ songs: filteredSongs, artists: filteredArtists, albums: filteredAlbums });
-}
-
-function renderSearchResults({songs=[], artists=[], albums=[]}) {
-  const topResultEl = $("topResult");
-  const songResults = $("songResults");
-  const artistResults = $("artistResults");
-  const albumResults = $("albumResults");
-  if (topResultEl) {
-    if (songs.length>0) {
-      const top = songs[0];
-      topResultEl.innerHTML = `<div class="flex items-center space-x-4">
-        <div class="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-3xl">${top.emoji||'🎵'}</div>
-        <div><h4 class="text-2xl font-bold mb-1">${top.title}</h4><p class="text-gray-400">Song • ${top.artist||''}</p></div>
-      </div>`;
-    } else topResultEl.innerHTML = `<p class="text-gray-400">No top result</p>`;
-  }
-  if (songResults) songResults.innerHTML = songs.slice(0,5).map((song,i)=>`<div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer group">
-    <div class="flex items-center space-x-4"><span class="text-gray-400 w-4">${i+1}</span><div class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded flex items-center justify-center text-lg">${song.emoji||'🎵'}</div><div><h4 class="font-semibold">${song.title}</h4><p class="text-sm text-gray-400">${song.artist||''}</p></div></div>
-    <div><button class="p-2 play-btn" data-src="${song.streamUrl||song.url||''}">▶</button></div></div>`).join('');
-  if (artistResults) artistResults.innerHTML = artists.slice(0,5).map(a=>`<div class="bg-gray-800 rounded-lg p-3 flex items-center flex-col">${a.emoji||'👤'}<div class="mt-2 font-semibold">${a.name}</div></div>`).join('');
-  if (albumResults) albumResults.innerHTML = albums.slice(0,5).map(al=>`<div class="bg-gray-800 rounded-lg p-3 flex items-center flex-col">${al.emoji||'💿'}<div class="mt-2 font-semibold">${al.title}</div><div class="text-xs text-gray-400">${al.artist||''}</div></div>`).join('');
-  // wire play buttons
-  document.querySelectorAll('.play-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> playSingle(btn.dataset.src));
-  });
-}
-
-// Audio player
-let audio = new Audio();
-function playSingle(src) {
-  if (!src) { alert("No stream URL available for this track."); return; }
+/* ---------- Audio Player Controls ---------- */
+function playSingle(src, id) {
+  if (!src) { console.warn('No stream URL for song', id); return; }
+  if (!src.startsWith('http')) src = API_BASE + src;
   audio.src = src;
-  audio.play().catch(e=>console.error("Play failed:", e));
+  audio.play().catch(err => console.error('Play failed:', err));
 }
-
-// Simple UI helpers reused from original file
-function showOnly(sectionId) {
-  const sections = ["homeContent","searchContent","likedSongsContent","recentlyPlayedContent","yourPlaylistContent","accountContent","profileContent","settingsContent","libraryContent"];
-  sections.forEach(s=>{
-    const el = document.getElementById(s);
-    if (!el) return;
-    if (s===sectionId) el.classList.remove('hidden'); else el.classList.add('hidden');
-  });
-}
-
-// Load liked songs (fallback implementation)
-async function loadLikedSongs() {
-  const data = API_AVAILABLE ? await apiFetch('/liked') : null;
-  const list = $('likedSongsList');
-  if (!list) return;
-  const songs = (data && data.songs) ? data.songs : SAMPLE_DATA.topHits;
-  list.innerHTML = songs.map((song,idx)=>`<div class="grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800">
-    <div class="col-span-1">${idx+1}</div><div class="col-span-5">${song.title}</div><div class="col-span-3">${song.album||''}</div><div class="col-span-2">${song.dateAdded||''}</div><div class="col-span-1">${song.duration||''}</div></div>`).join('');
-}
-
-// Load recently played
-async function loadRecentlyPlayed() {
-  const data = API_AVAILABLE ? await apiFetch('/recently-played') : null;
-  const list = $('recentlyPlayedList');
-  if (!list) return;
-  const songs = (data && data.songs) ? data.songs : SAMPLE_DATA.topHits;
-  list.innerHTML = songs.map((song,idx)=>`<div class="grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800">
-    <div class="col-span-1">${idx+1}</div><div class="col-span-5">${song.title}</div><div class="col-span-3">${song.album||''}</div><div class="col-span-2">${song.playedTime||''}</div><div class="col-span-1">${song.duration||''}</div></div>`).join('');
-}
-
-// Load your playlists (simple)
-async function loadYourPlaylists() {
-  const data = API_AVAILABLE ? await apiFetch('/playlists') : SAMPLE_DATA.playlists;
-  populatePlaylistsFromData(data);
-}
-
-// Initialization on DOM ready
-document.addEventListener('DOMContentLoaded', async () => {
-  // wire search input
-  const mainSearchInput = document.getElementById('mainSearchInput');
-  if (mainSearchInput) {
-    mainSearchInput.addEventListener('input', (e)=> performSearch(e.target.value));
-  }
-  // wire nav links (existing handlers in file may already take care of this)
-  // Start app
-  await initApp();
-});
+);
 </script>
 </body>
 </html>
