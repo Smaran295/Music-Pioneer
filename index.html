@@ -3283,5 +3283,141 @@ document.addEventListener('DOMContentLoaded', ()=>{
 })();</script>
 <!-- End Full API Integration Script -->
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Sections
+    const sections = {
+        landing: document.getElementById("landingPage"),
+        app: document.getElementById("mainApp"),
+        home: document.getElementById("homeContent"),
+        search: document.getElementById("searchContent"),
+        liked: document.getElementById("likedSongsContent"),
+        recent: document.getElementById("recentlyPlayedContent"),
+        playlist: document.getElementById("yourPlaylistContent"),
+        account: document.getElementById("accountContent"),
+        profile: document.getElementById("profileContent"),
+        settings: document.getElementById("settingsContent"),
+        library: document.getElementById("libraryContent")
+    };
+
+    // Navigation logic
+    function showSection(sectionId) {
+        Object.values(sections).forEach(sec => sec?.classList.add("hidden"));
+        sections.app.classList.remove("hidden");
+        if (sections[sectionId]) sections[sectionId].classList.remove("hidden");
+    }
+
+    document.getElementById("getStartedBtn")?.addEventListener("click", () => {
+        sections.landing.classList.add("hidden");
+        showSection("home");
+    });
+
+    document.getElementById("learnMoreBtn")?.addEventListener("click", () => {
+        alert("MusicPioneer: Discover millions of songs with high quality audio and playlists!");
+    });
+
+    document.getElementById("logoButton")?.addEventListener("click", () => {
+        showSection("home");
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById("mainSearchInput");
+    const searchResults = document.getElementById("searchResults");
+    const browseCategories = document.getElementById("browseCategories");
+    const topResult = document.getElementById("topResult");
+    const songResults = document.getElementById("songResults");
+    const artistResults = document.getElementById("artistResults");
+    const albumResults = document.getElementById("albumResults");
+
+    async function performSearch(query) {
+        if (!query.trim()) {
+            searchResults.classList.add("hidden");
+            browseCategories.classList.remove("hidden");
+            return;
+        }
+        try {
+            const res = await fetch(`https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`);
+            const data = await res.json();
+            console.log("API response:", data);
+
+            searchResults.classList.remove("hidden");
+            browseCategories.classList.add("hidden");
+
+            // Clear old results
+            topResult.innerHTML = "";
+            songResults.innerHTML = "";
+            artistResults.innerHTML = "";
+            albumResults.innerHTML = "";
+
+            if (data.results?.length) {
+                const first = data.results[0];
+                topResult.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <img src="${first.image?.[2]?.url || ''}" alt="cover" class="w-16 h-16 rounded">
+                        <div>
+                            <h4 class="font-bold">${first.name}</h4>
+                            <p class="text-gray-400">${first.artists?.[0]?.name || "Unknown"}</p>
+                        </div>
+                    </div>`;
+                data.results.forEach((song, idx) => {
+                    songResults.innerHTML += `
+                        <div class="flex items-center justify-between bg-gray-800 p-2 rounded hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span>${idx+1}</span>
+                                <img src="${song.image?.[2]?.url || ''}" class="w-10 h-10 rounded">
+                                <div>
+                                    <p class="font-semibold">${song.name}</p>
+                                    <p class="text-sm text-gray-400">${song.artists?.[0]?.name || "Unknown"}</p>
+                                </div>
+                            </div>
+                            <button onclick="playSong('${song.downloadUrl?.[0]?.url || ''}', '${song.name}', '${song.artists?.[0]?.name || ""}', '${song.image?.[2]?.url || ""}')">
+                                ▶️
+                            </button>
+                        </div>`;
+                });
+            } else {
+                topResult.innerHTML = "<p>No results found.</p>";
+            }
+        } catch (e) {
+            console.error("Search error:", e);
+            topResult.innerHTML = "<p>Error fetching results.</p>";
+        }
+    }
+
+    searchInput?.addEventListener("input", e => {
+        performSearch(e.target.value);
+    });
+
+    // Audio player
+    const audio = new Audio();
+    window.playSong = (url, title, artist, cover) => {
+        if (!url) return alert("No preview available");
+        audio.src = url;
+        audio.play();
+        console.log("Playing:", title, artist);
+    };
+
+    // Save profile/settings to localStorage
+    document.querySelectorAll("#profileContent input, #profileContent textarea, #settingsContent input, #settingsContent select").forEach(el => {
+        el.addEventListener("change", () => {
+            localStorage.setItem(el.name || el.id || el.placeholder, el.value || el.checked);
+        });
+    });
+
+    // Like button functionality
+    window.toggleLike = (songId) => {
+        let likes = JSON.parse(localStorage.getItem("likedSongs") || "[]");
+        if (likes.includes(songId)) {
+            likes = likes.filter(id => id !== songId);
+        } else {
+            likes.push(songId);
+        }
+        localStorage.setItem("likedSongs", JSON.stringify(likes));
+        alert("Updated liked songs!");
+    };
+});
+</script>
+
 </body>
 </html>
