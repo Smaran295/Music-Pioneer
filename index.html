@@ -3489,5 +3489,338 @@ document.addEventListener('DOMContentLoaded', ()=>{
 })(); 
 
 </script>
+
+<!-- BEGIN: MusicPioneer - Added runtime JS to enable search, playback, navigation and likes without changing UI -->
+<script>
+(function(){
+  const API_BASE = '/api';
+  const minSearch = 3;
+  const debounceMs = 350;
+  let searchTimer = null;
+  let queue = [], currentIndex = -1;
+  let likes = JSON.parse(localStorage.getItem('mp_likes' )|| '[]');
+
+  // Ensure audio element exists (hidden)
+  let audio = document.getElementById('mp_audio');
+  if(!audio){
+    audio = document.createElement('audio');
+    audio.id = 'mp_audio';
+    audio.preload = 'none';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+  }
+
+  function sanitize(s){ const d = document.createElement('div'); d.textContent = s||''; return d.textContent; }
+  function fmtTime(sec){ if(!sec||isNaN(sec)) return '0:00'; const m=Math.floor(sec/60), s=Math.floor(sec%60); return m+':'+String(s).padStart(2,'0'); }
+
+  // Simple parser that adapts to common shapes returned by your proxy
+  function parseSearch(json){
+    if(!json) return [];
+    const arr = json.songs || json.results || json.data || json;
+    if(!Array.isArray(arr)) return [];
+    return arr.map(it=>({
+      id: it.id || it.song_id || it.trackId || it.key || it.encodeId || it.perma || (it.title? (it.title+'_'+Math.random().toString(36).slice(2,6)) : Math.random().toString(36).slice(2,6)),
+      title: it.title || it.name || it.song || it.track || 'Unknown',
+      artist: it.artist || (it.primary_artists? it.primary_artists.join(', ') : it.artists) || it.subtitle || '',
+      artwork: it.image || it.albumCover || it.thumbnail || it.thumbnail_url || '',
+      duration: it.duration || it.duration_seconds || it.time || it.length || '',
+      media_url: it.media_url || it.preview || it.url || it.stream || it.mediaUrl || it.link || ''
+    }));
+  }
+
+  async function doSearch(q){
+    if(!q || q.length < minSearch) { toggleElement('#searchResults', false); toggleElement('#browseCategories',true); return; }
+    try{
+      const res = await fetch(`${API_BASE}/result/?query=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      const list = parseSearch(json);
+      queue = list;
+      renderSearchResults(list);
+      toggleElement('#searchResults', true);
+      toggleElement('#browseCategories', false);
+    }catch(err){ console.error('search error', err); }
+  }
+
+  function renderSearchResults(list){
+    const top = document.getElementById('topResult');
+    const songs = document.getElementById('songResults');
+    const artists = document.getElementById('artistResults');
+    const albums = document.getElementById('albumResults');
+    if(top) top.innerHTML = '';
+    if(songs) songs.innerHTML = '';
+    if(artists) artists.innerHTML = '';
+    if(albums) albums.innerHTML = '';
+
+    if(!list || list.length===0){
+      if(songs) songs.innerHTML = '<div class="text-sm text-gray-400">No songs</div>';
+      return;
+    }
+    // Top result
+    if(top){
+      const t = list[0];
+      top.innerHTML = `<div class="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer max-w-md" data-id="${sanitize(t.id)}">
+        <div><strong>${sanitize(t.title)}</strong><div class="text-sm text-gray-400">${sanitize(t.artist)}</div></div>
+      </div>`;
+      top.querySelector('[data-id]')?.addEventListener('click', ()=> playFromList(list,0));
+    }
+    // songs
+    if(songs){
+      const frag = document.createDocumentFragment();
+      list.forEach((s, i)=>{
+        const row = document.createElement('div');
+        row.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer hover-scale';
+        row.setAttribute('data-index', i);
+        row.innerHTML = `<div class="flex items-center space-x-4">
+            <span class="text-primary font-bold text-lg w-6">${i+1}</span>
+            <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded flex items-center justify-center text-lg">${sanitize(s.title? s.title[0]:'♫')}</div>
+            <div><h4 class="font-semibold">${sanitize(s.title)}</h4><p class="text-sm text-gray-400">${sanitize(s.artist)}</p></div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button class="like-btn p-2 rounded-full" title="Like">${likes.includes(s.id)?'♥':'♡'}</button>
+            <span class="text-sm text-gray-400">${sanitize(s.duration)}</span>
+            <button class="play-inline p-2 rounded-full" title="Play">▶</button>
+          </div>`;
+        // click to play entire row
+        row.addEventListener('click', (ev)=>{
+          if(ev.target && (ev.target.classList && (ev.target.classList.contains('like-btn') || ev.target.classList.contains('play-inline')))){
+            // handled below
+          } else {
+            playFromList(list, i);
+          }
+        });
+        // like button
+        const likeBtn = row.querySelector('.like-btn');
+        likeBtn?.addEventListener('click', (ev)=>{ ev.stopPropagation(); toggleLike(s, likeBtn); });
+        // inline play
+        row.querySelector('.play-inline')?.addEventListener('click', (ev)=>{ ev.stopPropagation(); playFromList(list,i); });
+        frag.appendChild(row);
+      });
+      songs.appendChild(frag);
+    }
+    // artists & albums: show unique simple tiles if available
+    if(artists){
+      const seen = new Set();
+      const frag = document.createDocumentFragment();
+      list.slice(0,10).forEach((s)=>{
+        const artName = s.artist || 'Unknown';
+        if(seen.has(artName)) return; seen.add(artName);
+        const el = document.createElement('div');
+        el.className = 'bg-gray-800 rounded-lg p-4 flex items-end cursor-pointer hover-scale';
+        el.innerHTML = `<h4 class="text-white font-semibold">${sanitize(artName)}</h4>`;
+        el.addEventListener('click', ()=> { doSearch(artName); document.getElementById('mainSearchInput').value = artName; });
+        frag.appendChild(el);
+      });
+      artists.appendChild(frag);
+    }
+    if(albums){
+      const frag = document.createDocumentFragment();
+      list.slice(0,8).forEach((s)=>{
+        const el = document.createElement('div');
+        el.className = 'bg-gray-800 rounded-lg p-4 flex items-end cursor-pointer hover-scale';
+        el.innerHTML = `<h4 class="text-white font-semibold">${sanitize(s.title)}</h4>`;
+        el.addEventListener('click', ()=> { doSearch(s.title); document.getElementById('mainSearchInput').value = s.title; });
+        frag.appendChild(el);
+      });
+      albums.appendChild(frag);
+    }
+  }
+
+  function toggleElement(selector, show){
+    const el = document.querySelector(selector);
+    if(!el) return;
+    if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
+  }
+
+  function toggleLike(song, btn){
+    if(!song || !song.id) return;
+    const idx = likes.indexOf(song.id);
+    if(idx === -1) likes.push(song.id); else likes.splice(idx,1);
+    localStorage.setItem('mp_likes', JSON.stringify(likes));
+    if(btn) btn.textContent = likes.includes(song.id)?'♥':'♡';
+    renderLikedSongs();
+  }
+
+  function renderLikedSongs(){
+    const container = document.getElementById('likedSongsList');
+    if(!container) return;
+    container.innerHTML = '';
+    if(!likes.length){ container.innerHTML = '<div class="text-sm text-gray-400">No liked songs yet.</div>'; return; }
+    likes.forEach((id, i)=>{
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800';
+      row.innerHTML = `<div class="col-span-1">${i+1}</div><div class="col-span-5">${sanitize(id)}</div><div class="col-span-3">-</div><div class="col-span-2">-</div><div class="col-span-1">-</div>`;
+      row.addEventListener('click', ()=> { playById(id); });
+      container.appendChild(row);
+    });
+  }
+
+  async function playById(id){
+    if(!id) return;
+    // try to find in queue or search results
+    const found = queue.find(x=>x.id===id);
+    if(found){ playFromList(queue, queue.indexOf(found)); return; }
+    // else try /api/song/?query=id
+    try{
+      const res = await fetch(`${API_BASE}/song/?query=${encodeURIComponent(id)}`);
+      if(!res.ok) throw new Error('fetch failed');
+      const j = await res.json();
+      const parsed = (j.song||j.data||j) ;
+      const url = parsed.media_url || parsed.preview || parsed.stream || parsed.url || parsed.link || parsed.mediaUrl;
+      if(url){ await fetchAndPlay(url, {title: parsed.title||parsed.name, artist: parsed.artist||parsed.artists||''}); }
+      else alert('No playable media found for this item.');
+    }catch(err){ console.error(err); alert('Could not fetch song details.'); }
+  }
+
+  async function playFromList(list, idx){
+    if(!Array.isArray(list) || !list[idx]) return;
+    queue = list.slice(idx);
+    currentIndex = 0;
+    const s = queue[0];
+    // try to get media url from item, else fallback to search for title+artist
+    let url = s.media_url || s.preview || s.url || s.stream || s.link || '';
+    if(!url){
+      try{
+        const fres = await fetch(`${API_BASE}/song/?query=${encodeURIComponent(s.id)}`);
+        if(fres.ok){
+          const fj = await fres.json();
+          const item = (fj.song||fj.data||fj);
+          url = item.media_url || item.preview || item.stream || item.url || '';
+        }
+      }catch(err){ console.warn('song endpoint failed', err); }
+    }
+    if(!url){
+      // fallback search
+      try{
+        const q = `${s.title} ${s.artist}`;
+        const r = await fetch(`${API_BASE}/result/?query=${encodeURIComponent(q)}`);
+        if(r.ok){
+          const j = await r.json();
+          const arr = parseSearch(j);
+          if(arr && arr.length && arr[0].media_url) url = arr[0].media_url;
+        }
+      }catch(e){ console.warn('fallback search failed', e); }
+    }
+    if(!url){ alert('No playable media found for this track via the proxy.'); return; }
+    await fetchAndPlay(url, s);
+  }
+
+  async function fetchAndPlay(url, meta){
+    try{
+      // If url is proxied (starts with /api) fetch raw; otherwise try to fetch via proxy path if it's an absolute URL to remote that the proxy can handle
+      let fetchUrl = url;
+      if(!url.startsWith('/api') && url.startsWith('http')){
+        // use proxy to avoid CORS in many cases: route through /api/proxy target expects full path appended; but your proxy maps /api/* to remote base domain, so best to call directly if your API already returned a proxied path. We'll attempt direct fetch first.
+        fetchUrl = url;
+      }
+      const resp = await fetch(fetchUrl);
+      if(!resp.ok) throw new Error('media fetch failed '+resp.status);
+      const ab = await resp.arrayBuffer();
+      const blob = new Blob([ab], {type: resp.headers.get('content-type')||'audio/mpeg'});
+      const blobUrl = URL.createObjectURL(blob);
+      audio.src = blobUrl;
+      await audio.play();
+      // update some UI small indicators if present (not altering layout)
+      try{
+        const nowPlaying = document.querySelector('#nowPlaying') || document.querySelector('#miniTitle') || null;
+        if(nowPlaying) nowPlaying.textContent = (meta && meta.title? meta.title : 'Playing') + (meta && meta.artist? ' - '+meta.artist : '');
+      }catch(e){}
+    }catch(err){ console.error('play error', err); alert('Playback failed (check proxy/API).'); }
+  }
+
+  // audio controls (basic)
+  audio.addEventListener('ended', ()=>{
+    if(currentIndex < queue.length - 1){ currentIndex++; fetchAndPlay(queue[currentIndex].media_url || queue[currentIndex].preview || queue[currentIndex].url, queue[currentIndex]); }
+  });
+
+  // Map navigation links to sections (preserve original UI)
+  const navMap = {
+    '#logoButton': 'homeContent',
+    'a[href="#"]': null // generic anchors ignored
+  };
+  // Specific nav anchors that exist
+  const likedLink = document.getElementById('likedSongsLink');
+  const recentLink = document.getElementById('recentlyPlayedLink');
+  const yourPlaylistLink = document.getElementById('yourPlaylistLink');
+  const searchNav = document.querySelector('.sidebar a[href="#"]') || null;
+
+  function showSection(id){
+    const sections = ['homeContent','searchContent','likedSongsContent','recentlyPlayedContent','yourPlaylistContent','accountContent','profileContent','settingsContent','libraryContent'];
+    sections.forEach(sid => {
+      const el = document.getElementById(sid);
+      if(!el) return;
+      if(sid === id) el.classList.remove('hidden'); else el.classList.add('hidden');
+    });
+    // scroll to top of main area
+    const main = document.querySelector('main') || document.getElementById('mainApp') || document.body;
+    if(main) main.scrollTop = 0;
+  }
+  if(likedLink) likedLink.addEventListener('click',(e)=>{ e.preventDefault(); showSection('likedSongsContent'); renderLikedSongs(); });
+  if(recentLink) recentLink.addEventListener('click',(e)=>{ e.preventDefault(); showSection('recentlyPlayedContent'); });
+  if(yourPlaylistLink) yourPlaylistLink.addEventListener('click',(e)=>{ e.preventDefault(); showSection('yourPlaylistContent'); });
+
+  // wire search input(s)
+  const mainSearchInput = document.getElementById('mainSearchInput') || document.getElementById('searchInput') || document.getElementById('mainSearchInput');
+  if(mainSearchInput){
+    mainSearchInput.addEventListener('input', (ev)=>{
+      const v = ev.target.value.trim();
+      if(searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(()=> doSearch(v), debounceMs);
+    });
+    mainSearchInput.addEventListener('keydown', (ev)=> { if(ev.key === 'Enter'){ doSearch(ev.target.value.trim()); } });
+  }
+
+  // Also make static World's Top Hits rows clickable (they exist in #homeOnlyContent)
+  const homeOnly = document.getElementById('homeOnlyContent');
+  if(homeOnly){
+    homeOnly.querySelectorAll('.cursor-pointer').forEach((el)=>{
+      el.addEventListener('click', ()=>{
+        // try to read title & artist inside
+        const t = el.querySelector('h4')?.textContent || el.textContent.split('\\n')[0];
+        const a = el.querySelector('p')?.textContent || '';
+        doSearch((t+' '+a).trim());
+      });
+    });
+  }
+
+  // On load render likes
+  document.addEventListener('DOMContentLoaded', ()=>{
+    renderLikedSongs();
+    // keep landingPage behavior: clicking Get Started flips to main app
+    const getStarted = document.getElementById('getStartedBtn');
+    if(getStarted){
+      getStarted.addEventListener('click', ()=>{
+        const landing = document.getElementById('landingPage');
+        const mainApp = document.getElementById('mainApp');
+        if(landing) landing.classList.add('hidden');
+        if(mainApp) mainApp.classList.remove('hidden');
+        showSection('homeContent');
+      });
+    }
+    // user menu toggle without changing markup
+    const userButton = document.getElementById('userMenuButton');
+    const userDropdown = document.getElementById('userDropdown');
+    if(userButton && userDropdown){
+      userButton.addEventListener('click', ()=> userDropdown.classList.toggle('hidden'));
+      document.addEventListener('click', (e)=>{ if(!userDropdown.contains(e.target) && e.target !== userButton) userDropdown.classList.add('hidden'); });
+    }
+    // make top static play icons (svg triangle buttons) attempt to play by searching title
+    document.querySelectorAll('button[title="Download"], button[title="Add to Playlist"]').forEach(b=> b.addEventListener('click',(e)=> e.stopPropagation()));
+    // attach play handlers for the small triangular play buttons inside world's hits blocks
+    document.querySelectorAll('#homeOnlyContent button').forEach(b => {
+      if(b.title === '' || b.title === undefined){
+        // if it's a play triangle, parent contains title/artist
+        b.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          const parent = b.closest('.bg-gray-800, .bg-gray-700') || b.closest('[class*="rounded-lg"]');
+          const t = parent?.querySelector('h4')?.textContent || parent?.textContent || '';
+          doSearch(t.trim());
+        });
+      }
+    });
+  });
+})();
+</script>
+<!-- END: MusicPioneer JS -->
+
 </body>
 </html>
