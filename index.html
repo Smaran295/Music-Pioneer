@@ -3052,307 +3052,236 @@
         });
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98064ce294402e39',t:'MTc1ODA4Nzk1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<!-- API + Player Integration Script -->
-<script>
-const API_BASE = "https://annonymous-sage.vercel.app";
-let audio = new Audio();
-let currentTrack = null;
-let currentList = [];
-let currentIndex = 0;
-const $ = id => document.getElementById(id);
 
-// Utility to safely fetch JSON
-async function apiFetch(path, opts={}) {
+
+
+<!-- Full API Integration Script for annonymous-sage.saavn API -->
+<script>
+(() => {
+const API_ROOT = "https://annonymous-sage.vercel.app/api";
+const $ = id => document.getElementById(id);
+let audio = new Audio();
+audio.crossOrigin = "anonymous";
+let queue = JSON.parse(localStorage.getItem("mp_queue")||"[]");
+let liked = JSON.parse(localStorage.getItem("mp_liked")||"[]");
+let recently = JSON.parse(localStorage.getItem("mp_recently")||"[]");
+let currentIndex = 0;
+
+// UTILITIES
+function log(...a){ console.log("[MP]",...a); }
+function saveState(){ localStorage.setItem("mp_queue", JSON.stringify(queue)); localStorage.setItem("mp_liked", JSON.stringify(liked)); localStorage.setItem("mp_recently", JSON.stringify(recently)); }
+
+async function apiFetch(path){
+  const url = API_ROOT + path;
   try {
-    const res = await fetch(API_BASE + path, opts);
+    const res = await fetch(url);
     if (!res.ok) {
-      console.warn("API fetch failed:", path, res.status);
+      const txt = await res.text();
+      console.error("API error", url, res.status, txt);
       return null;
     }
-    return await res.json();
-  } catch (e) {
-    console.error("Network error fetching", path, e);
+    const json = await res.json();
+    log("apiFetch", url, json);
+    return json;
+  } catch (e){
+    console.error("apiFetch failed", url, e);
     return null;
   }
 }
 
-/* ---------- UI Navigation ---------- */
-function showOnly(sectionId) {
-  const sections = [
-    "homeContent","searchContent","likedSongsContent","recentlyPlayedContent",
-    "yourPlaylistContent","accountContent","profileContent","settingsContent","libraryContent"
-  ];
-  sections.forEach(s => {
-    const el = $(s);
-    if (!el) return;
-    if (s === sectionId) el.classList.remove("hidden");
-    else el.classList.add("hidden");
-  });
+// Normalize a song object from search results or song detail
+function pickStreamFromItem(item){
+  if (!item) return null;
+  if (item.downloadUrl && Array.isArray(item.downloadUrl) && item.downloadUrl.length>0){
+    const full = item.downloadUrl.find(d=>/320/.test(String(d.quality))) || item.downloadUrl[item.downloadUrl.length-1];
+    if (full && full.url) return full.url;
+  }
+  if (item.media_url) return item.media_url;
+  if (item.url && item.url.includes("aac.saavncdn.com")) return item.url;
+  return null;
 }
 
-// Sidebar navigation wiring
-document.addEventListener("click", (e) => {
-  const target = e.target.closest && e.target.closest("a,button");
-  if (!target) return;
-  if (target.id === "likedSongsLink") { e.preventDefault(); loadLikedSongs(); showOnly("likedSongsContent"); }
-  if (target.id === "recentlyPlayedLink") { e.preventDefault(); loadRecentlyPlayed(); showOnly("recentlyPlayedContent"); }
-  if (target.id === "yourPlaylistLink") { e.preventDefault(); loadYourPlaylists(); showOnly("yourPlaylistContent"); }
-  if (target.textContent && target.textContent.trim() === "Home") { e.preventDefault(); showOnly("homeContent"); }
-  if (target.textContent && target.textContent.trim() === "Search") { e.preventDefault(); showOnly("searchContent"); }
-  if (target.textContent && target.textContent.trim() === "Your Library") { e.preventDefault(); showOnly("libraryContent"); }
-});
+function normalizeSong(item){
+  if (!item) return null;
+  return {
+    id: item.id || item.song_id || "",
+    title: item.name || item.title || "",
+    artist: (item.artists && item.artists.primary && item.artists.primary[0] && item.artists.primary[0].name) || (item.artist_name) || "Unknown",
+    album: (item.album && item.album.name) || "",
+    image: (item.image && item.image.length? item.image[item.image.length-1].url : ""),
+    duration: item.duration || item.length || item.duration_ms || "",
+    stream: pickStreamFromItem(item) || "",
+    raw: item
+  };
+}
 
-// Get Started button toggles
-document.addEventListener("DOMContentLoaded", () => {
-  const getStartedBtn = $("getStartedBtn");
-  if (getStartedBtn) {
-    getStartedBtn.addEventListener("click", () => {
-      document.getElementById("landingPage").classList.add("hidden");
-      document.getElementById("mainApp").classList.remove("hidden");
-      loadTopHits();
-      loadAccount();
-    });
-  }
-});
-
-/* ---------- Top Hits (Home) ---------- */
-async function loadTopHits() {
-  const data = await apiFetch("/top-hits");
-  const container = $("homeOnlyContent");
-  if (!container) return;
-  container.innerHTML = "";
-  if (!data || !Array.isArray(data) || data.length === 0) {
-    container.innerHTML = `<p class="text-gray-400">No top hits available.</p>`;
-    return;
-  }
-  data.forEach((song, idx) => {
-    const item = document.createElement("div");
-    item.className = "bg-gray-800 rounded-lg p-4 flex items-center justify-between hover:bg-gray-700 transition-colors cursor-pointer hover-scale";
-    item.innerHTML = `
-      <div class="flex items-center space-x-4">
-        <span class="text-primary font-bold text-lg w-6">${idx+1}</span>
-        <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded flex items-center justify-center text-lg">🎶</div>
+// RENDERERS
+function renderSongs(containerId, items){
+  const el = $(containerId);
+  if (!el) return;
+  el.innerHTML = "";
+  if (!items || items.length===0){ el.innerHTML = '<div class="text-gray-400 p-3">No results.</div>'; return; }
+  items.forEach((it, idx) => {
+    const s = normalizeSong(it);
+    const row = document.createElement("div");
+    row.className = "song-row p-3 bg-gray-800 rounded flex items-center justify-between space-x-4";
+    row.innerHTML = `
+      <div class="flex items-center space-x-3">
+        <div style="width:48px;height:48px;flex:0 0 48px;"><img src="${s.image||''}" alt="" style="width:48px;height:48px;border-radius:6px;object-fit:cover"></div>
         <div>
-          <h4 class="font-semibold">${song.title || "Untitled"}</h4>
-          <p class="text-sm text-gray-400">${song.artist || "Unknown"}</p>
+          <div class="font-semibold">${escapeHtml(s.title)}</div>
+          <div class="text-sm text-gray-400">${escapeHtml(s.artist)}</div>
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <button class="p-2 hover:bg-gray-600 rounded-full transition-colors play-btn" data-src="${song.streamUrl || song.url || ""}" data-id="${song.id || ""}" title="Play">▶️</button>
-        <span class="text-sm text-gray-400">${song.duration || ""}</span>
+        <button class="mp-play-btn px-3 py-1 rounded bg-blue-500" data-id="${s.id}" data-stream="${s.stream}">▶</button>
+        <button class="mp-like-btn px-2 py-1 rounded bg-gray-700" data-id="${s.id}">${liked.includes(s.id)?'♥':'♡'}</button>
       </div>
     `;
-    container.appendChild(item);
+    el.appendChild(row);
   });
-
-  // attach play button handlers
-  container.querySelectorAll(".play-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const src = btn.getAttribute("data-src");
-      const id = btn.getAttribute("data-id");
-      playSingle(src, id);
-      e.stopPropagation();
-    });
-  });
-}
-
-/* ---------- Search ---------- */
-const searchInput = $("mainSearchInput");
-if (searchInput) {
-  let searchTimer = null;
-  searchInput.addEventListener("input", (e) => {
-    const q = e.target.value.trim();
-    clearTimeout(searchTimer);
-    if (!q) {
-      $("searchResults") && $("searchResults").classList.add("hidden");
-      $("browseCategories") && $("browseCategories").classList.remove("hidden");
-      return;
+  el.querySelectorAll(".mp-play-btn").forEach(b=> b.addEventListener("click", (e)=>{
+    const id = b.dataset.id; const stream = b.dataset.stream;
+    if (stream && stream.length>0){
+      playByStream(stream, id);
+      addToRecently(id);
+    } else {
+      apiFetch(`/songs?id=${encodeURIComponent(id)}`).then(json=>{
+        if (!json) return;
+        const result = json.data && json.data[0] ? json.data[0] : json.data || json;
+        const item = Array.isArray(result)? result[0] : result;
+        const s = normalizeSong(item);
+        if (s.stream) playByStream(s.stream, s.id);
+        addToRecently(s.id);
+      });
     }
-    searchTimer = setTimeout(() => performSearch(q), 250);
+  }));
+  el.querySelectorAll(".mp-like-btn").forEach(b=> b.addEventListener("click", ()=>{
+    const id = b.dataset.id;
+    if (!id) return;
+    if (liked.includes(id)) { liked = liked.filter(x=>x!==id); b.textContent='♡'; }
+    else { liked.push(id); b.textContent='♥'; }
+    saveState();
+    renderLikedSongs();
+  }));
+}
+
+function escapeHtml(s){ if(!s) return ""; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// PLAYER
+function playByStream(streamUrl, id){
+  if (!streamUrl) { console.warn("no stream"); return; }
+  if (!streamUrl.startsWith("http")) streamUrl = streamUrl.startsWith('/') ? streamUrl : API_ROOT + streamUrl;
+  try { audio.pause(); } catch(e) {}
+  audio.src = streamUrl;
+  audio.play().then(()=>{
+    log("playing", streamUrl);
+    updateNowPlaying(id);
+  }).catch(err=>{ console.error("play error", err); });
+}
+
+function updateNowPlaying(id){
+  apiFetch(`/songs?id=${encodeURIComponent(id)}`).then(json=>{
+    let item = null;
+    if (!json) return;
+    if (Array.isArray(json.data)) item = json.data[0];
+    else if (Array.isArray(json)) item = json[0];
+    else item = json.data || json;
+    const s = normalizeSong(item);
+    const now = $("nowPlayingInfo");
+    if (now) now.innerHTML = `<div class="font-semibold">${escapeHtml(s.title)}</div><div class="text-sm text-gray-400">${escapeHtml(s.artist)}</div>`;
   });
 }
 
-async function performSearch(query) {
-  const data = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
-  const resultsEl = $("songResults");
-  if (!resultsEl) return;
-  resultsEl.innerHTML = "";
-  if (!data || !Array.isArray(data) || data.length === 0) {
-    resultsEl.innerHTML = `<div class="text-gray-400 p-2">No results for "${query}".</div>`;
-    return;
+// QUEUE & RECENTLY
+function addToQueue(item){ if(!item) return; queue.push(item); saveState(); renderQueue(); }
+function renderQueue(){ const el = $("queueList"); if(!el) return; el.innerHTML = queue.map((id, i)=>`<div class="p-2 border-b">${i+1}. ${escapeHtml(id)}</div>`).join(''); }
+function addToRecently(id){ if(!id) return; recently = [id, ...recently.filter(x=>x!==id)].slice(0,50); saveState(); renderRecently(); }
+function renderRecently(){ const el = $("recentlyPlayedList"); if(!el) return; if(!recently.length) el.innerHTML='<div class="text-gray-400 p-3">No recently played</div>'; else { el.innerHTML = ''; recently.forEach(id=>{ const div=document.createElement('div'); div.className='p-2 border-b text-sm'; div.textContent = id; el.appendChild(div); }); } }
+
+function renderLikedSongs(){ const el = $("likedSongsList"); if(!el) return; if(!liked.length) el.innerHTML='<div class="text-gray-400 p-3">No liked songs</div>'; else { el.innerHTML=''; Promise.all(liked.map(id=>apiFetch(`/songs?id=${encodeURIComponent(id)}`))).then(results=>{ results.forEach(r=>{ const item = Array.isArray(r.data)? r.data[0] : (r.data || r); const s = normalizeSong(item); const row = document.createElement('div'); row.className='p-2 border-b flex justify-between'; row.innerHTML = `<div>${escapeHtml(s.title)}<div class="text-sm text-gray-400">${escapeHtml(s.artist)}</div></div><div><button class="play-like-play px-2 py-1 bg-blue-500" data-stream="${escapeHtml(s.stream)}">▶</button></div>`; el.appendChild(row); row.querySelector('.play-like-play').addEventListener('click', ()=> playByStream(s.stream)); }); }); } }
+
+// LYRICS
+async function loadLyrics(songId){
+  const res = await apiFetch(`/lyrics?id=${encodeURIComponent(songId)}`);
+  if (!res) { $("lyricsContent") && ($("lyricsContent").textContent = "No lyrics found"); return; }
+  const lyricTxt = (res.data && res.data.lyrics) || (res.lyrics) || JSON.stringify(res);
+  $("lyricsContent") && ($("lyricsContent").textContent = lyricTxt);
+}
+
+// SEARCH wiring
+const searchBox = $("mainSearchInput");
+if (searchBox){
+  let timer = null;
+  searchBox.addEventListener('input', (e)=>{
+    const q = e.target.value.trim();
+    clearTimeout(timer);
+    if (!q){ renderSongs('songResults', []); return; }
+    timer = setTimeout(()=> performSearch(q), 300);
+  });
+}
+
+async function performSearch(query){
+  const json = await apiFetch(`/search/songs?query=${encodeURIComponent(query)}`);
+  if (!json || !json.success) { renderSongs('songResults', []); return; }
+  const results = (json.data && (json.data.results || json.data)) || json.results || json.data || [];
+  let items = results;
+  if (results && results.results) items = results.results;
+  if (!Array.isArray(items) && Array.isArray(json.data && json.data.results)) items = json.data.results;
+  renderSongs('songResults', items);
+  if (items && items.length>0) {
+    const top = normalizeSong(items[0]);
+    const topEl = $("topResult");
+    if (topEl) topEl.innerHTML = `<div class="p-4"><div class="font-semibold">${escapeHtml(top.title)}</div><div class="text-sm text-gray-400">${escapeHtml(top.artist)}</div></div><div><button id="topPlay" class="px-3 py-1 bg-blue-500 rounded">Play</button></div>`;
+    const btn = $("topPlay"); if (btn) btn.addEventListener('click', ()=>{ if(top.stream) playByStream(top.stream, top.id); else playById(top.id); addToRecently(top.id); });
+  } else {
+    const topEl = $("topResult"); if (topEl) topEl.innerHTML = '<div class="text-gray-400 p-3">No top result</div>';
   }
-  data.forEach(song => {
-    const row = document.createElement("div");
-    row.className = "p-2 bg-gray-800 rounded-lg flex justify-between hover:bg-gray-700 cursor-pointer";
-    row.innerHTML = `
-      <div>
-        <div class="font-semibold">${song.title || "Untitled"}</div>
-        <div class="text-sm text-gray-400">${song.artist || ""}</div>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="text-sm text-gray-400">${song.duration || ""}</span>
-        <button class="p-2 hover:bg-gray-600 rounded-full play-btn" data-src="${song.streamUrl || song.url || ""}" data-id="${song.id || ""}">▶️</button>
-      </div>
-    `;
-    resultsEl.appendChild(row);
-  });
-
-  resultsEl.querySelectorAll(".play-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const src = btn.getAttribute("data-src");
-      playSingle(src, btn.getAttribute("data-id"));
-      e.stopPropagation();
-    });
-  });
-
-  $("searchResults") && $("searchResults").classList.remove("hidden");
-  $("browseCategories") && $("browseCategories").classList.add("hidden");
 }
 
-/* ---------- Playlists / Library ---------- */
-async function loadLikedSongs() {
-  const data = await apiFetch("/liked-songs");
-  const list = $("likedSongsList");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!data || data.length === 0) {
-    list.innerHTML = `<div class="p-4 text-gray-400">No liked songs yet.</div>`;
-    return;
-  }
-  data.forEach((song, i) => {
-    const row = document.createElement("div");
-    row.className = "grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800";
-    row.innerHTML = `
-      <div class="col-span-1">${i+1}</div>
-      <div class="col-span-5">${song.title}</div>
-      <div class="col-span-3">${song.album || "-"}</div>
-      <div class="col-span-2">${song.addedAt || "-"}</div>
-      <div class="col-span-1">${song.duration || "-"}</div>
-    `;
-    list.appendChild(row);
-  });
+async function playById(id){
+  const json = await apiFetch(`/songs?id=${encodeURIComponent(id)}`);
+  if (!json) return;
+  const item = Array.isArray(json.data)? json.data[0] : (json.data || json);
+  const s = normalizeSong(item);
+  if (s.stream) playByStream(s.stream, s.id);
+  else console.warn("no stream for id", id);
+  addToRecently(s.id);
 }
 
-async function loadRecentlyPlayed() {
-  const data = await apiFetch("/recently-played");
-  const list = $("recentlyPlayedList");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!data || data.length === 0) {
-    list.innerHTML = `<div class="p-4 text-gray-400">No recently played songs.</div>`;
-    return;
-  }
-  data.forEach((song, i) => {
-    const row = document.createElement("div");
-    row.className = "grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800";
-    row.innerHTML = `
-      <div class="col-span-1">${i+1}</div>
-      <div class="col-span-5">${song.title}</div>
-      <div class="col-span-3">${song.album || "-"}</div>
-      <div class="col-span-2">${song.playedAt || "-"}</div>
-      <div class="col-span-1">${song.duration || "-"}</div>
-    `;
-    list.appendChild(row);
-  });
+// Player controls UI hook
+function hookPlayerUI(){
+  const playBtn = $("playerPlayBtn");
+  const pauseBtn = $("playerPauseBtn");
+  const prevBtn = $("playerPrevBtn");
+  const nextBtn = $("playerNextBtn");
+  const prog = $("playerProgress");
+  const curT = $("playerCurrentTime");
+  const durT = $("playerDuration");
+  if (playBtn) playBtn.addEventListener('click', ()=> audio.play());
+  if (pauseBtn) pauseBtn.addEventListener('click', ()=> audio.pause());
+  if (prevBtn) prevBtn.addEventListener('click', ()=> { if (queue.length>0 && currentIndex>0) { currentIndex--; playById(queue[currentIndex]); } });
+  if (nextBtn) nextBtn.addEventListener('click', ()=> { if (queue.length>0 && currentIndex<queue.length-1) { currentIndex++; playById(queue[currentIndex]); } });
+  audio.ontimeupdate = ()=> {
+    if (prog) { if (audio.duration) prog.value = (audio.currentTime / audio.duration) * 100; }
+    if (curT) curT.textContent = formatTime(audio.currentTime);
+    if (durT) durT.textContent = audio.duration ? formatTime(audio.duration) : "--:--";
+  };
+  prog && prog.addEventListener('input', ()=> { if (audio.duration) audio.currentTime = (prog.value/100) * audio.duration; });
 }
 
-async function loadYourPlaylists() {
-  const data = await apiFetch("/playlists");
-  const list = $("yourPlaylistList");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!data || data.length === 0) {
-    list.innerHTML = `<div class="p-4 text-gray-400">No playlists yet.</div>`;
-    return;
-  }
-  data.forEach((pl, i) => {
-    const item = document.createElement("div");
-    item.className = "p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer";
-    item.innerHTML = `<div class="font-semibold">${pl.name}</div><div class="text-sm text-gray-400">${pl.count || 0} songs</div>`;
-    item.addEventListener("click", () => loadPlaylistSongs(pl.id));
-    list.appendChild(item);
-  });
-}
+function formatTime(s){ if (!s && s!==0) return "--:--"; s = Math.floor(s); const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
 
-async function loadPlaylistSongs(playlistId) {
-  const data = await apiFetch(`/playlists/${playlistId}`);
-  const list = $("yourPlaylistList");
-  if (!list) return;
-  // render songs in selected playlist (replace list)
-  list.innerHTML = `<div class="mb-4"><button class="px-4 py-2 bg-primary rounded" id="backToPlaylists">Back to playlists</button></div>`;
-  const songs = data && data.songs ? data.songs : [];
-  songs.forEach((song,i) => {
-    const row = document.createElement("div");
-    row.className = "flex items-center justify-between p-2 bg-gray-900/30 rounded mb-2";
-    row.innerHTML = `<div><div class="font-semibold">${song.title}</div><div class="text-sm text-gray-400">${song.artist||""}</div></div>
-    <div><button class="p-2 play-btn" data-src="${song.streamUrl||song.url||''}">▶️</button></div>`;
-    list.appendChild(row);
-  });
-  document.getElementById("backToPlaylists")?.addEventListener("click", loadYourPlaylists);
-  list.querySelectorAll(".play-btn").forEach(btn => {
-    btn.addEventListener("click", (e)=> playSingle(btn.getAttribute("data-src")));
-  });
-}
-
-/* ---------- Account & Profile ---------- */
-async function loadAccount() {
-  const data = await apiFetch("/account");
-  if (!data) return;
-  // populate accountContent
-  const acct = $("accountContent");
-  if (!acct) return;
-  acct.querySelector("h3")?.textContent && (acct.querySelector("h3").textContent = "Account Overview");
-  acct.querySelector(".p-6 .font-bold") && (acct.querySelector(".p-6 .font-bold").textContent = data.name || "Music Pioneer");
-  // simple population where possible
-  acct.querySelector("p.text-gray-400") && (acct.querySelector("p.text-gray-400").textContent = data.email || "");
-}
-
-/* ---------- Audio Player Controls ---------- */
-function playSingle(src, id) {
-  if (!src) {
-    console.warn("No stream URL for song id", id);
-    return;
-  }
-  currentTrack = {src, id};
-  audio.src = src;
-  audio.play().catch(err => console.error("Play failed:", err));
-}
-
-function togglePlayPause() {
-  if (audio.paused) audio.play();
-  else audio.pause();
-}
-
-audio.addEventListener("ended", () => {
-  // simple behavior: stop or implement next tracking
-  console.log("Playback ended");
+document.addEventListener('DOMContentLoaded', ()=>{
+  hookPlayerUI();
+  renderQueue();
+  renderRecently();
+  renderLikedSongs();
+  const gs = $("getStartedBtn");
+  if (gs) gs.addEventListener('click', ()=>{ document.getElementById('landingPage')?.classList.add('hidden'); document.getElementById('mainApp')?.classList.remove('hidden'); performSearch('deva'); });
 });
-
-/* ---------- Initialization ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-  // Hide main app initially; landing page already visible
-  // wire user menu toggle
-  const userBtn = $("userMenuButton");
-  const userDrop = $("userDropdown");
-  if (userBtn && userDrop) {
-    userBtn.addEventListener("click", () => userDrop.classList.toggle("hidden"));
-    document.addEventListener("click", (e) => {
-      if (!userBtn.contains(e.target) && !userDrop.contains(e.target)) userDrop.classList.add("hidden");
-    });
-  }
-});
-</script>
-
-
-<!-- API + Player Integration Script (Resilient & Debugging) -->
-<script>
-const API_BASE = "https://annonymous-sage.vercel.app";
-let audio = new Audio();
-audio.crossOrigin = "anonymous";
-const $ = id => document.getElementById(id);
-// ... (resilient script shortened for storage; full script injected in file) ...
-</script>
-<!-- End resilient integration script -->
+})();</script>
+<!-- End Full API Integration Script -->
 
 </body>
 </html>
