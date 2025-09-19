@@ -5,34 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Pioneer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1db954',
-                        background: '#121212',
-                        card: '#181818',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { background-color: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         .hidden { display: none !important; }
         #search-section, #library-section, #account-overview, #edit-profile-section, #settings-section { display: none; }
         .player { background-color: #181818; }
-        .sidebar { background-color: #000; width: 240px; }
-        .nav-link { @apply text-gray-300 hover:text-white transition-colors; }
+        .sidebar { background-color: #000; }
+        .nav-link { @apply text-gray-300 hover:text-white; }
         .active { @apply text-white font-bold; }
-        /* Custom to match test site minimalism */
-        .test-site-style { background: linear-gradient(135deg, #121212 0%, #181818 100%); }
+        /* Additional styles to match test site */
+        .test-site-player { background: #282828; }
     </style>
 </head>
-<body class="bg-background text-white min-h-screen flex flex-col test-site-style">
+<body>
 
-    <!-- Header Icons -->
+    
     <header class="flex justify-center items-center p-4 bg-black">
         <div class="flex space-x-2 text-3xl">
             <span>🎵</span>
@@ -44,15 +35,10 @@
         </div>
     </header>
 
-    <!-- Main Layout -->
     <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar (Verbose as in original) -->
+        <!-- Sidebar -->
         <aside class="sidebar flex flex-col p-6 space-y-8 overflow-y-auto">
-            <!-- Logo -->
-            <div class="text-3xl font-bold text-primary mb-8 text-center">
-                MusicPioneer
-            </div>
-            <!-- Navigation (with icons for match) -->
+            <div class="text-3xl font-bold text-primary mb-8 text-center">MusicPioneer</div>
             <nav class="space-y-4">
                 <a href="#" class="home-link active nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-card">
                     <div class="w-5 h-5 bg-gray-600 rounded flex items-center justify-center">🏠</div>
@@ -67,7 +53,6 @@
                     <span>Your Library</span>
                 </a>
             </nav>
-            <!-- Playlists Section (Verbose nesting) -->
             <div class="mt-8 space-y-2">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">Playlists</h3>
@@ -86,19 +71,11 @@
                         <div class="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">➕</div>
                         <span class="text-sm">Your Own Playlist</span>
                     </li>
-                    <!-- Add more nested empty divs for line count -->
-                    <div class="p-0 m-0 h-0"></div>
-                    <div class="p-0 m-0 h-0"></div>
-                    <div class="p-0 m-0 h-0"></div>
-                    <div class="p-0 m-0 h-0"></div>
-                    <div class="p-0 m-0 h-0"></div>
                 </ul>
             </div>
         </aside>
 
-        <!-- Main Content Opening -->
         <main class="flex-1 flex flex-col overflow-y-auto p-6 bg-background">
-            <!-- Profile Menu (Verbose) -->
             <div class="flex justify-end mb-6 relative">
                 <div class="flex items-center space-x-3 bg-card rounded-full p-2 hover:bg-gray-700 cursor-pointer profile-toggle">
                     <div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center font-bold text-sm">MP</div>
@@ -116,24 +93,55 @@
                 </div>
             </div>
 
-            <!-- Home Section (Verbose with all original nesting, added IDs) -->
+            <section class="hero-section space-y-8">
+                <h1 class="text-4xl font-bold text-center">MusicPioneer</h1>
+                <p class="text-xl text-center">Your Music, Your Way</p>
+                <p class="text-center text-gray-400 max-w-2xl mx-auto">
+                    Discover millions of songs, create personalized playlists, and experience music like never before. 
+                    Join the revolution of digital music streaming with advanced features and crystal-clear sound quality.
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <button class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-green-600">Get Started Free</button>
+                    <button class="bg-transparent border border-gray-400 text-white px-6 py-3 rounded-lg hover:bg-gray-700">Learn More</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div><p class="text-3xl font-bold text-primary">50M+</p><p class="text-gray-400">Songs Available</p></div>
+                    <div><p class="text-3xl font-bold text-primary">10M+</p><p class="text-gray-400">Active Users</p></div>
+                    <div><p class="text-3xl font-bold text-primary">180+</p><p class="text-gray-400">Countries</p></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-card p-6 rounded-lg text-center">
+                        <span class="text-3xl block mb-2">🎵</span>
+                        <p class="font-semibold">Unlimited Music</p>
+                        <p class="text-gray-400">Access millions of songs from your favorite artists worldwide</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-lg text-center">
+                        <span class="text-3xl block mb-2">🎧</span>
+                        <p class="font-semibold">High Quality Audio</p>
+                        <p class="text-gray-400">Experience crystal-clear sound with lossless audio streaming</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-lg text-center">
+                        <span class="text-3xl block mb-2">📱</span>
+                        <p class="font-semibold">Cross Platform</p>
+                        <p class="text-gray-400">Enjoy your music anywhere, on any device, anytime</p>
+                    </div>
+                </div>
+            </section>
+
             <section id="home-section" class="space-y-8">
-                <!-- Greeting -->
-                <div class="text-center space-y-2">
+                <div class="greeting text-center space-y-2">
                     <h1 class="text-2xl font-bold">Good evening</h1>
                     <p class="text-gray-400 text-lg">Ready to discover your next favorite song?</p>
                 </div>
-                <!-- Search Bar -->
                 <div class="relative max-w-md mx-auto">
-                    <input type="text" id="search-input" class="search-input w-full px-4 py-3 bg-card rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary pl-10" placeholder="What do you want to listen to?">
+                    <input type="text" class="search-input w-full px-4 py-3 bg-card rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary pl-10" placeholder="What do you want to listen to?">
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <!-- Top Result Section (Verbose) -->
                 <div class="top-results">
                     <h2 class="text-lg font-semibold mb-4">Top result</h2>
-                    <div id="top-result" class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                    <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
                         <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">🎵</div>
                         <div>
                             <p class="font-semibold">No results yet</p>
@@ -141,168 +149,82 @@
                         </div>
                     </div>
                 </div>
-                <!-- Songs Section (Verbose nesting for lines) -->
                 <div class="songs-section">
                     <h2 class="text-lg font-semibold mb-4">Songs</h2>
-                    <div id="songs-list" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <!-- Dynamic, but add placeholders for lines -->
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Song Placeholder 1</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Song Placeholder 2</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Song Placeholder 3</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Song Placeholder 4</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <!-- More placeholders to increase lines -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                    <div class="songs-list grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Dynamic -->
                     </div>
                 </div>
-                <!-- Artists Section (Similar verbose) -->
                 <div class="artists-section">
                     <h2 class="text-lg font-semibold mb-4">Artists</h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">A</div>
-                            <p class="font-semibold text-sm">Artist 1</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">B</div>
-                            <p class="font-semibold text-sm">Artist 2</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">C</div>
-                            <p class="font-semibold text-sm">Artist 3</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">D</div>
-                            <p class="font-semibold text-sm">Artist 4</p>
-                        </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                        <!-- Dynamic -->
                     </div>
                 </div>
-                <!-- Albums Section -->
                 <div class="albums-section">
                     <h2 class="text-lg font-semibold mb-4">Albums</h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Album 1</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Album 2</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Album 3</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Album 4</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                        <!-- Dynamic -->
                     </div>
                 </div>
-                <!-- Browse All Genres -->
                 <div class="browse-section">
                     <h2 class="text-lg font-semibold mb-4">Browse all</h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Pop</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Rock</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Hip-Hop</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Electronic</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Jazz</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Classical</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">R&B</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Country</div>
-                        <!-- Placeholders for lines -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Pop</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Rock</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Hip-Hop</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Electronic</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Jazz</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Classical</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">R&B</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Country</div>
                     </div>
                 </div>
-                <!-- World's Top Hits (Dynamic ID) -->
                 <div class="top-hits-section">
                     <h2 class="text-lg font-semibold mb-4">World's Top Hits</h2>
-                    <ul id="top-hits-list" class="space-y-2">
-                        <!-- Dynamic, placeholders -->
-                        <li class="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-gray-700 cursor-pointer">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xl font-bold">1</span>
-                                <span>🌟</span>
-                                <div>
-                                    <p class="font-semibold">Blinding Lights</p>
-                                    <p class="text-gray-400 text-sm">The Weeknd</p>
-                                </div>
+                    <ul class="top-hits-list space-y-2">
+                        <li class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">1</div>
+                            <div>
+                                <p class="font-semibold">Blinding Lights</p>
+                                <p class="text-gray-400 text-sm">The Weeknd</p>
                             </div>
-                            <span class="text-gray-400">3:20</span>
+                            <span class="ml-auto text-gray-400">3:20</span>
                         </li>
-                        <li class="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-gray-700 cursor-pointer">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xl font-bold">2</span>
-                                <span>💖</span>
-                                <div>
-                                    <p class="font-semibold">Shape of You</p>
-                                    <p class="text-gray-400 text-sm">Ed Sheeran</p>
-                                </div>
+                        <li class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">2</div>
+                            <div>
+                                <p class="font-semibold">Shape of You</p>
+                                <p class="text-gray-400 text-sm">Ed Sheeran</p>
                             </div>
-                            <span class="text-gray-400">3:53</span>
+                            <span class="ml-auto text-gray-400">3:53</span>
                         </li>
-                        <li class="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-gray-700 cursor-pointer">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xl font-bold">3</span>
-                                <span>👑</span>
-                                <div>
-                                    <p class="font-semibold">Bohemian Rhapsody</p>
-                                    <p class="text-gray-400 text-sm">Queen</p>
-                                </div>
+                        <li class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">3</div>
+                            <div>
+                                <p class="font-semibold">Bohemian Rhapsody</p>
+                                <p class="text-gray-400 text-sm">Queen</p>
                             </div>
-                            <span class="text-gray-400">5:55</span>
+                            <span class="ml-auto text-gray-400">5:55</span>
                         </li>
-                        <li class="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-gray-700 cursor-pointer">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xl font-bold">4</span>
-                                <span>💔</span>
-                                <div>
-                                    <p class="font-semibold">Someone Like You</p>
-                                    <p class="text-gray-400 text-sm">Adele</p>
-                                </div>
+                        <li class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">4</div>
+                            <div>
+                                <p class="font-semibold">Someone Like You</p>
+                                <p class="text-gray-400 text-sm">Adele</p>
                             </div>
-                            <span class="text-gray-400">4:45</span>
+                            <span class="ml-auto text-gray-400">4:45</span>
                         </li>
-                        <li class="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-gray-700 cursor-pointer">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xl font-bold">5</span>
-                                <span>🕺</span>
-                                <div>
-                                    <p class="font-semibold">Billie Jean</p>
-                                    <p class="text-gray-400 text-sm">Michael Jackson</p>
-                                </div>
+                        <li class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">5</div>
+                            <div>
+                                <p class="font-semibold">Billie Jean</p>
+                                <p class="text-gray-400 text-sm">Michael Jackson</p>
                             </div>
-                            <span class="text-gray-400">4:54</span>
+                            <span class="ml-auto text-gray-400">4:54</span>
                         </li>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
                     </ul>
                 </div>
-                <!-- Liked Songs Playlist (Verbose table) -->
                 <div class="playlist-section space-y-4">
                     <h3 class="text-lg font-semibold flex items-center">
                         <span class="mr-2">PLAYLIST</span>
@@ -320,21 +242,11 @@
                                 <th class="text-left py-3 text-sm font-semibold">⏱</th>
                             </tr>
                         </thead>
-                        <tbody id="liked-songs-body" class="divide-y divide-gray-700">
-                            <!-- Dynamic, placeholder row -->
-                            <tr class="hover:bg-gray-700 cursor-pointer">
-                                <td class="py-3 text-sm">1</td>
-                                <td class="py-3 text-sm font-medium">Blinding Lights</td>
-                                <td class="py-3 text-sm text-gray-400">After Hours</td>
-                                <td class="py-3 text-sm text-gray-400">Today</td>
-                                <td class="py-3 text-sm text-gray-400">3:20</td>
-                            </tr>
-                            <!-- Add 10+ placeholder rows for lines -->
-                            <tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr>
+                        <tbody class="divide-y divide-gray-700">
+                            <!-- Dynamic -->
                         </tbody>
                     </table>
                 </div>
-                <!-- Recently Played Playlist -->
                 <div class="playlist-section space-y-4">
                     <h3 class="text-lg font-semibold flex items-center">
                         <span class="mr-2">PLAYLIST</span>
@@ -352,29 +264,17 @@
                                 <th class="text-left py-3 text-sm font-semibold">⏱</th>
                             </tr>
                         </thead>
-                        <tbody id="recently-played-body" class="divide-y divide-gray-700">
-                            <tr class="hover:bg-gray-700 cursor-pointer">
-                                <td class="py-3 text-sm">1</td>
-                                <td class="py-3 text-sm font-medium">Shape of You</td>
-                                <td class="py-3 text-sm text-gray-400">Divide</td>
-                                <td class="py-3 text-sm text-gray-400">2 hours ago</td>
-                                <td class="py-3 text-sm text-gray-400">3:53</td>
-                            </tr>
-                            <!-- Placeholders -->
-                            <tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr>
+                        <tbody class="divide-y divide-gray-700">
+                            <!-- Dynamic -->
                         </tbody>
                     </table>
                 </div>
-                <!-- Your Own Playlist -->
                 <div class="playlist-section space-y-4">
-                    <div class="flex items-center mb-4">
-                        <span class="text-3xl mr-3">🎵</span>
-                        <h3 class="text-lg font-semibold flex items-center">
-                            <span>PLAYLIST</span>
-                            <span class="text-primary ml-2">Your Own Playlist</span>
-                            <span class="ml-2 text-gray-400">Music Pioneer • 23 songs</span>
-                        </h3>
-                    </div>
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <span class="mr-2">PLAYLIST</span>
+                        <span class="text-primary">Your Own Playlist</span>
+                        <span class="ml-2 text-gray-400">Music Pioneer • 23 songs</span>
+                    </h3>
                     <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center text-2xl">➕</div>
                     <table class="w-full table-auto border-collapse">
                         <thead>
@@ -386,26 +286,17 @@
                                 <th class="text-left py-3 text-sm font-semibold">⏱</th>
                             </tr>
                         </thead>
-                        <tbody id="own-playlist-body" class="divide-y divide-gray-700">
-                            <tr class="hover:bg-gray-700 cursor-pointer">
-                                <td class="py-3 text-sm">1</td>
-                                <td class="py-3 text-sm font-medium">Bohemian Rhapsody</td>
-                                <td class="py-3 text-sm text-gray-400">A Night at the Opera</td>
-                                <td class="py-3 text-sm text-gray-400">Yesterday</td>
-                                <td class="py-3 text-sm text-gray-400">5:55</td>
-                            </tr>
-                            <!-- Placeholders -->
-                            <tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr><tr class="h-0"></tr>
+                        <tbody class="divide-y divide-gray-700">
+                            <!-- Dynamic -->
                         </tbody>
                     </table>
                 </div>
-                <!-- End Home Section -->
             </section>
-            <!-- Search Section (Verbose) -->
-            <section id="search-section" class="space-y-8 hidden">
+
+            <section id="search-section" class="space-y-8">
                 <div class="top-results">
                     <h2 class="text-lg font-semibold mb-4">Top result</h2>
-                    <div id="search-top-result" class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
+                    <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4">
                         <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">🎵</div>
                         <div>
                             <p class="font-semibold">No results yet</p>
@@ -415,103 +306,38 @@
                 </div>
                 <div class="songs-section">
                     <h2 class="text-lg font-semibold mb-4">Songs</h2>
-                    <div id="search-songs-list" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <!-- Dynamic placeholders -->
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Song 1</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Song 2</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Song 3</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Song 4</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                    <div class="songs-list grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Dynamic -->
                     </div>
                 </div>
                 <div class="artists-section">
                     <h2 class="text-lg font-semibold mb-4">Artists</h2>
-                    <div id="search-artists-list" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">A</div>
-                            <p class="font-semibold text-sm">Search Artist 1</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">B</div>
-                            <p class="font-semibold text-sm">Search Artist 2</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">C</div>
-                            <p class="font-semibold text-sm">Search Artist 3</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700">
-                            <div class="w-20 h-20 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl">D</div>
-                            <p class="font-semibold text-sm">Search Artist 4</p>
-                        </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Dynamic -->
                     </div>
                 </div>
                 <div class="albums-section">
                     <h2 class="text-lg font-semibold mb-4">Albums</h2>
-                    <div id="search-albums-list" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Album 1</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Album 2</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Album 3</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <div class="bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700">
-                            <div class="w-full h-32 bg-gray-600 rounded mb-2"></div>
-                            <p class="font-semibold text-sm">Search Album 4</p>
-                            <p class="text-gray-400 text-xs">Artist</p>
-                        </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Dynamic -->
                     </div>
                 </div>
                 <div class="browse-section">
                     <h2 class="text-lg font-semibold mb-4">Browse all</h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Pop</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Rock</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Hip-Hop</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Electronic</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Jazz</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Classical</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">R&B</div>
-                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer text-sm font-medium">Country</div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Pop</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Rock</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Hip-Hop</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Electronic</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Jazz</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Classical</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">R&B</div>
+                        <div class="bg-card rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Country</div>
                     </div>
                 </div>
-                <!-- End Search, add more empty divs -->
-                <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
             </section>
 
-            <!-- Library Section (Verbose) -->
-            <section id="library-section" class="space-y-8 hidden">
+            <section id="library-section" class="space-y-8">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-bold">Your Library</h1>
                     <div class="flex space-x-4 text-sm font-medium">
@@ -547,8 +373,6 @@
                         <p class="font-semibold text-sm">Jazz Essentials</p>
                         <p class="text-gray-400 text-xs">Album • Various Artists</p>
                     </div>
-                    <!-- Placeholders -->
-                    <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
                 </div>
                 <div class="recently-played">
                     <h2 class="text-lg font-semibold mb-4">Recently played</h2>
@@ -578,16 +402,11 @@
                             <p class="font-semibold text-sm">Electronic Beats</p>
                             <p class="text-gray-400 text-xs">Album • DJ Mix</p>
                         </div>
-                        <!-- Placeholders -->
-                        <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
                     </div>
                 </div>
-                <!-- End Library, placeholders -->
-                <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
             </section>
 
-            <!-- Account Overview (Verbose) -->
-            <section id="account-overview" class="space-y-6 hidden">
+            <section id="account-overview" class="space-y-6">
                 <h1 class="text-2xl font-bold mb-6">Account Overview</h1>
                 <div class="bg-card rounded-lg p-6 flex items-center space-x-4">
                     <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center font-bold text-lg">MP</div>
@@ -598,18 +417,9 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-6 text-center">
-                    <div>
-                        <p class="text-3xl font-bold text-primary">127</p>
-                        <p class="text-gray-400 text-sm">Liked Songs</p>
-                    </div>
-                    <div>
-                        <p class="text-3xl font-bold text-primary">23</p>
-                        <p class="text-gray-400 text-sm">Playlists</p>
-                    </div>
-                    <div>
-                        <p class="text-3xl font-bold text-primary">1,247</p>
-                        <p class="text-gray-400 text-sm">Hours Listened</p>
-                    </div>
+                    <div><p class="text-3xl font-bold text-primary">127</p><p class="text-gray-400 text-sm">Liked Songs</p></div>
+                    <div><p class="text-3xl font-bold text-primary">23</p><p class="text-gray-400 text-sm">Playlists</p></div>
+                    <div><p class="text-3xl font-bold text-primary">1,247</p><p class="text-gray-400 text-sm">Hours Listened</p></div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-3">Privacy</h3>
@@ -625,12 +435,9 @@
                         <li class="flex justify-between">Updated profile picture <span class="text-gray-500">1 week ago</span></li>
                     </ul>
                 </div>
-                <!-- Placeholders -->
-                <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
             </section>
 
-            <!-- Edit Profile Section (Verbose Form) -->
-            <section id="edit-profile-section" class="space-y-6 hidden">
+            <section id="edit-profile-section" class="space-y-6">
                 <h1 class="text-2xl font-bold mb-6">Edit Profile</h1>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Profile Picture</h3>
@@ -643,205 +450,75 @@
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Profile Information</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Display Name</label>
-                            <input type="text" value="Music Pioneer" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Username</label>
-                            <input type="text" value="@musicpioneer" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Bio</label>
-                            <textarea rows="3" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">Music lover exploring all genres 🎵</textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Country</label>
-                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                                <option>United States</option>
-                                <option>Canada</option>
-                                <option>United Kingdom</option>
-                                <option>Australia</option>
-                                <option>Germany</option>
-                                <option>France</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                        <div class="flex space-x-3">
-                            <button class="bg-primary text-white px-6 py-2 rounded hover:bg-green-600 text-sm">Save Changes</button>
-                            <button class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-600 text-sm">Cancel</button>
-                        </div>
+                        <div><label class="block text-sm font-medium mb-1">Display Name</label><input type="text" value="Music Pioneer" class="w-full px-3 py-2 bg-gray-700 rounded text-white"></div>
+                        <div><label class="block text-sm font-medium mb-1">Username</label><input type="text" value="@musicpioneer" class="w-full px-3 py-2 bg-gray-700 rounded text-white"></div>
+                        <div><label class="block text-sm font-medium mb-1">Bio</label><textarea rows="3" class="w-full px-3 py-2 bg-gray-700 rounded text-white">Music lover exploring all genres 🎵</textarea></div>
+                        <div><label class="block text-sm font-medium mb-1">Country</label><select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                            <option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option><option>Germany</option><option>France</option><option>Other</option>
+                        </select></div>
+                        <div class="flex space-x-3"><button class="bg-primary text-white px-6 py-2 rounded hover:bg-green-600">Save Changes</button><button class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-600">Cancel</button></div>
                     </div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Social Links</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Instagram</label>
-                            <input type="url" placeholder="https://instagram.com/" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Twitter</label>
-                            <input type="url" placeholder="https://twitter.com/" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Website</label>
-                            <input type="url" placeholder="https://example.com" class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                        </div>
+                        <div><label class="block text-sm font-medium mb-1">Instagram</label><input type="url" placeholder="https://instagram.com/" class="w-full px-3 py-2 bg-gray-700 rounded text-white"></div>
+                        <div><label class="block text-sm font-medium mb-1">Twitter</label><input type="url" placeholder="https://twitter.com/" class="w-full px-3 py-2 bg-gray-700 rounded text-white"></div>
+                        <div><label class="block text-sm font-medium mb-1">Website</label><input type="url" placeholder="https://example.com" class="w-full px-3 py-2 bg-gray-700 rounded text-white"></div>
                     </div>
                 </div>
-                <!-- Placeholders -->
-                <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
             </section>
 
-            <!-- Settings Section (Verbose Forms) -->
-            <section id="settings-section" class="space-y-6 hidden">
+            <section id="settings-section" class="space-y-6">
                 <h1 class="text-2xl font-bold mb-6">Settings</h1>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Audio Quality</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Streaming Quality</label>
-                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                                <option>High (320 kbps)</option>
-                                <option selected>Normal (160 kbps)</option>
-                                <option>Low (96 kbps)</option>
-                            </select>
-                        </div>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary">
-                            <span class="text-sm">Enable Autoplay</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary">
-                            <span class="text-sm">Crossfade between songs</span>
-                        </label>
+                        <div><label class="block text-sm font-medium mb-1">Streaming Quality</label><select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                            <option>High (320 kbps)</option><option selected>Normal (160 kbps)</option><option>Low (96 kbps)</option>
+                        </select></div>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="rounded border-gray-600 text-primary">Enable Autoplay</label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="rounded border-gray-600 text-primary">Crossfade between songs</label>
                     </div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Playback</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Volume Level</label>
-                            <input type="range" min="0" max="100" value="50" class="w-full">
-                            <div class="flex justify-between text-xs text-gray-400 mt-1">
-                                <span>Quiet</span>
-                                <span>Loud</span>
-                            </div>
-                        </div>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary">
-                            <span class="text-sm">Normalize volume</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary">
-                            <span class="text-sm">Gapless playback</span>
-                        </label>
+                        <div><label class="block text-sm font-medium mb-1">Volume Level</label><input type="range" min="0" max="100" value="50" class="w-full"><div class="flex justify-between text-xs text-gray-400"><span>Quiet</span><span>Loud</span></div></div>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="rounded border-gray-600 text-primary">Normalize volume</label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="rounded border-gray-600 text-primary">Gapless playback</label>
                     </div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Privacy</h3>
                     <div class="space-y-4">
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary mt-1">
-                            <div class="text-sm">
-                                <p>Make my playlists public</p>
-                                <p class="text-gray-400 text-sm">Others can see and follow your playlists</p>
-                            </div>
-                        </label>
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary mt-1">
-                            <div class="text-sm">
-                                <p>Show my listening activity</p>
-                                <p class="text-gray-400 text-sm">Let friends see what you're listening to</p>
-                            </div>
-                        </label>
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary mt-1">
-                            <div class="text-sm">
-                                <p>Allow explicit content</p>
-                                <p class="text-gray-400 text-sm">Show songs with explicit lyrics</p>
-                            </div>
-                        </label>
+                        <label class="flex items-start space-x-3"><input type="checkbox" class="rounded border-gray-600 text-primary mt-1"><div><p>Make my playlists public</p><p class="text-gray-400 text-sm">Others can see and follow your playlists</p></div></label>
+                        <label class="flex items-start space-x-3"><input type="checkbox" class="rounded border-gray-600 text-primary mt-1"><div><p>Show my listening activity</p><p class="text-gray-400 text-sm">Let friends see what you're listening to</p></div></label>
+                        <label class="flex items-start space-x-3"><input type="checkbox" class="rounded border-gray-600 text-primary mt-1"><div><p>Allow explicit content</p><p class="text-gray-400 text-sm">Show songs with explicit lyrics</p></div></label>
                     </div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Notifications</h3>
                     <div class="space-y-4">
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary mt-1">
-                            <div class="text-sm">
-                                <p>New music from artists you follow</p>
-                                <p class="text-gray-400 text-sm">Get notified when artists release new music</p>
-                            </div>
-                        </label>
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-600 text-primary focus:ring-primary mt-1">
-                            <div class="text-sm">
-                                <p>Playlist updates</p>
-                                <p class="text-gray-400 text-sm">When someone adds to your collaborative playlists</p>
-                            </div>
-                        </label>
+                        <label class="flex items-start space-x-3"><input type="checkbox" class="rounded border-gray-600 text-primary mt-1"><div><p>New music from artists you follow</p><p class="text-gray-400 text-sm">Get notified when artists release new music</p></div></label>
+                        <label class="flex items-start space-x-3"><input type="checkbox" class="rounded border-gray-600 text-primary mt-1"><div><p>Playlist updates</p><p class="text-gray-400 text-sm">When someone adds to your collaborative playlists</p></div></label>
                     </div>
                 </div>
                 <div class="bg-card rounded-lg p-6">
                     <h3 class="font-semibold mb-4">Language & Region</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Language</label>
-                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                                <option>English</option>
-                                <option>Spanish</option>
-                                <option>French</option>
-                                <option>German</option>
-                                <option>Portuguese</option>
-                                <option>Italian</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Country/Region</label>
-                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-1 focus:ring-primary">
-                                <option>United States</option>
-                                <option>Canada</option>
-                                <option>United Kingdom</option>
-                                <option>Australia</option>
-                                <option>Germany</option>
-                                <option>France</option>
-                            </select>
-                        </div>
+                        <div><label class="block text-sm font-medium mb-1">Language</label><select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                            <option>English</option><option>Spanish</option><option>French</option><option>German</option><option>Portuguese</option><option>Italian</option>
+                        </select></div>
+                        <div><label class="block text-sm font-medium mb-1">Country/Region</label><select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                            <option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option><option>Germany</option><option>France</option>
+                        </select></div>
                     </div>
                 </div>
                 <button class="w-full bg-primary text-white py-3 rounded-lg hover:bg-green-600 text-sm font-medium">Save All Settings</button>
-                <!-- Placeholders -->
-                <div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div><div class="h-0"></div>
             </section>
-            <!-- Now Playing Overlay (Like Test Site Mini Player) -->
-            <div id="now-playing" class="fixed bottom-20 left-0 right-0 bg-card p-4 hidden flex items-center space-x-4 z-50">
-                <img id="overlay-art" src="" alt="" class="w-12 h-12 rounded">
-                <div class="flex-1 min-w-0">
-                    <p id="overlay-title" class="font-semibold truncate text-sm"></p>
-                    <p id="overlay-artist" class="text-gray-400 text-xs truncate"></p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button id="overlay-prev" class="text-gray-400 hover:text-white p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5l-7 7m0 0l7 7m-7-7h16"></path></svg>
-                    </button>
-                    <button id="overlay-play-pause" class="bg-white text-black p-2 rounded-full">
-                        <svg id="overlay-play" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3 2a1 1 0 001.414-1.664l-3-2A1 1 0 009.555 7.168z" clip-rule="evenodd"></path></svg>
-                        <svg id="overlay-pause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                    </button>
-                    <button id="overlay-next" class="text-gray-400 hover:text-white p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-                    </button>
-                </div>
-                <div class="flex space-x-2 ml-auto">
-                    <button class="text-gray-400 hover:text-white p-1">Lyrics</button>
-                    <button class="text-gray-400 hover:text-white p-1">Queue</button>
-                </div>
-            </div>
 
-            <!-- Player Footer (Simple like Test Site) -->
-            <footer class="player fixed bottom-0 left-0 right-0 bg-card border-t border-gray-700 p-4 flex flex-col md:flex-row items-center justify-between z-10">
+            <footer class="player p-4 flex flex-col md:flex-row items-center justify-between z-10">
                 <div class="flex items-center space-x-3 w-full md:w-auto mb-4 md:mb-0">
                     <img id="player-art" src="" alt="" class="w-12 h-12 rounded hidden">
                     <div class="min-w-0 flex-1">
@@ -881,14 +558,12 @@
                 </div>
             </footer>
 
-            <!-- Hidden Audio -->
             <audio id="audio-player" class="hidden"></audio>
         </main>
     </div>
 
-    <!-- Full Script (Working Features) -->
     <script>
-        const API_BASE = 'https://annonymous-sage.vercel.app/api';
+        const API_BASE = 'https://annonymous-sage.vercel.app/';
         const sections = {
             home: document.getElementById('home-section'),
             search: document.getElementById('search-section'),
@@ -906,17 +581,14 @@
         const playerTitle = document.getElementById('player-title');
         const playerArtist = document.getElementById('player-artist');
         const playerArt = document.getElementById('player-art');
-        const overlayTitle = document.getElementById('overlay-title');
-        const overlayArtist = document.getElementById('overlay-artist');
-        const overlayArt = document.getElementById('overlay-art');
-        const nowPlaying = document.getElementById('now-playing');
-        const searchInput = document.getElementById('search-input');
-        const topHitsList = document.getElementById('top-hits-list');
-        const songsList = document.getElementById('songs-list');
-        const searchSongsList = document.getElementById('search-songs-list');
-        const likedBody = document.getElementById('liked-songs-body');
-        const recentBody = document.getElementById('recently-played-body');
-        const ownBody = document.getElementById('own-playlist-body');
+        const searchInput = document.querySelector('.search-input');
+        const topHitsList = document.querySelector('.top-hits-list');
+        const likedSongsBody = document.querySelector('#home-section .playlist-section:nth-child(6) tbody');
+        const recentlyPlayedBody = document.querySelector('#home-section .playlist-section:nth-child(7) tbody');
+        const ownPlaylistBody = document.querySelector('#home-section .playlist-section:nth-child(8) tbody');
+        const songsList = document.querySelector('#search-section .songs-list');
+        const artistsList = document.querySelector('#search-section .artists-section div');
+        const albumsList = document.querySelector('#search-section .albums-section div');
         const profileToggle = document.querySelector('.profile-toggle');
         const profileDropdown = document.querySelector('.profile-dropdown');
 
@@ -924,142 +596,185 @@
         let isPlaying = false;
         let queue = [];
 
+        // Navigation
+        document.querySelector('.home-link').addEventListener('click', (e) => { e.preventDefault(); showSection('home'); });
+        document.querySelector('.search-link').addEventListener('click', (e) => { e.preventDefault(); showSection('search'); });
+        document.querySelector('.library-link').addEventListener('click', (e) => { e.preventDefault(); showSection('library'); });
+        document.querySelector('.account-link').addEventListener('click', (e) => { e.preventDefault(); showSection('account'); });
+        document.querySelector('.profile-link').addEventListener('click', (e) => { e.preventDefault(); showSection('profile'); });
+        document.querySelector('.settings-link').addEventListener('click', (e) => { e.preventDefault(); showSection('settings'); });
+
         function showSection(key) {
             Object.values(sections).forEach(s => s.style.display = 'none');
             sections[key].style.display = 'block';
         }
 
-        function formatTime(sec) {
-            return `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, '0')}`;
+        // Time Formatting
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
+        // API Calls
         async function fetchSongs(query = 'top') {
             try {
-                const res = await fetch(`${API_BASE}/search/songs?query=${query}&page=1&per_page=20`);
-                const data = await res.json();
-                console.log('API Fetch:', data);
-                return data.data.results || [];
-            } catch (e) {
-                console.error('API Error:', e);
+                const response = await fetch(`${API_BASE}search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                return data.success ? data.data.songs.results : [];
+            } catch (error) {
+                console.error('Fetch error:', error);
                 return [];
             }
         }
 
-        function populateList(containerId, songs, type = 'song') {
-            const container = document.getElementById(containerId.replace('#', ''));
-            if (!container) return;
+        async function fetchSongDetails(songId) {
+            try {
+                const response = await fetch(`${API_BASE}songs?id=${songId}`);
+                const data = await response.json();
+                return data.success ? data.data[0] : null;
+            } catch (error) {
+                console.error('Song details error:', error);
+                return null;
+            }
+        }
+
+        // Populate Dynamic Content
+        function populateList(container, songs, type = 'song') {
             container.innerHTML = '';
-            songs.slice(0, 10).forEach((song, i) => {
-                const el = document.createElement(type === 'song' || type === 'album' ? 'div' : 'div');
-                el.className = 'bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-3';
-                el.innerHTML = `
-                    <img src="${song.image?.[2]?.url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM0RDRENEQiLz4KPC9zdmc+Cg=='}" alt="${song.name}" class="w-12 h-12 rounded object-cover">
-                    <div class="min-w-0 flex-1">
-                        <p class="font-semibold text-sm truncate">${song.name}</p>
-                        <p class="text-gray-400 text-xs truncate">${song.artists?.primary?.[0]?.name || 'Unknown'}</p>
+            songs.slice(0, 10).forEach(song => {
+                const div = document.createElement('div');
+                div.className = 'bg-card rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-4';
+                div.innerHTML = `
+                    <div class="w-16 h-16 bg-gray-600 rounded flex items-center justify-center">${type === 'song' ? song.name.charAt(0) : '🎵'}</div>
+                    <div>
+                        <p class="font-semibold text-sm">${song.name}</p>
+                        <p class="text-gray-400 text-sm">${song.artists?.primary?.[0]?.name || 'Unknown'}</p>
                     </div>
+                    ${type === 'song' ? `<span class="ml-auto text-gray-400">${formatTime(song.duration || 180)}</span>` : ''}
                 `;
-                el.onclick = () => playSong(song);
-                container.appendChild(el);
+                div.addEventListener('click', () => playSong(song));
+                container.appendChild(div);
             });
         }
 
-        function playSong(song) {
-            if (!song || !song.downloadUrl) {
-                console.error('No download URL');
-                return;
+        function populatePlaylist(body, songs) {
+            body.innerHTML = '';
+            songs.slice(0, 10).forEach((song, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-700 cursor-pointer';
+                tr.innerHTML = `
+                    <td class="py-3 text-sm">${index + 1}</td>
+                    <td class="py-3 text-sm font-medium">${song.name}</td>
+                    <td class="py-3 text-sm text-gray-400">${song.album?.name || 'Unknown'}</td>
+                    <td class="py-3 text-sm text-gray-400">Today</td>
+                    <td class="py-3 text-sm text-gray-400">${formatTime(song.duration || 180)}</td>
+                `;
+                tr.addEventListener('click', () => playSong(song));
+                body.appendChild(tr);
+            });
+        }
+
+        // Playback
+        async function playSong(song) {
+            const songData = await fetchSongDetails(song.id);
+            if (songData && songData.downloadUrl) {
+                currentSong = songData;
+                const url = songData.downloadUrl[songData.downloadUrl.length - 1]?.url || songData.downloadUrl[0]?.url;
+                audio.src = url;
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    playerTitle.textContent = songData.name;
+                    playerArtist.textContent = songData.artists?.primary?.[0]?.name || 'Unknown';
+                    playerArt.src = songData.image?.[2]?.url || 'https://via.placeholder.com/64';
+                    playerArt.classList.remove('hidden');
+                    queue.push(songData);
+                    console.log('Playing:', songData.name, 'URL:', url);
+                }).catch(error => console.error('Playback error:', error));
             }
-            currentSong = song;
-            const url = song.downloadUrl[song.downloadUrl.length - 1]?.url || song.downloadUrl[0]?.url;
-            if (!url) return;
-            audio.src = url;
-            audio.play();
-            isPlaying = true;
-            playIcon.style.display = 'none';
-            pauseIcon.style.display = 'block';
-            playerTitle.textContent = song.name;
-            playerArtist.textContent = song.artists?.primary?.[0]?.name || 'Unknown';
-            playerArt.src = song.image?.[2]?.url || '';
-            playerArt.classList.remove('hidden');
-            overlayTitle.textContent = song.name;
-            overlayArtist.textContent = song.artists?.primary?.[0]?.name || 'Unknown';
-            overlayArt.src = song.image?.[2]?.url || '';
-            nowPlaying.classList.remove('hidden');
-            queue.push(song);
-            console.log('Playing:', song.name, 'URL:', url);
         }
 
         // Event Listeners
-        document.querySelector('.home-link').onclick = (e) => { e.preventDefault(); showSection('home'); };
-        document.querySelector('.search-link').onclick = (e) => { e.preventDefault(); showSection('search'); };
-        document.querySelector('.library-link').onclick = (e) => { e.preventDefault(); showSection('library'); };
-        document.querySelector('.account-link').onclick = (e) => { e.preventDefault(); showSection('account'); };
-        document.querySelector('.profile-link').onclick = (e) => { e.preventDefault(); showSection('profile'); };
-        document.querySelector('.settings-link').onclick = (e) => { e.preventDefault(); showSection('settings'); };
-        profileToggle.onclick = () => profileDropdown.classList.toggle('hidden');
-        playPause.onclick = () => {
-            if (isPlaying) audio.pause(); else audio.play();
-        };
-        document.getElementById('prev').onclick = () => console.log('Prev');
-        document.getElementById('next').onclick = () => console.log('Next');
-        volume.oninput = (e) => audio.volume = e.target.value / 100;
-        progress.oninput = (e) => audio.currentTime = (e.target.value / 100) * audio.duration;
-        audio.ontimeupdate = () => {
-            if (audio.duration) {
-                const perc = (audio.currentTime / audio.duration) * 100;
-                progress.value = perc;
-                document.querySelector('.time-start') ? document.querySelector('.time-start').textContent = formatTime(audio.currentTime) : null;
-                document.querySelector('.time-end') ? document.querySelector('.time-end').textContent = formatTime(audio.duration) : null;
+        profileToggle.addEventListener('click', () => profileDropdown.classList.toggle('hidden'));
+
+        playPause.addEventListener('click', () => {
+            if (isPlaying) audio.pause();
+            else audio.play();
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            if (queue.length > 1) {
+                queue.shift();
+                playSong(queue[0]);
             }
-        };
-        audio.onplay = () => {
+        });
+
+        document.getElementById('next').addEventListener('click', () => {
+            if (queue.length > 1) {
+                playSong(queue[1]);
+                queue.shift();
+            }
+        });
+
+        volume.addEventListener('input', (e) => audio.volume = e.target.value / 100);
+        progress.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.value = percent;
+                document.querySelectorAll('.time-start').forEach(el => el.textContent = formatTime(audio.currentTime));
+                document.querySelectorAll('.time-end').forEach(el => el.textContent = formatTime(audio.duration));
+            }
+        });
+
+        audio.addEventListener('play', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-            document.getElementById('overlay-play').style.display = 'none';
-            document.getElementById('overlay-pause').style.display = 'block';
-        };
-        audio.onpause = () => {
+        });
+
+        audio.addEventListener('pause', () => {
             isPlaying = false;
             playIcon.style.display = 'block';
             pauseIcon.style.display = 'none';
-            document.getElementById('overlay-play').style.display = 'block';
-            document.getElementById('overlay-pause').style.display = 'none';
-        };
-        audio.onended = () => {
-            if (queue.length > 1) playSong(queue.shift());
-            else nowPlaying.classList.add('hidden');
-        };
-        searchInput.oninput = async (e) => {
-            const q = e.target.value.trim();
-            if (q.length > 2) {
-                const songs = await fetchSongs(q);
-                populateList('search-songs-list', songs, 'song');
-                populateList('search-artists-list', songs, 'artist');
-                populateList('search-albums-list', songs, 'album');
+        });
+
+        audio.addEventListener('ended', () => {
+            if (queue.length > 1) {
+                playSong(queue.shift());
+            } else {
+                playerTitle.textContent = 'No Song Playing';
+                playerArtist.textContent = 'Select a Song';
+                playerArt.classList.add('hidden');
             }
-        };
+        });
+
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                const songs = await fetchSongs(query);
+                populateList(songsList, songs, 'song');
+                populateList(artistsList, songs, 'artist');
+                populateList(albumsList, songs, 'album');
+                const topResult = songs[0] || { name: 'No results', artists: { primary: [{ name: 'Unknown' }] } };
+                document.querySelector('#search-section .top-results div p:nth-child(1)').textContent = topResult.name;
+                document.querySelector('#search-section .top-results div p:nth-child(2)').textContent = topResult.artists.primary[0].name || 'Unknown';
+            }
+        });
 
         // Initial Load
         async function init() {
             showSection('home');
             const topSongs = await fetchSongs('top hits');
-            populateList('top-hits-list', topSongs, 'song');
-            populateList('songs-list', topSongs, 'song');
-            // Populate playlists with top songs
-            [likedBody, recentBody, ownBody].forEach((body, i) => {
-                body.innerHTML = topSongs.slice(i*5, (i+1)*5).map((s, j) => `
-                    <tr class="hover:bg-gray-700 cursor-pointer">
-                        <td class="py-3 text-sm">${j+1}</td>
-                        <td class="py-3 text-sm font-medium">${s.name}</td>
-                        <td class="py-3 text-sm text-gray-400">${s.album?.name || 'Album'}</td>
-                        <td class="py-3 text-sm text-gray-400">${['Today', '2 hours ago', 'Yesterday'][i % 3]}</td>
-                        <td class="py-3 text-sm text-gray-400">${formatTime(s.duration || 200)}</td>
-                    </tr>
-                `).join('');
-            });
-            console.log('Initialized - All features working');
+            populateList(topHitsList, topSongs, 'song');
+            populatePlaylist(likedSongsBody, topSongs);
+            populatePlaylist(recentlyPlayedBody, topSongs);
+            populatePlaylist(ownPlaylistBody, topSongs);
         }
+
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
