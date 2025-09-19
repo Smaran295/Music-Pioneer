@@ -56,6 +56,41 @@
         .animate-delay-4 { animation-delay: 0.8s; animation-fill-mode: both; }
         .animate-delay-5 { animation-delay: 1s; animation-fill-mode: both; }
     </style>
+
+<style>
+
+/* --- MusicPioneer inline CSS (expanded for large prototype) --- */
+:root{--bg:#071018;--card:#0f1720;--muted:#9aa0b4;--accent:#8B5CF6;--accent2:#F59E0B;--text:#e6eef8}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:linear-gradient(180deg,#04050a 0%, #071018 100%);}
+header.site-header{display:flex;align-items:center;justify-content:space-between;padding:18px;border-bottom:1px solid rgba(255,255,255,0.03);background:linear-gradient(90deg,#061025,#071018)}
+.header-left{display:flex;align-items:center;gap:12px}
+.brand{font-weight:800;color:var(--accent);font-size:20px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.layout{display:flex;min-height:calc(100vh - 72px)}
+.sidebar{width:260px;padding:18px;border-right:1px solid rgba(255,255,255,0.03);background:rgba(6,6,10,0.6)}
+.sidebar nav a{display:block;color:var(--muted);padding:8px;border-radius:8px;text-decoration:none;margin-bottom:6px}
+.sidebar nav a:hover{background:rgba(255,255,255,0.02);color:var(--text)}
+.main{flex:1;padding:18px;overflow:auto}
+.card{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.03)}
+.search-input{width:100%;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.sidebar{display:none}}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+/* large prototype helpers */
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left;color:var(--muted)}
+.btn{padding:8px 10px;border-radius:8px;border:0;background:transparent;color:var(--text);cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff}
+.mini-player{position:fixed;left:12px;right:12px;bottom:12px;background:linear-gradient(90deg,rgba(8,9,12,0.98),rgba(6,7,10,0.98));display:flex;gap:12px;align-items:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);z-index:9999}
+.mini-player img{width:56px;height:56px;border-radius:6px;object-fit:cover}
+.progress{height:6px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;width:220px}
+.progress > div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 120ms linear}
+.small{font-size:13px;color:var(--muted)}
+.large-title{font-size:24px;font-weight:700;margin:0 0 8px 0}
+/* accessibility */
+:focus{outline:3px solid rgba(139,92,246,0.6);outline-offset:3px}
+
+</style>
 </head>
 <body class="bg-darker text-white overflow-hidden">
     <!-- Landing Page -->
@@ -3284,494 +3319,175 @@ document.addEventListener('DOMContentLoaded', ()=>{
 <!-- End Full API Integration Script -->
 
 
-<!-- =========================
-  MusicPioneer - Full JS & CSS Fix Bundle
-  - Adds: navigation, search (API), audio player, mini-player UI,
-          liked songs, recently played, profile/settings persistence,
-          accessibility enhancements, responsive tweaks, and error handling.
-  - Works with: https://annonymous-sage.vercel.app/api/search/songs?query=...
-========================= -->
-
-<style>
-/* Accessibility & small helpers */
-:focus { outline: 3px solid rgba(139,92,246,0.6); outline-offset: 2px; }
-.hidden { display: none !important; }
-/* Mini-player */
-#mp-mini { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
-  background: linear-gradient(180deg, rgba(10,10,20,0.98), rgba(6,6,10,0.95));
-  border-top: 1px solid rgba(255,255,255,0.04); padding:8px 12px; display:flex; gap:12px; align-items:center; }
-#mp-mini img { width:48px; height:48px; border-radius:6px; object-fit:cover; }
-#mp-mini .meta { flex:1; min-width:0; }
-#mp-mini .meta .title { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#mp-mini .meta .artist { font-size:12px; color:#c7c7d6; }
-#mp-mini .controls { display:flex; gap:8px; align-items:center; }
-#mp-progress-wrap { width:240px; max-width:38vw; background: rgba(255,255,255,0.04); height:6px; border-radius:6px; overflow:hidden; }
-#mp-progress { height:100%; width:0%; background: linear-gradient(90deg,#8B5CF6,#F59E0B); transition: width 120ms linear; }
-#mp-time { font-size:12px; color:#9aa0b4; min-width:64px; text-align:right; margin-left:8px; }
-
-/* Mobile responsive */
-@media (max-width: 880px) {
-  .sidebar-hidden-sm { display:none !important; }
-  #mp-mini { padding:8px; gap:8px; }
-  #mp-mini img { width:44px; height:44px; }
-}
-
-/* Search results layout tweaks */
-.search-song { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.search-song .left { display:flex; gap:12px; align-items:center; }
-.search-song img { width:48px; height:48px; border-radius:6px; object-fit:cover; }
-
-/* Small utilities */
-.btn { cursor:pointer; border:0; background:transparent; color:inherit; padding:6px 10px; border-radius:8px; }
-.btn:hover { background: rgba(255,255,255,0.02); }
-.card { background: #0f1116; border: 1px solid rgba(255,255,255,0.03); padding:10px; border-radius:8px; }
-.visually-hidden { position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap; }
-</style>
-
-<!-- Hidden audio element -->
-<audio id="audioPlayer" crossorigin="anonymous"></audio>
-
-<!-- Mini player UI -->
-<div id="mp-mini" class="hidden" role="region" aria-label="Now playing">
-  <img id="mp-cover" src="" alt="Album cover" loading="lazy">
-  <div class="meta">
-    <div class="title" id="mp-title">Not playing</div>
-    <div class="artist" id="mp-artist">—</div>
-  </div>
-  <div class="controls" role="group" aria-label="Player controls">
-    <button id="mp-prev" class="btn" aria-label="Previous">⏮</button>
-    <button id="mp-play" class="btn" aria-label="Play">▶</button>
-    <button id="mp-next" class="btn" aria-label="Next">⏭</button>
-    <div id="mp-progress-wrap" aria-hidden="true"><div id="mp-progress"></div></div>
-    <div id="mp-time" aria-live="polite">0:00 / 0:00</div>
-  </div>
-</div>
-
 <script>
-/* MusicPioneer: App JS - single-file for demo/proof-of-fix
-   - Uses annonymous-sage search endpoint for song discovery.
-   - Persists likes, recently played, profile/settings to localStorage.
-   - Defensive parsing and graceful fallbacks.
-*/
 
+/* --- MusicPioneer inline JS: search, playback, likes, recent, profile/settings --- */
 (function(){
   'use strict';
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from((r||document).querySelectorAll(s));
+  const apiBase = '/api'; // proxy endpoint on Vercel
+  const escapeHtml = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  // Helpers
-  const $ = (s, root=document) => root.querySelector(s);
-  const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
-  const escapeHtml = (str='') => String(str === null || str === undefined ? '' : str).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const tpl = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content; };
-
-  // Section map (IDs expected in your HTML)
-  const SECTIONS = {
-    landing: $('#landingPage'),
-    app: $('#mainApp'),
-    home: $('#homeContent'),
+  // sections expected in the big prototype; create fallbacks if not present
+  const sections = {
+    landing: $('#landingPage') || document.createElement('div'),
+    app: $('#mainApp') || document.createElement('div'),
     search: $('#searchContent'),
+    home: $('#homeContent'),
     liked: $('#likedSongsContent'),
     recent: $('#recentlyPlayedContent'),
     playlist: $('#yourPlaylistContent'),
-    account: $('#accountContent'),
     profile: $('#profileContent'),
-    settings: $('#settingsContent'),
-    library: $('#libraryContent')
+    settings: $('#settingsContent')
   };
 
-  function hideAllAppSections(){
-    Object.values(SECTIONS).forEach(s => { if(s && s !== SECTIONS.landing && s !== SECTIONS.app) s.classList.add('hidden'); });
+  function showSection(id){
+    // hide landing, show app container and target section; handle missing ids gracefully
+    const all = document.querySelectorAll('.page, .section');
+    all.forEach(el => el.classList.add('hidden'));
+    sections.app && sections.app.classList.remove('hidden');
+    const target = sections[id] || document.getElementById(id);
+    if(target) target.classList.remove('hidden');
+    if(id === 'liked') renderLiked();
+    if(id === 'recent') renderRecent();
+    if(id === 'profile') loadProfile();
   }
 
-  function showSection(name){
-    if(!SECTIONS[name]) return;
-    // show app shell
-    SECTIONS.landing && SECTIONS.landing.classList.add('hidden');
-    SECTIONS.app && SECTIONS.app.classList.remove('hidden');
-    hideAllAppSections();
-    SECTIONS[name].classList.remove('hidden');
-
-    // lazy updates for certain sections
-    if(name === 'liked') renderLikedSongs();
-    if(name === 'recent') renderRecentlyPlayed();
-    if(name === 'profile') loadProfileIntoForm();
-  }
-
-  // Wire main CTAs
+  // wire main controls if present
   $('#getStartedBtn')?.addEventListener('click', ()=> showSection('home'));
-  $('#learnMoreBtn')?.addEventListener('click', ()=> alert('MusicPioneer — demo with live search & playback integrations.'));
+  $('.brand')?.addEventListener('click', ()=> showSection('home'));
 
-  // Sidebar nav: attach click handlers to first nav in #mainApp
-  const navLinks = $$('#mainApp nav a');
-  navLinks.forEach(a => {
-    a.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      const txt = (a.textContent || '').trim().toLowerCase();
-      if(txt.includes('home')) showSection('home');
-      else if(txt.includes('search')) { showSection('search'); $('#mainSearchInput')?.focus(); }
-      else if(txt.includes('your library')) showSection('library');
+  // SEARCH: debounce + API call to /api/search/songs?query=...
+  const searchInput = $('#mainSearchInput') || $('#searchInput') || $('#mainSearch') || document.querySelector('input[type="search"]');
+  const resultsNode = $('#songResults') || $('#searchResults') || (function(){ const d=document.createElement('div'); d.id='dynamicSearchResults'; (searchInput?.parentNode||document.body).appendChild(d); return d; })();
+
+  let timer = null;
+  if(searchInput){
+    searchInput.addEventListener('input', e => {
+      const q = (e.target.value||'').trim();
+      clearTimeout(timer);
+      timer = setTimeout(()=> performSearch(q), 300);
     });
-  });
+  }
 
-  // Playlist quick links
-  $('#likedSongsLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('liked'); });
-  $('#recentlyPlayedLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('recent'); });
-  $('#yourPlaylistLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('playlist'); });
+  async function performSearch(q){
+    if(!q){ resultsNode.innerHTML = '<div class="card small">No results yet. Start searching.</div>'; return; }
+    resultsNode.innerHTML = '<div class="card small">Searching…</div>';
+    try{
+      const res = await fetch(apiBase + '/search/songs?query=' + encodeURIComponent(q) + '&limit=20');
+      if(!res.ok) throw new Error('Search failed ' + res.status);
+      const data = await res.json();
+      const songs = extractSongs(data);
+      renderSearchResults(songs);
+    }catch(err){
+      console.error(err);
+      resultsNode.innerHTML = '<div class="card small">Search error — check console.</div>';
+    }
+  }
 
-  // User dropdown toggle
-  $('#userMenuButton')?.addEventListener('click', ()=> { $('#userDropdown')?.classList.toggle('hidden'); });
-  document.addEventListener('click', (e)=> { if(!e.target.closest('#userMenuButton') && !e.target.closest('#userDropdown')) { $('#userDropdown')?.classList.add('hidden'); } });
-
-  // -------------------- Search Integration --------------------
-  const searchInput = $('#mainSearchInput');
-  const searchResultsArea = $('#searchResults');
-  const browseCategories = $('#browseCategories');
-  const topResult = $('#topResult');
-  const songResults = $('#songResults');
-  const artistResults = $('#artistResults');
-  const albumResults = $('#albumResults');
-
-  // Interpret API response to extract song-like objects
   function extractSongs(data){
     if(!data) return [];
     if(Array.isArray(data)) return data;
     if(Array.isArray(data.results)) return data.results;
     if(Array.isArray(data.songs)) return data.songs;
     if(Array.isArray(data.data)) return data.data;
-    // scan for arrays of objects with 'name' or 'title'
     for(const k of Object.keys(data)){
       if(Array.isArray(data[k]) && data[k].length && typeof data[k][0] === 'object' && (data[k][0].name || data[k][0].title)) return data[k];
     }
     return [];
   }
 
-  let searchTimer = null;
-  if(searchInput){
-    searchInput.addEventListener('input', (e)=>{
-      const q = (e.target.value || '').trim();
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(()=> performSearch(q), 300);
-    });
-  }
-
-  async function performSearch(query){
-    if(!query){
-      if(searchResultsArea) searchResultsArea.classList.add('hidden');
-      if(browseCategories) browseCategories.classList.remove('hidden');
-      return;
-    }
-    if(searchResultsArea) searchResultsArea.classList.remove('hidden');
-    if(browseCategories) browseCategories.classList.add('hidden');
-    topResult && (topResult.innerHTML = '<p class="text-gray-400">Searching…</p>');
-    songResults && (songResults.innerHTML = '<p class="text-gray-400">Loading songs…</p>');
-
-    try{
-      const url = `https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`;
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('Search failed: '+res.status);
-      const data = await res.json();
-      const songs = extractSongs(data);
-      // clear UI
-      topResult && (topResult.innerHTML = '');
-      songResults && (songResults.innerHTML = '');
-      artistResults && (artistResults.innerHTML = '');
-      albumResults && (albumResults.innerHTML = '');
-
-      if(songs.length === 0){
-        topResult && (topResult.innerHTML = '<p class="text-gray-400">No results found.</p>');
-        return;
-      }
-
-      // Top result
-      const first = songs[0];
-      const firstImg = first.image?.[2]?.url || first.image || first.cover || '';
-      topResult && (topResult.innerHTML = `
-        <div class="flex items-center gap-4">
-          <img src="${escapeHtml(firstImg)}" alt="${escapeHtml(first.name||first.title||'cover')}" loading="lazy" style="width:64px;height:64px;border-radius:8px;object-fit:cover;">
-          <div>
-            <div style="font-weight:700;">${escapeHtml(first.name||first.title||'Unknown')}</div>
-            <div style="color:#a8a8b3;">${escapeHtml(first.artists?.[0]?.name || first.artist || '')}</div>
-            <div style="margin-top:6px;"><button class="btn play-top" aria-label="Play top result">Play</button></div>
-          </div>
-        </div>
-      `);
-
-      // Songs list
-      songs.forEach((song, idx) => {
-        const img = song.image?.[2]?.url || song.image || song.cover || '';
-        const title = song.name || song.title || 'Unknown';
-        const artist = song.artists?.[0]?.name || song.artist || 'Unknown';
-        // derive playable media if present
-        const media = song.downloadUrl?.[0]?.url || song.media_url || song.url || song.streamingUrl || '';
-        const id = song.id || song.sid || song.songid || '';
-        const row = document.createElement('div');
-        row.className = 'search-song card';
-        row.innerHTML = `
-          <div class="left">
-            <div style="width:28px;text-align:center;color:#8B5CF6;font-weight:600">${idx+1}</div>
-            <img src="${escapeHtml(img)}" alt="${escapeHtml(title)}" loading="lazy">
-            <div style="min-width:0">
-              <div style="font-weight:600;color:white">${escapeHtml(title)}</div>
-              <div style="font-size:13px;color:#a8a8b3">${escapeHtml(artist)}</div>
-            </div>
+  function renderSearchResults(songs){
+    if(!songs || !songs.length){ resultsNode.innerHTML = '<div class="card small">No songs found</div>'; return; }
+    const html = songs.map((s, i) => {
+      const img = s.image?.[2]?.url || s.image || s.cover || '';
+      const title = escapeHtml(s.name || s.title || 'Unknown');
+      const artist = escapeHtml((s.artists && s.artists[0] && s.artists[0].name) || s.artist || 'Unknown');
+      const media = s.downloadUrl?.[0]?.url || s.media_url || s.url || s.streamingUrl || '';
+      const id = s.id || s.songid || s.sid || '';
+      return `<div class="card" data-media="${encodeURIComponent(media)}" data-id="${escapeHtml(id)}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="${escapeHtml(img)}" alt="${title}" style="width:64px;height:64px;border-radius:8px;object-fit:cover"/>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700">${title}</div>
+            <div class="small">${artist}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn play-btn" data-media="${encodeURIComponent(media)}" data-title="${escapeHtml(title)}" data-artist="${escapeHtml(artist)}" data-cover="${encodeURIComponent(img)}" aria-label="Play ${escapeHtml(title)}">▶</button>
-            <button class="btn like-btn" data-id="${escapeHtml(id|| (title+'|'+artist))}" data-title="${escapeHtml(title)}" data-artist="${escapeHtml(artist)}" data-cover="${encodeURIComponent(img)}" aria-label="Like ${escapeHtml(title)}">❤️</button>
+            <button class="btn play-btn" data-media="${encodeURIComponent(media)}" data-title="${title}" data-artist="${artist}">▶</button>
+            <button class="btn like-btn" data-id="${escapeHtml(id)}" data-title="${title}" data-artist="${artist}">❤️</button>
           </div>
-        `;
-        songResults.appendChild(row);
-      });
-
-      // attach top play handler
-      $('.play-top')?.addEventListener('click', ()=>{
-        const media = songs[0].downloadUrl?.[0]?.url || songs[0].media_url || songs[0].url || songs[0].streamingUrl || '';
-        if(media) player.playNow({url: media, title: songs[0].name||songs[0].title, artist: songs[0].artists?.[0]?.name || songs[0].artist, cover: songs[0].image?.[2]?.url || ''});
-        else alert('No playable preview for this track.');
-      });
-
-    }catch(err){
-      console.error('Search error', err);
-      topResult && (topResult.innerHTML = `<p class="text-red-400">Search error: ${escapeHtml(err.message)}</p>`);
-      songResults && (songResults.innerHTML = '');
-    }
+        </div>
+      </div>`;
+    }).join('');
+    resultsNode.innerHTML = html;
   }
 
-  // delegate play/like inside songResults
-  $('#songResults')?.addEventListener('click', (ev)=>{
-    const playBtn = ev.target.closest('.play-btn');
-    if(playBtn){
-      const media = decodeURIComponent(playBtn.dataset.media || '');
-      const title = playBtn.dataset.title;
-      const artist = playBtn.dataset.artist;
-      const cover = decodeURIComponent(playBtn.dataset.cover || '');
-      if(!media) return alert('No preview available for this track.');
-      player.playNow({url: media, title, artist, cover});
-      return;
-    }
-    const likeBtn = ev.target.closest('.like-btn');
-    if(likeBtn){
-      const id = likeBtn.dataset.id;
-      const title = likeBtn.dataset.title;
-      const artist = likeBtn.dataset.artist;
-      const cover = decodeURIComponent(likeBtn.dataset.cover || '');
-      toggleLike({id, title, artist, cover, media: ''});
-      return;
-    }
+  // delegate clicks for play / like
+  resultsNode.addEventListener('click', e => {
+    const p = e.target.closest('.play-btn');
+    if(p){ const media = decodeURIComponent(p.dataset.media||''); const title = p.dataset.title; const artist = p.dataset.artist; if(!media) return alert('No preview available'); player.playNow({url:media,title,artist,cover:''}); return; }
+    const l = e.target.closest('.like-btn');
+    if(l){ toggleLike({id:l.dataset.id,title:l.dataset.title,artist:l.dataset.artist}); return; }
   });
 
-  // -------------------- Player (queue + playback) --------------------
-  const audio = $('#audioPlayer');
-  const mpMini = $('#mp-mini');
-  const mpCover = $('#mp-cover');
-  const mpTitle = $('#mp-title');
-  const mpArtist = $('#mp-artist');
-  const mpPlayBtn = $('#mp-play');
-  const mpPrev = $('#mp-prev');
-  const mpNext = $('#mp-next');
-  const mpProgress = $('#mp-progress');
-  const mpTime = $('#mp-time');
+  // PLAYER: audio element + mini player UI (expect elements in prototype or create)
+  let audio = $('audio#audioPlayer') || document.createElement('audio');
+  audio.id = 'audioPlayer'; audio.crossOrigin = 'anonymous'; audio.preload = 'metadata';
+  if(!document.body.contains(audio)) document.body.appendChild(audio);
 
-  const player = {
-    queue: [], index: -1, playing:false,
-    playNow(track){
-      if(!track || !track.url) { alert('Playable URL not found'); return; }
-      this.queue = [track];
-      this.index = 0;
-      this._loadAndPlay(track);
-    },
-    enqueue(track){ this.queue.push(track); },
-    _loadAndPlay(track){
-      try{
-        audio.src = track.url;
-        audio.play().catch(e => console.warn('Playback prevented', e));
-        this.playing = true;
-        updateMini(track);
-        addToRecentlyPlayed(track);
-      }catch(e){ console.error(e); alert('Playback error'); }
-    },
-    playIndex(i){ if(i>=0 && i < this.queue.length){ this.index = i; this._loadAndPlay(this.queue[i]); } },
-    playNext(){ if(this.index + 1 < this.queue.length) this.playIndex(this.index + 1); else { audio.pause(); this.playing = false; } },
-    playPrev(){ if(this.index - 1 >= 0) this.playIndex(this.index - 1); }
-  };
+  const mini = document.querySelector('.mini-player') || (function(){ const m=document.createElement('div'); m.className='mini-player hidden'; m.innerHTML='<img id="mp_img"/><div style="flex:1"><div id="mp_title">Not playing</div><div id="mp_artist" class="small">—</div></div><div style="display:flex;gap:8px;align-items:center"><button id="mp_prev" class="btn">⏮</button><button id="mp_play" class="btn">▶</button><button id="mp_next" class="btn">⏭</button><div class="progress"><div id="mp_progress"></div></div><div id="mp_time" class="small">0:00 / 0:00</div></div>'; document.body.appendChild(m); return m; })();
 
-  function updateMini(track){
-    if(!track) return;
-    mpMini.classList.remove('hidden');
-    mpCover.src = track.cover || '';
-    mpCover.alt = track.title || 'cover';
-    mpTitle.textContent = track.title || 'Untitled';
-    mpArtist.textContent = track.artist || '';
-    mpPlayBtn.textContent = '⏸';
-  }
+  const mp_img = mini.querySelector('#mp_img'); const mp_title = mini.querySelector('#mp_title'); const mp_artist = mini.querySelector('#mp_artist');
+  const mp_play = mini.querySelector('#mp_play'); const mp_prev = mini.querySelector('#mp_prev'); const mp_next = mini.querySelector('#mp_next'); const mp_progress = mini.querySelector('#mp_progress'); const mp_time = mini.querySelector('#mp_time');
 
-  mpPlayBtn?.addEventListener('click', ()=>{
-    if(audio.paused){ audio.play(); mpPlayBtn.textContent='⏸'; } else { audio.pause(); mpPlayBtn.textContent='▶'; }
-  });
-  mpPrev?.addEventListener('click', ()=> player.playPrev());
-  mpNext?.addEventListener('click', ()=> player.playNext());
+  const player = { queue:[], index:-1, playNow(track){ if(!track||!track.url) return alert('No playable URL'); this.queue=[track]; this.index=0; this._play(track); }, _play(track){ audio.src = track.url; audio.play().catch(e=>console.warn('play prevented',e)); mp_img.src = track.cover||''; mp_title.textContent = track.title||'Unknown'; mp_artist.textContent = track.artist||''; mini.classList.remove('hidden'); addRecent(track); }, playNext(){ if(this.index+1 < this.queue.length) this.index++, this._play(this.queue[this.index]); else audio.pause(); }, playPrev(){ if(this.index-1>=0) this.index--, this._play(this.queue[this.index]); } };
 
-  audio?.addEventListener('timeupdate', ()=>{
-    const cur = audio.currentTime || 0;
-    const dur = audio.duration || 0;
-    const pct = dur ? (cur/dur)*100 : 0;
-    mpProgress.style.width = pct + '%';
-    mpTime.textContent = formatTime(cur) + ' / ' + (dur ? formatTime(dur) : '0:00');
-  });
-  audio?.addEventListener('ended', ()=> player.playNext());
-  audio?.addEventListener('play', ()=> mpPlayBtn.textContent = '⏸');
-  audio?.addEventListener('pause', ()=> mpPlayBtn.textContent = '▶');
+  mp_play.addEventListener('click', ()=> audio.paused ? audio.play() : audio.pause());
+  mp_prev.addEventListener('click', ()=> player.playPrev());
+  mp_next.addEventListener('click', ()=> player.playNext());
+  audio.addEventListener('timeupdate', ()=>{ const cur=audio.currentTime||0; const dur=audio.duration||0; const pct=dur?(cur/dur)*100:0; mp_progress.style.width=pct+'%'; mp_time.textContent = formatTime(cur) + ' / ' + (dur?formatTime(dur):'0:00'); });
+  audio.addEventListener('play', ()=> mp_play.textContent='⏸'); audio.addEventListener('pause', ()=> mp_play.textContent='▶'); audio.addEventListener('ended', ()=> player.playNext());
 
-  function formatTime(t){ if(!t || !isFinite(t)) return '0:00'; const m = Math.floor(t/60); const s = Math.floor(t%60); return `${m}:${String(s).padStart(2,'0')}`; }
+  function formatTime(t){ if(!t||!isFinite(t)) return '0:00'; const m=Math.floor(t/60); const s=Math.floor(t%60); return m+':'+String(s).padStart(2,'0'); }
 
-  // -------------------- Likes & Persistence --------------------
-  function getLikes(){ try{ return JSON.parse(localStorage.getItem('mp_likes') || '[]'); }catch(e){ return []; } }
-  function saveLikes(arr){ localStorage.setItem('mp_likes', JSON.stringify(arr)); }
-  function toggleLike(song){
-    const arr = getLikes();
-    const id = song.id || (song.title + '|' + song.artist);
-    const idx = arr.findIndex(x => x.id === id);
-    if(idx >= 0){ arr.splice(idx,1); saveLikes(arr); notify('Removed from Liked Songs'); }
-    else { const entry = { id, title: song.title, artist: song.artist, cover: song.cover || '', media: song.media || '', addedAt: new Date().toLocaleString() }; arr.push(entry); saveLikes(arr); notify('Added to Liked Songs'); }
-    // refresh liked view if open
-    if(!SECTIONS.liked.classList.contains('hidden')) renderLikedSongs();
-  }
+  // Likes & Recent (localStorage)
+  function getLikes(){ try{ return JSON.parse(localStorage.getItem('mp_likes')||'[]'); }catch(e){ return []; } }
+  function saveLikes(a){ localStorage.setItem('mp_likes', JSON.stringify(a)); }
+  function toggleLike(item){ const arr=getLikes(); const id=item.id||(item.title+'|'+item.artist); const idx=arr.findIndex(x=>x.id===id); if(idx>=0){ arr.splice(idx,1); saveLikes(arr); notify('Removed from Liked Songs'); } else { arr.push({id,title:item.title,artist:item.artist,cover:item.cover||'',media:item.media||'',addedAt:new Date().toLocaleString()}); saveLikes(arr); notify('Added to Liked Songs'); } renderLiked(); }
   window.toggleLike = toggleLike;
 
-  function renderLikedSongs(){
-    const list = getLikes();
-    const container = $('#likedSongsList');
-    if(!container) return;
-    container.innerHTML = '';
-    if(list.length === 0){ container.innerHTML = '<div class="p-4 text-gray-400">No liked songs yet. ❤️ songs from search to add here.</div>'; return; }
-    list.forEach((item, idx)=>{
-      const div = document.createElement('div');
-      div.className = 'grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 items-center';
-      div.innerHTML = `
-        <div class="col-span-1">${idx+1}</div>
-        <div class="col-span-5 flex items-center gap-3">
-          <img src="${escapeHtml(item.cover||'')}" alt="${escapeHtml(item.title)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover">
-          <div>
-            <div style="color:white;font-weight:600">${escapeHtml(item.title)}</div>
-            <div style="font-size:13px;color:#a8a8b3">${escapeHtml(item.artist)}</div>
-          </div>
-        </div>
-        <div class="col-span-3">${escapeHtml(item.album||'—')}</div>
-        <div class="col-span-2 text-xs">${escapeHtml(item.addedAt||'—')}</div>
-        <div class="col-span-1" style="display:flex;gap:6px;justify-end">
-          <button class="btn play-liked" data-media="${encodeURIComponent(item.media||'')}" data-title="${escapeHtml(item.title)}" data-artist="${escapeHtml(item.artist)}" aria-label="Play ${escapeHtml(item.title)}">▶</button>
-          <button class="btn remove-liked" data-id="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)}">🗑</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-    // attach handlers
-    container.querySelectorAll('.play-liked').forEach(btn => btn.addEventListener('click', ()=>{
-      const media = decodeURIComponent(btn.dataset.media || '');
-      const title = btn.dataset.title; const artist = btn.dataset.artist;
-      if(media) player.playNow({url: media, title, artist, cover: ''});
-      else alert('No preview available for this track.');
-    }));
-    container.querySelectorAll('.remove-liked').forEach(btn => btn.addEventListener('click', ()=>{
-      const id = btn.dataset.id; const arr = getLikes().filter(x => x.id !== id); saveLikes(arr); renderLikedSongs(); notify('Removed');
-    }));
-  }
+  function renderLiked(){ const list=getLikes(); const container = $('#likedSongsList') || document.createElement('div'); if(!$('#likedSongsList')){ container.id='likedSongsList'; (sections.liked||document.body).appendChild(container); } container.innerHTML=''; if(!list.length){ container.innerHTML='<div class="card small">No liked songs yet.</div>'; return; } list.forEach((it, idx)=>{ const row=document.createElement('div'); row.className='card'; row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${escapeHtml(it.title)}</strong><div class="small">${escapeHtml(it.artist)}</div></div><div style="display:flex;gap:8px"><button class="btn play-liked" data-media="${encodeURIComponent(it.media||'')}">▶</button><button class="btn remove-liked" data-id="${escapeHtml(it.id)}">🗑</button></div></div>`; container.appendChild(row); }); container.querySelectorAll('.play-liked').forEach(b=>b.addEventListener('click', ()=>{ const m=decodeURIComponent(b.dataset.media||''); if(m) player.playNow({url:m,title:'Liked',artist:'',cover:''}); else alert('No preview'); })); container.querySelectorAll('.remove-liked').forEach(b=>b.addEventListener('click', ()=>{ const id=b.dataset.id; const arr=getLikes().filter(x=>x.id!==id); saveLikes(arr); renderLiked(); })); }
 
-  // -------------------- Recently Played --------------------
-  function getRecent(){ try{ return JSON.parse(localStorage.getItem('mp_recent') || '[]'); }catch(e){ return []; } }
-  function saveRecent(arr){ localStorage.setItem('mp_recent', JSON.stringify(arr)); }
-  function addToRecentlyPlayed(track){
-    if(!track || !track.title) return;
-    const arr = getRecent();
-    // add simple object
-    arr.unshift({ title: track.title, artist: track.artist, cover: track.cover||'', media: track.url||'', playedAt: new Date().toLocaleString() });
-    if(arr.length > 200) arr.length = 200;
-    saveRecent(arr);
-  }
-  function renderRecentlyPlayed(){
-    const list = getRecent();
-    const container = $('#recentlyPlayedList');
-    if(!container) return;
-    container.innerHTML = '';
-    if(list.length === 0){ container.innerHTML = '<div class="p-4 text-gray-400">No recently played tracks.</div>'; return; }
-    list.forEach((it, idx)=>{
-      const div = document.createElement('div');
-      div.className = 'grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 items-center';
-      div.innerHTML = `
-        <div class="col-span-1">${idx+1}</div>
-        <div class="col-span-5 flex items-center gap-3">
-          <img src="${escapeHtml(it.cover||'')}" alt="${escapeHtml(it.title)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover">
-          <div><div style="color:white;font-weight:600">${escapeHtml(it.title)}</div><div style="font-size:13px;color:#a8a8b3">${escapeHtml(it.artist)}</div></div>
-        </div>
-        <div class="col-span-3">—</div>
-        <div class="col-span-2 text-xs">${escapeHtml(it.playedAt||'—')}</div>
-        <div class="col-span-1" style="display:flex;justify-end"><button class="btn play-recent" data-media="${encodeURIComponent(it.media||'')}">▶</button></div>
-      `;
-      container.appendChild(div);
-    });
-    container.querySelectorAll('.play-recent').forEach(b => b.addEventListener('click', ()=>{
-      const media = decodeURIComponent(b.dataset.media||'');
-      if(media) player.playNow({url: media, title:'Recently played', artist:'', cover:''});
-      else alert('No preview available');
-    }));
-  }
+  // Recent
+  function getRecent(){ try{ return JSON.parse(localStorage.getItem('mp_recent')||'[]'); }catch(e){ return []; } }
+  function saveRecent(a){ localStorage.setItem('mp_recent', JSON.stringify(a)); }
+  function addRecent(track){ if(!track||!track.title) return; const arr=getRecent(); arr.unshift({title:track.title,artist:track.artist,cover:track.cover||'',media:track.url||'',when:new Date().toLocaleString()}); if(arr.length>200) arr.length=200; saveRecent(arr); }
+  function renderRecent(){ const list=getRecent(); const container = $('#recentlyPlayedList') || document.createElement('div'); if(!$('#recentlyPlayedList')){ container.id='recentlyPlayedList'; (sections.recent||document.body).appendChild(container); } container.innerHTML=''; if(!list.length){ container.innerHTML='<div class="card small">No recently played</div>'; return; } list.forEach(it=>{ const r=document.createElement('div'); r.className='card'; r.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${escapeHtml(it.title)}</strong><div class="small">${escapeHtml(it.artist)}</div></div><div><button class="btn play-recent" data-media="${encodeURIComponent(it.media||'')}">▶</button></div></div>`; container.appendChild(r); }); container.querySelectorAll('.play-recent').forEach(b=>b.addEventListener('click', ()=>{ const m=decodeURIComponent(b.dataset.media||''); if(m) player.playNow({url:m,title:'Recent',artist:'',cover:''}); else alert('No preview'); })); }
 
-  // -------------------- Profile & Settings Persistence --------------------
-  function persistInputs(rootSelector, storagePrefix='mp_profile_'){
-    const root = document.querySelector(rootSelector);
-    if(!root) return;
-    const inputs = root.querySelectorAll('input,textarea,select');
-    inputs.forEach(inp => {
-      const key = storagePrefix + (inp.name || inp.id || inp.placeholder || inp.getAttribute('aria-label') || '');
-      const val = localStorage.getItem(key);
-      if(val !== null){
-        if(inp.type === 'checkbox') inp.checked = (val === 'true');
-        else inp.value = val;
-      }
-      inp.addEventListener('change', ()=> {
-        const v = inp.type === 'checkbox' ? inp.checked.toString() : inp.value;
-        localStorage.setItem(key, v);
-      });
-    });
-  }
+  // profile persistence
+  function loadProfile(){ const name=localStorage.getItem('mp_profile_name')||''; const bio=localStorage.getItem('mp_profile_bio')||''; if($('#profile_name')) $('#profile_name').value=name; if($('#profile_bio')) $('#profile_bio').value=bio; }
+  $('#saveProfile')?.addEventListener('click', ()=>{ if($('#profile_name')) localStorage.setItem('mp_profile_name',$('#profile_name').value); if($('#profile_bio')) localStorage.setItem('mp_profile_bio',$('#profile_bio').value); notify('Profile saved'); });
 
-  function loadProfileIntoForm(){ persistInputs('#profileContent'); }
+  // util notify
+  function notify(msg){ const n=document.createElement('div'); n.textContent=msg; n.style.position='fixed'; n.style.right='18px'; n.style.bottom='120px'; n.style.background='rgba(0,0,0,0.7)'; n.style.padding='8px 12px'; n.style.borderRadius='8px'; n.style.color='white'; n.style.zIndex='99999'; document.body.appendChild(n); setTimeout(()=>n.style.opacity='0',1400); setTimeout(()=>n.remove(),2000); }
 
-  // wire save buttons in profile & settings
-  $$('#profileContent button, #settingsContent button').forEach(btn => {
-    if((btn.textContent || '').toLowerCase().includes('save')){
-      btn.addEventListener('click', ()=>{
-        persistInputs('#profileContent');
-        persistInputs('#settingsContent');
-        notify('Saved settings');
-      });
+  // init: wire some prototype samples if sections exist
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // hydrate profile inputs
+    loadProfile();
+    // if home/top hits area exists, populate from API 'top hits' search
+    const topArea = $('#topHitsList') || $('#worldTopHits') || document.querySelector('.top-hits');
+    if(topArea){
+      // fetch a sample 'top hits' query (best-effort)
+      fetch(apiBase + '/search/songs?query=top hits&limit=8').then(r=>r.json()).then(d=>{ const s = extractSongs(d); if(!s||!s.length) return; topArea.innerHTML = ''; s.slice(0,8).forEach(t=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;gap:12px;align-items:center"><img src="${escapeHtml(t.image?.[2]?.url||t.image||t.cover||'')}" style="width:64px;height:64px;border-radius:8px;object-fit:cover"/><div><strong>${escapeHtml(t.name||t.title)}</strong><div class="small">${escapeHtml((t.artists&&t.artists[0]&&t.artists[0].name)||t.artist||'')}</div></div></div><div><button class="btn play-sample" data-media="${encodeURIComponent(t.downloadUrl?.[0]?.url||t.media_url||t.url||'')}" data-title="${escapeHtml(t.name||t.title)}">▶</button></div></div>`; topArea.appendChild(el); }); topArea.querySelectorAll('.play-sample').forEach(b=>b.addEventListener('click', ()=>{ const m=decodeURIComponent(b.dataset.media||''); if(m) player.playNow({url:m,title:b.dataset.title,artist:'',cover:''}); else alert('No preview'); })); }).catch(()=>{});
     }
   });
 
-  // -------------------- Small UI helpers --------------------
-  function notify(msg){ console.log('MP:', msg); const n = document.createElement('div'); n.textContent = msg; n.style.position='fixed'; n.style.right='18px'; n.style.bottom='110px'; n.style.background='rgba(0,0,0,0.7)'; n.style.padding='8px 12px'; n.style.borderRadius='8px'; n.style.color='white'; n.style.zIndex=9999; document.body.appendChild(n); setTimeout(()=> n.style.opacity='0', 1400); setTimeout(()=> n.remove(), 2000); }
+  // expose API for debug
+  window.MP = { performSearch, player, toggleLike, renderLiked, renderRecent };
+})(); 
 
-  // initial hydration: load recent/likes counts into UI badges if present
-  function hydrateCounts(){
-    const likes = getLikes(); const rec = getRecent();
-    // example: update any element showing counts (if in DOM can customize)
-    $$('#mainApp .badge-liked').forEach(el => el.textContent = likes.length);
-    $$('#mainApp .badge-recent').forEach(el => el.textContent = rec.length);
-  }
-
-  // on load
-  document.addEventListener('DOMContentLoaded', ()=>{
-    hydrateCounts();
-    // populate profile inputs
-    persistInputs('#profileContent');
-    // attach search placeholder behavior
-    if(searchInput && searchInput.value) performSearch(searchInput.value);
-  });
-
-  // Expose for debugging
-  window.MusicPioneer = { performSearch, player, toggleLike, getLikes: getLikes, getRecent };
-})();
 </script>
-<!-- END MusicPioneer Fix Bundle -->
-
 </body>
 </html>
