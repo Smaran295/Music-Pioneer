@@ -3490,33 +3490,484 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 </script>
 
-<audio id="audio" preload="none"></audio>
-<script>
-// MusicPioneer interactive script
-const searchInput=document.getElementById('search-input');
-const resultsDiv=document.getElementById('search-results');
-const audio=document.getElementById('audio');
-const nowPlaying=document.querySelector('.now-playing')||document.getElementById('nowPlaying');
-const playPause=document.querySelector('.play-btn')||document.getElementById('playPause');
-const progressBar=document.querySelector('.progress')||document.getElementById('progress');
-let queue=[],currentIndex=-1,likedSongs=JSON.parse(localStorage.getItem('likedSongs')||'[]');
-
-async function searchSongs(q){const r=await fetch(`/api/result/?query=${encodeURIComponent(q)}`);return r.json();}
-function renderSongs(container,songs){
-  container.innerHTML=songs.map((s,i)=>`<div class="song-item" data-index="${i}" data-id="${s.id}">${s.title} - ${s.artist||''}</div>`).join('');
-  container.querySelectorAll('.song-item').forEach(el=>{
-    el.addEventListener('click',()=>{currentIndex=parseInt(el.dataset.index);playSong(queue[currentIndex]);});
-  });
+<!-- BEGIN: MusicPioneer - Robust non-destructive frontend wiring (audio, search, playback, debug) -->
+<style id="mp-enhance-styles">
+/* Minimal helper styles for injected UI (non-destructive) */
+#mp-debug {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: 380px;
+  max-height: 60vh;
+  background: rgba(6,7,10,0.95);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #e6eef8;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 8px;
+  overflow: auto;
+  z-index: 99999;
+  border-radius: 8px;
 }
-async function loadTopHits(){try{const d=await searchSongs("top hits");queue=d.songs||d.results||[];if(document.getElementById('topHits'))renderSongs(document.getElementById('topHits'),queue);}catch(e){console.error(e);}}
-if(searchInput)searchInput.addEventListener('input',async e=>{const q=e.target.value.trim();if(q.length<3){if(resultsDiv)resultsDiv.innerHTML='<p>No results yet</p>';return;}try{const d=await searchSongs(q);queue=d.songs||d.results||[];if(resultsDiv)renderSongs(resultsDiv,queue);}catch(err){if(resultsDiv)resultsDiv.innerHTML='<p>Error</p>';}});
-function playSong(song){if(!song)return;audio.src=song.media_url||'';audio.play();if(nowPlaying)nowPlaying.textContent=song.title+' - '+(song.artist||'');if(playPause)playPause.textContent='⏸';}
-if(playPause)playPause.addEventListener('click',()=>{if(audio.paused){audio.play();playPause.textContent='⏸';}else{audio.pause();playPause.textContent='▶️';}});
-if(progressBar){const fill=progressBar.querySelector('div')||progressBar.firstElementChild;audio.addEventListener('timeupdate',()=>{if(fill){fill.style.width=(audio.currentTime/audio.duration*100)+'%';}});progressBar.addEventListener('click',e=>{const rect=progressBar.getBoundingClientRect();const pct=(e.clientX-rect.left)/rect.width;if(audio.duration)audio.currentTime=audio.duration*pct;});}
-document.querySelectorAll('.nav-link').forEach(link=>{link.addEventListener('click',e=>{e.preventDefault();document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');const target=link.getAttribute('href').slice(1);const el=document.getElementById(target);if(el)el.style.display='block';});});
-async function loadLiked(){const tbody=document.getElementById('liked-tbody');if(!tbody)return;tbody.innerHTML='';for(const id of likedSongs){try{const r=await fetch(`/api/song/?query=${id}`);const s=await r.json();tbody.innerHTML+=`<tr><td>${s.title}</td><td>${s.artist}</td></tr>`;}catch(e){}}}
-loadTopHits();loadLiked();
+#mp-debug h4 { margin: 0 0 6px 0; font-size: 13px; }
+#mp-debug pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow:auto; background: rgba(255,255,255,0.02); padding:6px; border-radius:4px; }
+#mp-debug .controls { display:flex; gap:6px; margin-bottom:6px; }
+#mp-debug button { background: linear-gradient(90deg,#7C3AED,#F59E0B); color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:12px; }
+#mp-status { font-size:12px; color:#9aa0b4; margin-bottom:6px; }
+.mp-hidden { display:none !important; }
+</style>
+
+<div id="mp-debug" aria-live="polite" role="status" class="mp-hidden" aria-hidden="true">
+  <h4>MusicPioneer — Debug & Tools</h4>
+  <div id="mp-status">Ready</div>
+  <div class="controls">
+    <button id="mp-toggle">Hide</button>
+    <button id="mp-test-api">Test /api/result/?query=test</button>
+    <button id="mp-show-json">Show last JSON</button>
+    <button id="mp-copy-sample">Copy sample JSON</button>
+  </div>
+  <div id="mp-last" style="margin-bottom:6px;"><strong>Last response:</strong></div>
+  <pre id="mp-json">No API calls yet.</pre>
+  <div style="margin-top:6px;font-size:11px;color:#9aa0b4">If API field names differ, click "Show last JSON", copy it and paste into chat so I can adapt parsing precisely.</div>
+</div>
+
+<script id="mp-enhance-script">
+(function(){
+  // Config
+  const API_BASE = '/api'; // proxy configured in vercel.json/proxy.js
+  const MIN_QUERY = 3;
+  const DEBOUNCE = 300;
+  const AUDIO_TYPES = ['audio/mpeg','audio/mp3','audio/aac','audio/ogg','audio/x-m4a','audio/m4a'];
+  let lastApiJson = null;
+
+  // Create hidden audio if missing
+  let audio = document.getElementById('mp_audio');
+  if(!audio){
+    audio = document.createElement('audio');
+    audio.id = 'mp_audio';
+    audio.preload = 'none';
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+  }
+
+  // find or create debug pane
+  let debug = document.getElementById('mp-debug');
+  if(debug){
+    debug.classList.remove('mp-hidden');
+    debug.setAttribute('aria-hidden','false');
+  }
+
+  const setStatus = (t) => {
+    const s = document.getElementById('mp-status');
+    if(s) s.textContent = t;
+    console.log('[MP Status]', t);
+  };
+
+  // helper: flexible JSON parser for search results
+  function extractArrayCandidates(json){
+    if(!json) return [];
+    const keys = ['songs','results','data','tracks','items','hits'];
+    for(const k of keys){
+      if(Array.isArray(json[k])) return json[k];
+    }
+    // sometimes nested under data.result or result.songs
+    for(const k in json){
+      if(Array.isArray(json[k])) return json[k];
+      if(json[k] && typeof json[k] === 'object'){
+        for(const k2 in json[k]){
+          if(Array.isArray(json[k][k2])) return json[k][k2];
+        }
+      }
+    }
+    // top-level array?
+    if(Array.isArray(json)) return json;
+    return [];
+  }
+
+  function normalizeSongObject(it){
+    if(!it || typeof it !== 'object') return null;
+    // common name candidates
+    const id = it.id || it.song_id || it.trackId || it.encodeId || it.key || it.link || it.perma || it.sid || null;
+    const title = it.title || it.name || it.song || it.track || it.trackName || it.heading || '';
+    const artist = it.artist || it.artists || (it.primary_artists? (Array.isArray(it.primary_artists)? it.primary_artists.join(', '): it.primary_artists) : '') || it.subtitle || '';
+    const artwork = it.image || it.albumCover || it.thumbnail || it.thumbnail_url || it.artwork || it.img || it.cover || '';
+    const duration = it.duration || it.duration_seconds || it.time || it.length || it.size || '';
+    // possible media fields
+    const mediaCandidates = ['media_url','mediaUrl','stream','stream_url','downloadUrl','download_url','url','file','audio','preview','file_link','src','link'];
+    let media = '';
+    for(const k of mediaCandidates){
+      if(it[k]){ media = it[k]; break; }
+    }
+    // sometimes media nested inside 'more_info' or 'download'
+    if(!media){
+      for(const k in it){
+        if(it[k] && typeof it[k] === 'object'){
+          for(const k2 of mediaCandidates){
+            if(it[k][k2]){ media = it[k][k2]; break; }
+          }
+          if(media) break;
+        }
+      }
+    }
+    return { id, title, artist, artwork, duration, media_url: media };
+  }
+
+  async function flexibleFetchJson(url){
+    setStatus('Fetching ' + url);
+    try{
+      const res = await fetch(url, {cache:'no-store'});
+      const contentType = res.headers.get('content-type') || '';
+      const text = await res.text();
+      let parsed = null;
+      try{ parsed = JSON.parse(text); }catch(e){ 
+        // if not JSON, try to wrap
+        parsed = { _raw: text, _contentType: contentType };
+      }
+      lastApiJson = parsed;
+      const jsonEl = document.getElementById('mp-json');
+      if(jsonEl) jsonEl.textContent = JSON.stringify(parsed, null, 2);
+      return { ok: res.ok, status: res.status, contentType, json: parsed };
+    }catch(err){
+      setStatus('Network error: ' + err.message);
+      const jsonEl = document.getElementById('mp-json');
+      if(jsonEl) jsonEl.textContent = 'Network error: ' + err.message;
+      console.error('MP fetch error', err);
+      throw err;
+    }
+  }
+
+  // search flow
+  let searchTimer = null;
+  function hookSearchInput(){
+    // try common selectors
+    const selectors = ['#mainSearchInput', '#searchInput', 'input[type="search"]', 'input[aria-label*="search"]', 'input[placeholder*="Search"]'];
+    let el = null;
+    for(const s of selectors){
+      el = document.querySelector(s);
+      if(el) break;
+    }
+    if(!el){
+      // fallback: first text input
+      el = document.querySelector('input[type="text"], input[type="search"]');
+    }
+    if(!el) { setStatus('Search input not found on page'); return; }
+    setStatus('Search input hooked');
+    el.addEventListener('input', (e)=>{
+      const v = (e.target.value || '').trim();
+      if(searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(()=> {
+        if(v.length < MIN_QUERY){ setStatus('Type 3+ chars to search'); return; }
+        performSearch(v);
+      }, DEBOUNCE);
+    });
+    // expose globally
+    window.MP_searchInput = el;
+  }
+
+  async function performSearch(q){
+    setStatus('Searching: ' + q);
+    try{
+      const r = await flexibleFetchJson(API_BASE + '/result/?query=' + encodeURIComponent(q));
+      if(!r.ok) { setStatus('Search failed: HTTP ' + r.status); return; }
+      const arr = extractArrayCandidates(r.json);
+      const normalized = arr.map(normalizeSongObject).filter(Boolean);
+      renderSearchResults(normalized);
+      setStatus('Search returned ' + normalized.length + ' items');
+    }catch(err){
+      setStatus('Search error: ' + err.message);
+    }
+  }
+
+  // Render results into existing page containers without changing layout
+  function renderSearchResults(list){
+    // target containers by common IDs
+    const topEl = document.getElementById('topResult');
+    const songsEl = document.getElementById('songResults') || document.getElementById('search-results') || document.getElementById('searchResults');
+    const artistsEl = document.getElementById('artistResults');
+    const albumsEl = document.getElementById('albumResults');
+
+    // clear
+    [topEl, songsEl, artistsEl, albumsEl].forEach(el=>{ if(el) el.innerHTML=''; });
+
+    if(!list || list.length === 0){
+      if(songsEl) songsEl.innerHTML = '<div style="color:#9aa0b4">No songs</div>';
+      return;
+    }
+
+    // top result
+    if(topEl){
+      const t = list[0];
+      topEl.innerHTML = `<div class="mp-top" aria-label="Top result" style="cursor:pointer;padding:8px;border-radius:6px;background:rgba(255,255,255,0.02)"><strong>${escapeHtml(t.title)}</strong><div style="color:#9aa0b4">${escapeHtml(t.artist)}</div></div>`;
+      topEl.querySelector('.mp-top').addEventListener('click', ()=> playFromList(list, 0));
+    }
+
+    if(songsEl){
+      const frag = document.createDocumentFragment();
+      list.forEach((s, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'song-item';
+        row.setAttribute('data-index', idx);
+        row.setAttribute('data-id', s.id || '');
+        row.setAttribute('role','button');
+        row.tabIndex = 0;
+        row.innerHTML = `<div style="min-width:0"><div style="font-weight:600">${escapeHtml(s.title)}</div><div style="color:#9aa0b4;font-size:12px">${escapeHtml(s.artist)}</div></div><div style="display:flex;gap:8px;align-items:center"><div style="font-size:12px;color:#9aa0b4">${escapeHtml(s.duration||'')}</div><button aria-label="Like" class="mp-like-btn">${likesIncludes(s.id)?'♥':'♡'}</button></div>`;
+        row.addEventListener('click', ()=> playFromList(list, idx));
+        row.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playFromList(list, idx); } });
+        frag.appendChild(row);
+      });
+      songsEl.appendChild(frag);
+      // attach like handlers
+      songsEl.querySelectorAll('.mp-like-btn').forEach(btn=>{
+        btn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          const row = ev.target.closest('.song-item');
+          const id = row?.getAttribute('data-id');
+          if(id) toggleLike(id, ev.target);
+        });
+      });
+    }
+
+    // simple artist tiles
+    if(artistsEl){
+      const seen = new Set();
+      const frag = document.createDocumentFragment();
+      list.slice(0,8).forEach(s=>{ if(seen.has(s.artist)) return; seen.add(s.artist); const el = document.createElement('div'); el.className='mp-artist'; el.style.padding='8px'; el.style.cursor='pointer'; el.innerHTML = `<strong>${escapeHtml(s.artist || 'Unknown')}</strong>`; el.addEventListener('click', ()=> performSearch(s.artist)); frag.appendChild(el); });
+      artistsEl.appendChild(frag);
+    }
+    if(albumsEl){
+      const frag = document.createDocumentFragment();
+      list.slice(0,8).forEach(s=>{ const el = document.createElement('div'); el.className='mp-album'; el.style.padding='8px'; el.style.cursor='pointer'; el.innerHTML=`<strong>${escapeHtml(s.title||'')}</strong>`; el.addEventListener('click', ()=> performSearch(s.title)); frag.appendChild(el); });
+      albumsEl.appendChild(frag);
+    }
+  }
+
+  // small utilities
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+  // Playback and queue
+  let queue = [];
+  let currentIndex = 0;
+
+  async function playFromList(list, idx){
+    if(!Array.isArray(list) || !list[idx]) return;
+    queue = list.slice(idx);
+    currentIndex = 0;
+    const s = queue[0];
+    await ensureAndPlay(s);
+  }
+
+  async function playById(id){
+    // try to find in rendered items
+    const el = document.querySelector('[data-id="'+id+'"]');
+    if(el){ const idx = parseInt(el.getAttribute('data-index')||'0'); return playFromList(queue, idx); }
+    // else call /api/song/?query=id
+    try{
+      const r = await flexibleFetchJson(API_BASE + '/song/?query=' + encodeURIComponent(id));
+      if(r.ok){
+        let item = r.json.song || r.json.data || r.json;
+        if(Array.isArray(item)) item = item[0];
+        const normalized = normalizeSongObject(item);
+        if(normalized) await ensureAndPlay(normalized);
+      } else {
+        setStatus('song endpoint failed: ' + r.status);
+      }
+    }catch(err){ setStatus('playById failed'); console.error(err); }
+  }
+
+  async function ensureAndPlay(s){
+    if(!s) return;
+    // try candidate URLs
+    let url = s.media_url || s.preview || s.url || s.stream || s.link || '';
+    // if url is relative (starts with /api), keep; if absolute and proxy exists it's ok
+    if(!url){
+      // try /api/song/?query=id
+      if(s.id){
+        try{
+          const r = await flexibleFetchJson(API_BASE + '/song/?query=' + encodeURIComponent(s.id));
+          if(r.ok){
+            let item = r.json.song || r.json.data || r.json;
+            if(Array.isArray(item)) item = item[0];
+            const norm = normalizeSongObject(item);
+            url = norm ? norm.media_url : url;
+          }
+        }catch(e){ console.warn('song endpoint error', e); }
+      }
+    }
+    // fallback: search by title + artist
+    if(!url && (s.title || s.artist)){
+      try{
+        const q = ((s.title||'') + ' ' + (s.artist||'')).trim();
+        if(q){
+          const r2 = await flexibleFetchJson(API_BASE + '/result/?query=' + encodeURIComponent(q));
+          if(r2.ok){
+            const arr = extractArrayCandidates(r2.json);
+            if(arr && arr.length){
+              const norm = normalizeSongObject(arr[0]);
+              if(norm && norm.media_url) url = norm.media_url;
+            }
+          }
+        }
+      }catch(e){ console.warn('fallback search failed', e); }
+    }
+
+    if(!url){
+      setStatus('No playable media URL found for this track.');
+      const jsonEl = document.getElementById('mp-json');
+      if(jsonEl) jsonEl.textContent = 'No playable media URL found. Last API JSON available above.';
+      alert('No playable media found via proxy for this track. Check mp-debug for API JSON.');
+      return;
+    }
+
+    // fetch media via proxy or direct URL, create blob URL, and play
+    try{
+      setStatus('Fetching media...');
+      const resp = await fetch(url);
+      if(!resp.ok){ setStatus('Media fetch failed: ' + resp.status); console.error('media fetch failed', resp); alert('Media fetch failed: ' + resp.status); return; }
+      const ctype = resp.headers.get('content-type') || '';
+      const isAudio = AUDIO_TYPES.some(t => ctype.includes(t)) || /\.(mp3|m4a|aac|ogg|wav)$/i.test(url);
+      if(!isAudio){
+        // still attempt if response seems binary; fallback: try to parse as arrayBuffer and play
+        console.warn('media content-type not recognized as audio:', ctype);
+      }
+      const ab = await resp.arrayBuffer();
+      const blob = new Blob([ab], { type: ctype || 'audio/mpeg' });
+      const blobUrl = URL.createObjectURL(blob);
+      audio.src = blobUrl;
+      await audio.play().catch(e=>{ console.warn('play failed', e); });
+      setStatus('Playing: ' + (s.title||s.id||'unknown'));
+      // update visible player text if present
+      const titleNode = document.querySelector('.now-playing') || document.getElementById('nowPlaying') || document.querySelector('.mini-title');
+      if(titleNode) titleNode.textContent = (s.title||'') + (s.artist? ' — ' + s.artist : '');
+      // update artwork if container found (non-destructive)
+      const artCandidates = ['.player-art','.artwork','.cover','.thumbnail','#coverArt'];
+      for(const sel of artCandidates){
+        const art = document.querySelector(sel);
+        if(art){
+          try{
+            art.innerHTML = '';
+            const img = document.createElement('img');
+            img.alt = s.title || 'Artwork';
+            img.src = s.artwork || '';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            art.appendChild(img);
+          }catch(e){ console.warn('art update failed', e); }
+          break;
+        }
+      }
+      // attach timeupdate to update progress bars if present
+      const progFill = document.querySelector('.progress > div') || document.querySelector('#progress > div');
+      if(progFill){
+        audio.addEventListener('timeupdate', ()=>{ if(audio.duration && !isNaN(audio.duration)) progFill.style.width = ((audio.currentTime/audio.duration)*100) + '%'; });
+      }
+    }catch(err){
+      console.error('ensureAndPlay error', err);
+      setStatus('Playback failed: see console');
+      alert('Playback failed — see console and mp-debug for details.');
+    }
+  }
+
+  // likes
+  function likesIncludes(id){ if(!id) return false; try{ return (Array.isArray(window._mp_likes) ? window._mp_likes.includes(id) : (Array.isArray(likes) ? likes.includes(id) : false)); }catch(e){ return false; } }
+  const likes = (function(){ try{ return JSON.parse(localStorage.getItem('mp_likes')||'[]'); }catch(e){ return []; } })();
+  function toggleLike(id, btn){
+    if(!id) return;
+    let arr = [];
+    try{ arr = JSON.parse(localStorage.getItem('mp_likes')||'[]'); }catch(e){ arr=[]; }
+    const idx = arr.indexOf(id);
+    if(idx === -1) arr.push(id); else arr.splice(idx,1);
+    localStorage.setItem('mp_likes', JSON.stringify(arr));
+    if(btn) btn.textContent = arr.includes(id)?'♥':'♡';
+    renderLikedList();
+  }
+  function renderLikedList(){
+    const container = document.getElementById('likedSongsList') || document.getElementById('liked-tbody');
+    if(!container) return;
+    if(container.tagName === 'TBODY'){
+      container.innerHTML = '';
+      let arr = [];
+      try{ arr = JSON.parse(localStorage.getItem('mp_likes')||'[]'); }catch(e){ arr=[]; }
+      if(!arr.length){ container.innerHTML = '<tr><td colspan="2" style="color:#9aa0b4">No liked songs</td></tr>'; return; }
+      arr.forEach(async (id, i)=>{
+        try{
+          const r = await flexibleFetchJson(API_BASE + '/song/?query=' + encodeURIComponent(id));
+          const item = r.json.song || r.json.data || r.json || {};
+          const norm = normalizeSongObject(item);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${escapeHtml(norm ? norm.title : id)}</td><td>${escapeHtml(norm ? norm.artist : '')}</td>`;
+          container.appendChild(tr);
+        }catch(e){ console.warn('liked fetch failed', e); }
+      });
+    } else {
+      // generic container
+      const wrapper = document.createElement('div');
+      let arr = [];
+      try{ arr = JSON.parse(localStorage.getItem('mp_likes')||'[]'); }catch(e){ arr=[]; }
+      if(!arr.length){ container.innerHTML = '<div style="color:#9aa0b4">No liked songs</div>'; return; }
+      container.innerHTML = '';
+      arr.forEach(id=>{
+        const el = document.createElement('div');
+        el.textContent = id;
+        container.appendChild(el);
+      });
+    }
+  }
+
+  // wire debug controls
+  function setupDebug(){
+    const toggle = document.getElementById('mp-toggle');
+    const testBtn = document.getElementById('mp-test-api');
+    const showBtn = document.getElementById('mp-show-json');
+    const copyBtn = document.getElementById('mp-copy-sample');
+    const debugBox = document.getElementById('mp-debug');
+    toggle.addEventListener('click', ()=> {
+      if(debugBox.classList.contains('mp-hidden')){ debugBox.classList.remove('mp-hidden'); debugBox.setAttribute('aria-hidden','false'); toggle.textContent='Hide'; }
+      else { debugBox.classList.add('mp-hidden'); debugBox.setAttribute('aria-hidden','true'); toggle.textContent='Show'; }
+    });
+    testBtn.addEventListener('click', async ()=>{
+      setStatus('Testing /api/result/?query=test');
+      try{
+        const r = await flexibleFetchJson(API_BASE + '/result/?query=test');
+        setStatus('Test complete — status ' + r.status);
+      }catch(e){ setStatus('Test failed'); }
+    });
+    showBtn.addEventListener('click', ()=>{
+      const el = document.getElementById('mp-json');
+      if(el) el.textContent = JSON.stringify(lastApiJson || 'No data yet', null, 2);
+    });
+    copyBtn.addEventListener('click', ()=>{
+      const el = document.getElementById('mp-json');
+      try{
+        navigator.clipboard.writeText(el ? el.textContent : '');
+        setStatus('Copied JSON to clipboard — paste it here for parser tuning.');
+      }catch(e){
+        setStatus('Copy failed — open mp-debug and copy manually.');
+      }
+    });
+  }
+
+  // expose helper to developers
+  window.MP = {
+    performSearch,
+    playById,
+    playFromList,
+    lastApiJson: () => lastApiJson,
+    setStatus
+  };
+
+  // init
+  setTimeout(()=>{
+    hookSearchInput();
+    setupDebug();
+    renderLikedList();
+    // try to load top hits:
+    (async ()=> { try{ const r = await flexibleFetchJson(API_BASE + '/result/?query=top hits'); if(r.ok){ const arr = extractArrayCandidates(r.json); const norm = arr.map(normalizeSongObject).filter(Boolean); const topContainer = document.getElementById('topHits') || document.getElementById('topHitsList') || document.getElementById('homeTopHits'); if(topContainer) renderSearchResults(norm); } }catch(e){ console.warn('top hits failed', e); } })();
+  }, 300);
+})();
 </script>
+<!-- END: MusicPioneer enhance -->
 
 </body>
 </html>
