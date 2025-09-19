@@ -4,446 +4,787 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Pioneer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1db954',
+                        background: '#121212',
+                        card: '#181818',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Add your CSS here. For example, to hide sections by default: */
+        body { background-color: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .hidden { display: none !important; }
         #search-section, #library-section, #account-overview, #edit-profile-section, #settings-section { display: none; }
-        /* Other styles for layout, grid, etc. */
+        /* Additional custom styles for music app theme */
+        .player { background-color: #181818; }
+        .sidebar { background-color: #000; }
+        .nav-link { @apply text-gray-300 hover:text-white; }
+        .active { @apply text-white font-bold; }
     </style>
 </head>
-<body>
-
-    <header>
-        <nav>
-            <div class="nav-icons">
-                🎵 🎶 🎼 🎤 🎸 🎹
-            </div>
-        </nav>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <!-- Header with icons -->
+    <header class="flex justify-center items-center p-4 bg-black">
+        <div class="flex space-x-2 text-2xl">
+            <span>🎵</span>
+            <span>🎶</span>
+            <span>🎼</span>
+            <span>🎤</span>
+            <span>🎸</span>
+            <span>🎹</span>
+        </div>
     </header>
 
-    <aside>
-        <div class="logo">
-            MusicPioneer
-        </div>
-        <ul>
-            <li><a href="#" class="home-link active">Home</a></li>
-            <li><a href="#" class="search-link">Search</a></li>
-            <li><a href="#" class="library-link">Your Library</a></li>
-        </ul>
-        <div class="playlists">
-            Playlists
-            <ul>
-                <li>Liked Songs</li>
-                <li>Recently Played</li>
-                <li>Your Own Playlist</li>
-            </ul>
-        </div>
-    </aside>
+    <!-- Main container -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 flex flex-col p-4 space-y-8 hidden md:flex">
+            <!-- Logo -->
+            <div class="text-2xl font-bold text-green-500 mb-8">
+                MusicPioneer
+            </div>
 
-    <main>
-        <div class="profile">
-            <div class="profile-icon">MP</div>
-            <ul>
-                <li class="account-link">Account</li>
-                <li class="profile-link">Profile</li>
-                <li class="settings-link">Settings</li>
-                <li>Log out</li>
-            </ul>
-        </div>
+            <!-- Navigation -->
+            <nav class="space-y-4">
+                <a href="#" class="home-link active nav-link block py-2 px-4 rounded-lg flex items-center space-x-3">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="search-link nav-link block py-2 px-4 rounded-lg flex items-center space-x-3">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4a5 5 0 00-5 5 5 5 0 005 5 5 5 0 005-5 5 5 0 00-5-5zm-6 9a7 7 0 1114 0 7 7 0 01-14 0z"></path><path d="M17.293 13.293a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414z"></path></svg>
+                    <span>Search</span>
+                </a>
+                <a href="#" class="library-link nav-link block py-2 px-4 rounded-lg flex items-center space-x-3">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8 4a3 3 0 00-3 3v6a3 3 0 006 0V7a3 3 0 00-3-3zm-2 4a1 1 0 110-2 1 1 0 010 2zm5-1v6a1 1 0 102 0V7a1 1 0 10-2 0z"></path></svg>
+                    <span>Your Library</span>
+                </a>
+            </nav>
 
-        <div id="home-section">
-            <div class="greeting">
-                Good evening
-                Ready to discover your next favorite song?
-            </div>
-            <div class="search-bar">
-                <input type="search" class="search-input" placeholder="What do you want to listen to?">
-            </div>
-            <div class="top-results">
-                Top result
-                <div></div>
-            </div>
-            <div class="songs">
-                Songs
-                <div></div>
-            </div>
-            <div class="artists">
-                Artists
-                <div></div>
-            </div>
-            <div class="albums">
-                Albums
-                <div></div>
-            </div>
-            <div class="browse-all">
-                Browse all
-                <div>Pop</div>
-                <div>Rock</div>
-                <div>Hip-Hop</div>
-                <div>Electronic</div>
-                <div>Jazz</div>
-                <div>Classical</div>
-                <div>R&B</div>
-                <div>Country</div>
-            </div>
-            <div class="top-hits">
-                World's Top Hits
-                <ul class="top-hits-list">
-                    <li>
-                        1 🌟 Blinding Lights The Weeknd 3:20
+            <!-- Playlists -->
+            <div class="mt-8">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Playlists</h3>
+                <ul class="space-y-2">
+                    <li class="playlist-item nav-link block py-2 px-4 rounded-lg flex items-center space-x-3 cursor-pointer hover:bg-gray-800">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17 3a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1h14zm-9 8a1 1 0 112 0v3a1 1 0 11-2 0v-3zM7 6a1 1 0 112 0v4a1 1 0 11-2 0V6zm10 7a1 1 0 100-2H7a1 1 0 100 2h10z"></path></svg>
+                        <span>Liked Songs</span>
                     </li>
-                    <li>
-                        2 💖 Shape of You Ed Sheeran 3:53
+                    <li class="playlist-item nav-link block py-2 px-4 rounded-lg flex items-center space-x-3 cursor-pointer hover:bg-gray-800">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Recently Played</span>
                     </li>
-                    <li>
-                        3 👑 Bohemian Rhapsody Queen 5:55
-                    </li>
-                    <li>
-                        4 💔 Someone Like You Adele 4:45
-                    </li>
-                    <li>
-                        5 🕺 Billie Jean Michael Jackson 4:54
+                    <li class="playlist-item nav-link block py-2 px-4 rounded-lg flex items-center space-x-3 cursor-pointer hover:bg-gray-800">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span>Your Own Playlist</span>
                     </li>
                 </ul>
             </div>
-            <div class="playlist-section">
-                PLAYLIST
-                Liked Songs
-                Music Pioneer • 127 songs
-                <div></div>
-                <table>
-                    <tr>
-                        # TITLE ALBUM DATE ADDED ⏱
-                    </tr>
-                    <tr>
-                        <td></td>
-                    </tr>
-                </table>
-            </div>
-            <div class="recently-played">
-                PLAYLIST
-                Recently Played
-                Music Pioneer • 45 songs
-                <div></div>
-                <table>
-                    <tr>
-                        # TITLE ALBUM PLAYED ⏱
-                    </tr>
-                    <tr>
-                        <td></td>
-                    </tr>
-                </table>
-            </div>
-            <div class="your-playlist">
-                🎵
-                PLAYLIST
-                Your Own Playlist
-                Music Pioneer • 23 songs
-                <div></div>
-                <table>
-                    <tr>
-                        # TITLE ALBUM DATE ADDED ⏱
-                    </tr>
-                    <tr>
-                        <td></td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div id="search-section">
-            /* The search results are moved here from home to separate. */
-            <div class="top-results">
-                Top result
-                <div></div>
-            </div>
-            <div class="songs">
-                Songs
-                <div class="songs-list"></div>
-            </div>
-            <div class="artists">
-                Artists
-                <div></div>
-            </div>
-            <div class="albums">
-                Albums
-                <div></div>
-            </div>
-            <div class="browse-all">
-                Browse all
-                <div>Pop</div>
-                <div>Rock</div>
-                <div>Hip-Hop</div>
-                <div>Electronic</div>
-                <div>Jazz</div>
-                <div>Classical</div>
-                <div>R&B</div>
-                <div>Country</div>
-            </div>
-        </div>
-
-        <div id="library-section">
-            Your Library
-            All Playlists Artists Albums
-            <div>
-                <div>
-                    Liked Songs
-                    127 songs
-                </div>
-                <div>
-                    🎵 Your Own Playlist
-                    Playlist • 23 songs
-                </div>
-                <div>
-                    🎸 Rock Classics
-                    Playlist • 50 songs
-                </div>
-                <div>
-                    🎤 Pop Hits 2024
-                    Playlist • 75 songs
-                </div>
-                <div>
-                    🎹 Jazz Essentials
-                    Album • Various Artists
+        </aside>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto p-6 bg-gray-900">
+            <!-- Profile Menu -->
+            <div class="profile-menu flex justify-end items-center mb-6">
+                <div class="relative">
+                    <button class="flex items-center space-x-2 bg-gray-800 rounded-full p-2 hover:bg-gray-700">
+                        <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center font-bold text-sm">MP</div>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg hidden profile-dropdown">
+                        <div class="py-1">
+                            <a href="#" class="account-link block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Account</a>
+                            <a href="#" class="profile-link block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Profile</a>
+                            <a href="#" class="settings-link block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Settings</a>
+                            <a href="#" class="logout-link block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">Log out</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-            Recently played
-            <div>
-                🎵 Midnight Vibes Album • Artist Name
-            </div>
-            <div>
-                🎸 Rock Classics Playlist • 50 songs
-            </div>
-            <div>
-                🎹 Jazz Essentials Album • Various Artists
-            </div>
-            <div>
-                🎤 Pop Hits 2024 Playlist • 75 songs
-            </div>
-            <div>
-                🎧 Electronic Beats Album • DJ Mix
-            </div>
-        </div>
 
-        <div id="account-overview">
-            Account Overview
-            <div>
-                MP
-                Music Pioneer
-                musicpioneer@email.com
-                Free Plan • Member since March 2024
-            </div>
-            <div>
-                127 Liked Songs
-                23 Playlists
-                1,247 Hours Listened
-            </div>
-            <div>
-                Privacy
-                Manage your privacy settings and data preferences.
-                Privacy Settings
-            </div>
-            <div>
-                Recent Activity
-                Liked "Blinding Lights" by The Weeknd 2 hours ago
-                Created playlist "Road Trip Vibes" 1 day ago
-                Followed artist "Dua Lipa" 3 days ago
-                Updated profile picture 1 week ago
-            </div>
-        </div>
+            <!-- Home Section -->
+            <section id="home-section" class="space-y-8">
+                <!-- Greeting -->
+                <div class="greeting text-center">
+                    <h1 class="text-2xl font-bold mb-2">Good evening</h1>
+                    <p class="text-gray-400">Ready to discover your next favorite song?</p>
+                </div>
 
-        <div id="edit-profile-section">
-            Edit Profile
-            <div>
-                Profile Picture
-                MP
-                Choose Photo
-                JPG, PNG or GIF. Max size 2MB.
-            </div>
-            <div>
-                Profile Information
-                Display Name
-                Username
-                Bio Music lover exploring all genres 🎵
-                Country
-                <select>
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>United Kingdom</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>Other</option>
-                </select>
-                Save Changes Cancel
-            </div>
-            <div>
-                Social Links
-                Instagram
-                Twitter
-                Website
-            </div>
-        </div>
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="relative max-w-md mx-auto">
+                        <input type="text" id="search-input" class="search-input w-full px-4 py-3 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="What do you want to listen to?">
+                        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </button>
+                    </div>
+                </div>
 
-        <div id="settings-section">
-            Settings
-            <div>
-                Audio Quality
-                Streaming Quality
-                <select>
-                    <option>High (320 kbps)</option>
-                    <option>Normal (160 kbps)</option>
-                    <option>Low (96 kbps)</option>
-                </select>
-                Enable Autoplay
-                Crossfade between songs
-            </div>
-            <div>
-                Playback
-                Volume Level Quiet Loud
-                Normalize volume
-                Gapless playback
-            </div>
-            <div>
-                Privacy
-                Make my playlists public Others can see and follow your playlists
-                Show my listening activity Let friends see what you're listening to
-                Allow explicit content Show songs with explicit lyrics
-            </div>
-            <div>
-                Notifications
-                New music from artists you follow Get notified when artists release new music
-                Playlist updates When someone adds to your collaborative playlists
-            </div>
-            <div>
-                Language & Region
-                Language
-                <select>
-                    <option>English</option>
-                    <option>Spanish</option>
-                    <option>French</option>
-                    <option>German</option>
-                    <option>Portuguese</option>
-                    <option>Italian</option>
-                </select>
-                Country/Region
-                <select>
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>United Kingdom</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                </select>
-            </div>
-            <button>Save All Settings</button>
-        </div>
+                <!-- Top Results Placeholder -->
+                <div class="top-results-section">
+                    <h2 class="text-lg font-semibold mb-4">Top result</h2>
+                    <div id="top-result-placeholder" class="bg-gray-800 rounded-lg p-4">
+                        <!-- Dynamic content here -->
+                    </div>
+                </div>
 
-        <footer class="player">
-            <div class="song-info">
-                🎵
-                Song Title
-                Artist Name
-            </div>
-            <div class="player-controls">
-                <button>Shuffle</button>
-                <button>Previous</button>
-                <button>Play</button>
-                <button>Next</button>
-                <button>Repeat</button>
-                <div class="time">
-                    1:23
-                    <progress value="30" max="100"></progress>
-                    3:45
+                <!-- Songs Section -->
+                <div class="songs-section">
+                    <h2 class="text-lg font-semibold mb-4">Songs</h2>
+                    <div id="songs-list" class="songs-list grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Dynamic songs here -->
+                    </div>
+                </div>
+
+                <!-- Artists Section -->
+                <div class="artists-section">
+                    <h2 class="text-lg font-semibold mb-4">Artists</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Static or dynamic artists -->
+                        <div class="bg-gray-800 rounded-lg p-4 text-center">
+                            <div class="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-2"></div>
+                            <p class="font-semibold">Artist Name</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Albums Section -->
+                <div class="albums-section">
+                    <h2 class="text-lg font-semibold mb-4">Albums</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Static or dynamic albums -->
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="w-full aspect-square bg-gray-700 rounded mb-2"></div>
+                            <p class="font-semibold">Album Title</p>
+                            <p class="text-gray-400 text-sm">Artist</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Browse All Genres -->
+                <div class="browse-section">
+                    <h2 class="text-lg font-semibold mb-4">Browse all</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Pop</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Rock</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Hip-Hop</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Electronic</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Jazz</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Classical</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">R&B</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Country</div>
+                    </div>
+                </div>
+
+                <!-- World's Top Hits -->
+                <div class="top-hits-section">
+                    <h2 class="text-lg font-semibold mb-4">World's Top Hits</h2>
+                    <ul id="top-hits-list" class="top-hits-list space-y-2">
+                        <li class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xl font-bold">1</span>
+                                <span>🌟</span>
+                                <div>
+                                    <p class="font-semibold">Blinding Lights</p>
+                                    <p class="text-gray-400 text-sm">The Weeknd</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400">3:20</span>
+                        </li>
+                        <li class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xl font-bold">2</span>
+                                <span>💖</span>
+                                <div>
+                                    <p class="font-semibold">Shape of You</p>
+                                    <p class="text-gray-400 text-sm">Ed Sheeran</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400">3:53</span>
+                        </li>
+                        <li class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xl font-bold">3</span>
+                                <span>👑</span>
+                                <div>
+                                    <p class="font-semibold">Bohemian Rhapsody</p>
+                                    <p class="text-gray-400 text-sm">Queen</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400">5:55</span>
+                        </li>
+                        <li class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xl font-bold">4</span>
+                                <span>💔</span>
+                                <div>
+                                    <p class="font-semibold">Someone Like You</p>
+                                    <p class="text-gray-400 text-sm">Adele</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400">4:45</span>
+                        </li>
+                        <li class="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xl font-bold">5</span>
+                                <span>🕺</span>
+                                <div>
+                                    <p class="font-semibold">Billie Jean</p>
+                                    <p class="text-gray-400 text-sm">Michael Jackson</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400">4:54</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Liked Songs Playlist -->
+                <div class="playlist-section">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span>PLAYLIST</span>
+                        <span class="ml-2 text-green-500">Liked Songs</span>
+                        <span class="ml-2 text-gray-400">Music Pioneer • 127 songs</span>
+                    </h3>
+                    <div class="mb-4">
+                        <!-- Cover image placeholder -->
+                        <div class="w-16 h-16 bg-gray-700 rounded"></div>
+                    </div>
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-2">#</th>
+                                <th class="text-left py-2">TITLE</th>
+                                <th class="text-left py-2">ALBUM</th>
+                                <th class="text-left py-2">DATE ADDED</th>
+                                <th class="text-left py-2">⏱</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liked-songs-tbody">
+                            <tr class="hover:bg-gray-800">
+                                <td class="py-2">1</td>
+                                <td class="py-2">Song Title</td>
+                                <td class="py-2">Album</td>
+                                <td class="py-2">Today</td>
+                                <td class="py-2 text-gray-400">3:20</td>
+                            </tr>
+                            <!-- More rows dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Recently Played Playlist -->
+                <div class="playlist-section">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span>PLAYLIST</span>
+                        <span class="ml-2 text-green-500">Recently Played</span>
+                        <span class="ml-2 text-gray-400">Music Pioneer • 45 songs</span>
+                    </h3>
+                    <div class="mb-4">
+                        <!-- Cover image placeholder -->
+                        <div class="w-16 h-16 bg-gray-700 rounded"></div>
+                    </div>
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-2">#</th>
+                                <th class="text-left py-2">TITLE</th>
+                                <th class="text-left py-2">ALBUM</th>
+                                <th class="text-left py-2">PLAYED</th>
+                                <th class="text-left py-2">⏱</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recently-played-tbody">
+                            <tr class="hover:bg-gray-800">
+                                <td class="py-2">1</td>
+                                <td class="py-2">Song Title</td>
+                                <td class="py-2">Album</td>
+                                <td class="py-2">2 hours ago</td>
+                                <td class="py-2 text-gray-400">3:45</td>
+                            </tr>
+                            <!-- More rows dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Your Own Playlist -->
+                <div class="playlist-section">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-2">🎵</span>
+                        <h3 class="text-lg font-semibold flex items-center">
+                            <span>PLAYLIST</span>
+                            <span class="ml-2 text-green-500">Your Own Playlist</span>
+                            <span class="ml-2 text-gray-400">Music Pioneer • 23 songs</span>
+                        </h3>
+                    </div>
+                    <div class="mb-4">
+                        <!-- Cover image placeholder -->
+                        <div class="w-16 h-16 bg-gray-700 rounded"></div>
+                    </div>
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-2">#</th>
+                                <th class="text-left py-2">TITLE</th>
+                                <th class="text-left py-2">ALBUM</th>
+                                <th class="text-left py-2">DATE ADDED</th>
+                                <th class="text-left py-2">⏱</th>
+                            </tr>
+                        </thead>
+                        <tbody id="own-playlist-tbody">
+                            <tr class="hover:bg-gray-800">
+                                <td class="py-2">1</td>
+                                <td class="py-2">Song Title</td>
+                                <td class="py-2">Album</td>
+                                <td class="py-2">Yesterday</td>
+                                <td class="py-2 text-gray-400">4:10</td>
+                            </tr>
+                            <!-- More rows dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- Search Section -->
+            <section id="search-section" class="space-y-8 hidden">
+                <h1 class="text-2xl font-bold mb-6">Search Results</h1>
+                <div class="top-results-section">
+                    <h2 class="text-lg font-semibold mb-4">Top result</h2>
+                    <div id="search-top-result" class="bg-gray-800 rounded-lg p-4">
+                        <!-- Dynamic -->
+                    </div>
+                </div>
+                <div class="songs-section">
+                    <h2 class="text-lg font-semibold mb-4">Songs</h2>
+                    <div id="search-songs-list" class="songs-list grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Dynamic -->
+                    </div>
+                </div>
+                <div class="artists-section">
+                    <h2 class="text-lg font-semibold mb-4">Artists</h2>
+                    <div id="search-artists" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Dynamic -->
+                    </div>
+                </div>
+                <div class="albums-section">
+                    <h2 class="text-lg font-semibold mb-4">Albums</h2>
+                    <div id="search-albums" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Dynamic -->
+                    </div>
+                </div>
+                <div class="browse-section">
+                    <h2 class="text-lg font-semibold mb-4">Browse all</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-4">
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Pop</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Rock</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Hip-Hop</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Electronic</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Jazz</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Classical</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">R&B</div>
+                        <div class="genre-item bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 cursor-pointer">Country</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Library Section -->
+            <section id="library-section" class="space-y-8 hidden">
+                <div class="library-header flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold">Your Library</h1>
+                    <div class="library-tabs flex space-x-4 text-sm">
+                        <button class="library-tab active-tab px-4 py-2 border-b-2 border-green-500">All</button>
+                        <button class="library-tab px-4 py-2 text-gray-400 hover:text-white">Playlists</button>
+                        <button class="library-tab px-4 py-2 text-gray-400 hover:text-white">Artists</button>
+                        <button class="library-tab px-4 py-2 text-gray-400 hover:text-white">Albums</button>
+                    </div>
+                </div>
+                <div class="library-grid grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                        <div class="w-12 h-12 bg-gray-700 rounded mx-auto mb-2 flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <p class="font-semibold">Liked Songs</p>
+                        <p class="text-gray-400 text-sm">127 songs</p>
+                    </div>
+                    <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                        <span class="text-2xl mb-2 block">🎵</span>
+                        <p class="font-semibold">Your Own Playlist</p>
+                        <p class="text-gray-400 text-sm">Playlist • 23 songs</p>
+                    </div>
+                    <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                        <span class="text-2xl mb-2 block">🎸</span>
+                        <p class="font-semibold">Rock Classics</p>
+                        <p class="text-gray-400 text-sm">Playlist • 50 songs</p>
+                    </div>
+                    <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                        <span class="text-2xl mb-2 block">🎤</span>
+                        <p class="font-semibold">Pop Hits 2024</p>
+                        <p class="text-gray-400 text-sm">Playlist • 75 songs</p>
+                    </div>
+                    <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                        <span class="text-2xl mb-2 block">🎹</span>
+                        <p class="font-semibold">Jazz Essentials</p>
+                        <p class="text-gray-400 text-sm">Album • Various Artists</p>
+                    </div>
+                </div>
+                <div class="recently-played-section">
+                    <h2 class="text-lg font-semibold mb-4">Recently played</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                            <span class="text-2xl mb-2 block">🎵</span>
+                            <p class="font-semibold">Midnight Vibes</p>
+                            <p class="text-gray-400 text-sm">Album • Artist Name</p>
+                        </div>
+                        <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                            <span class="text-2xl mb-2 block">🎸</span>
+                            <p class="font-semibold">Rock Classics</p>
+                            <p class="text-gray-400 text-sm">Playlist • 50 songs</p>
+                        </div>
+                        <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                            <span class="text-2xl mb-2 block">🎹</span>
+                            <p class="font-semibold">Jazz Essentials</p>
+                            <p class="text-gray-400 text-sm">Album • Various Artists</p>
+                        </div>
+                        <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                            <span class="text-2xl mb-2 block">🎤</span>
+                            <p class="font-semibold">Pop Hits 2024</p>
+                            <p class="text-gray-400 text-sm">Playlist • 75 songs</p>
+                        </div>
+                        <div class="item bg-gray-800 rounded-lg p-4 text-center">
+                            <span class="text-2xl mb-2 block">🎧</span>
+                            <p class="font-semibold">Electronic Beats</p>
+                            <p class="text-gray-400 text-sm">Album • DJ Mix</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Account Overview -->
+            <section id="account-overview" class="space-y-6 hidden">
+                <h1 class="text-2xl font-bold mb-6">Account Overview</h1>
+                <div class="profile-info flex items-center space-x-4 bg-gray-800 rounded-lg p-4">
+                    <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center font-bold text-lg">MP</div>
+                    <div>
+                        <h2 class="font-semibold">Music Pioneer</h2>
+                        <p class="text-gray-400">musicpioneer@email.com</p>
+                        <p class="text-sm text-gray-500">Free Plan • Member since March 2024</p>
+                    </div>
+                </div>
+                <div class="stats grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p class="text-2xl font-bold">127</p>
+                        <p class="text-gray-400">Liked Songs</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold">23</p>
+                        <p class="text-gray-400">Playlists</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold">1,247</p>
+                        <p class="text-gray-400">Hours Listened</p>
+                    </div>
+                </div>
+                <div class="privacy-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">Privacy</h3>
+                    <p class="text-gray-400 mb-2">Manage your privacy settings and data preferences.</p>
+                    <button class="text-green-500 hover:underline">Privacy Settings</button>
+                </div>
+                <div class="activity-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Recent Activity</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li class="text-gray-300">Liked "Blinding Lights" by The Weeknd <span class="text-gray-500">2 hours ago</span></li>
+                        <li class="text-gray-300">Created playlist "Road Trip Vibes" <span class="text-gray-500">1 day ago</span></li>
+                        <li class="text-gray-300">Followed artist "Dua Lipa" <span class="text-gray-500">3 days ago</span></li>
+                        <li class="text-gray-300">Updated profile picture <span class="text-gray-500">1 week ago</span></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Edit Profile -->
+            <section id="edit-profile-section" class="space-y-6 hidden">
+                <h1 class="text-2xl font-bold mb-6">Edit Profile</h1>
+                <div class="profile-pic-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Profile Picture</h3>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center font-bold text-lg">MP</div>
+                        <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Choose Photo</button>
+                        <p class="text-gray-400 text-sm">JPG, PNG or GIF. Max size 2MB.</p>
+                    </div>
+                </div>
+                <div class="profile-info-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Profile Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Display Name</label>
+                            <input type="text" class="w-full px-3 py-2 bg-gray-700 rounded text-white" value="Music Pioneer">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Username</label>
+                            <input type="text" class="w-full px-3 py-2 bg-gray-700 rounded text-white" value="@musicpioneer">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Bio</label>
+                            <textarea class="w-full px-3 py-2 bg-gray-700 rounded text-white" rows="3">Music lover exploring all genres 🎵</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Country</label>
+                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                                <option>United States</option>
+                                <option>Canada</option>
+                                <option>United Kingdom</option>
+                                <option>Australia</option>
+                                <option>Germany</option>
+                                <option>France</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Save Changes</button>
+                            <button class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="social-links-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Social Links</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Instagram</label>
+                            <input type="url" class="w-full px-3 py-2 bg-gray-700 rounded text-white" placeholder="https://instagram.com/">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Twitter</label>
+                            <input type="url" class="w-full px-3 py-2 bg-gray-700 rounded text-white" placeholder="https://twitter.com/">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Website</label>
+                            <input type="url" class="w-full px-3 py-2 bg-gray-700 rounded text-white" placeholder="https://example.com">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section id="settings-section" class="space-y-6 hidden">
+                <h1 class="text-2xl font-bold mb-6">Settings</h1>
+                <div class="audio-quality-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Audio Quality</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Streaming Quality</label>
+                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                                <option>High (320 kbps)</option>
+                                <option>Normal (160 kbps)</option>
+                                <option>Low (96 kbps)</option>
+                            </select>
+                        </div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="rounded">
+                            <span class="text-sm">Enable Autoplay</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="rounded">
+                            <span class="text-sm">Crossfade between songs</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="playback-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Playback</h3>
+                    <div class="space-y-4">
+                        <div class="volume-slider">
+                            <label class="block text-sm font-medium mb-1">Volume Level</label>
+                            <input type="range" min="0" max="100" value="50" class="w-full">
+                            <div class="flex justify-between text-xs text-gray-400">
+                                <span>Quiet</span>
+                                <span>Loud</span>
+                            </div>
+                        </div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="rounded">
+                            <span class="text-sm">Normalize volume</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="rounded">
+                            <span class="text-sm">Gapless playback</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="privacy-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Privacy</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-start space-x-2">
+                            <input type="checkbox" class="rounded mt-1">
+                            <div class="text-sm">
+                                <p>Make my playlists public</p>
+                                <p class="text-gray-400">Others can see and follow your playlists</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start space-x-2">
+                            <input type="checkbox" class="rounded mt-1">
+                            <div class="text-sm">
+                                <p>Show my listening activity</p>
+                                <p class="text-gray-400">Let friends see what you're listening to</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start space-x-2">
+                            <input type="checkbox" class="rounded mt-1">
+                            <div class="text-sm">
+                                <p>Allow explicit content</p>
+                                <p class="text-gray-400">Show songs with explicit lyrics</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="notifications-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Notifications</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-start space-x-2">
+                            <input type="checkbox" class="rounded mt-1">
+                            <div class="text-sm">
+                                <p>New music from artists you follow</p>
+                                <p class="text-gray-400">Get notified when artists release new music</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start space-x-2">
+                            <input type="checkbox" class="rounded mt-1">
+                            <div class="text-sm">
+                                <p>Playlist updates</p>
+                                <p class="text-gray-400">When someone adds to your collaborative playlists</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="language-section bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold mb-4">Language & Region</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Language</label>
+                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                                <option>English</option>
+                                <option>Spanish</option>
+                                <option>French</option>
+                                <option>German</option>
+                                <option>Portuguese</option>
+                                <option>Italian</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Country/Region</label>
+                            <select class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                                <option>United States</option>
+                                <option>Canada</option>
+                                <option>United Kingdom</option>
+                                <option>Australia</option>
+                                <option>Germany</option>
+                                <option>France</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-full bg-green-500 text-white py-3 rounded hover:bg-green-600">Save All Settings</button>
+            </section>
+            <!-- Now Playing Overlay (shows when playing) -->
+            <div id="now-playing-overlay" class="fixed bottom-20 left-0 right-0 bg-gray-800 p-4 hidden md:flex items-center space-x-4 z-50">
+                <div class="flex-shrink-0">
+                    <img id="now-playing-art" src="" alt="Album Art" class="w-16 h-16 rounded object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="now-playing-title" class="font-semibold truncate"></p>
+                    <p id="now-playing-artist" class="text-gray-400 text-sm truncate"></p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="prev-btn" class="text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z"></path></svg>
+                    </button>
+                    <button id="play-pause-btn" class="bg-white text-black p-1 rounded-full">
+                        <svg id="play-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 8a3 3 0 100 6 3 3 0 000-6z" fill="currentColor"></path><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812z" clip-rule="evenodd" fill="currentColor"></path></svg>
+                        <svg id="pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button id="next-btn" class="text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.555 14.832A1 1 0 0010 14v-2.798L5.555 10.168A1 1 0 004 10v4a1 1 0 001.555.832l6 4zM5.445 5.168A1 1 0 004 6v4a1 1 0 001.555.832L10 12.798V10.798l-5.445-3.63A1 1 0 005.445 5.168z"></path></svg>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 ml-4">
+                    <button class="text-gray-400 hover:text-white">Queue</button>
+                    <button class="text-gray-400 hover:text-white">Lyrics</button>
                 </div>
             </div>
-            <audio id="audio" controls></audio>
-            <div class="volume">
-                Volume
+
+            <!-- Queue/Lyrics Sidebar (hidden by default) -->
+            <div id="queue-lyrics-sidebar" class="fixed right-0 top-0 h-full w-80 bg-gray-800 hidden z-40">
+                <div class="p-4">
+                    <button id="close-sidebar" class="text-gray-400 hover:text-white mb-4">×</button>
+                    <div id="queue-content" class="space-y-2">
+                        <!-- Queue or Lyrics dynamic -->
+                    </div>
+                </div>
             </div>
-        </footer>
 
-    </main>
+            <!-- Player Footer -->
+            <footer class="player fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-4 flex flex-col md:flex-row items-center justify-between z-10">
+                <!-- Song Info -->
+                <div class="song-info flex items-center space-x-3 mb-4 md:mb-0 flex-1 md:flex-none">
+                    <img id="player-art" src="" alt="Album Art" class="w-12 h-12 rounded object-cover hidden">
+                    <div class="flex-1 min-w-0">
+                        <p id="player-title" class="font-semibold truncate text-sm">No song playing</p>
+                        <p id="player-artist" class="text-gray-400 text-xs truncate">Select a song</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-white md:hidden">...</button>
+                </div>
 
+                <!-- Controls -->
+                <div class="controls flex items-center space-x-4 mb-4 md:mb-0">
+                    <button id="shuffle-btn" class="control-btn text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                    <button id="prev-btn-footer" class="control-btn text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z"></path></svg>
+                    </button>
+                    <button id="play-pause-btn-footer" class="control-btn bg-white text-black p-2 rounded-full">
+                        <svg id="play-icon-footer" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
+                        <svg id="pause-icon-footer" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button id="next-btn-footer" class="control-btn text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.555 14.832A1 1 0 0010 14v-2.798L5.555 10.168A1 1 0 004 10v4a1 1 0 001.555.832l6 4zM5.445 5.168A1 1 0 004 6v4a1 1 0 001.555.832L10 12.798V10.798l-5.445-3.63A1 1 0 005.445 5.168z"></path></svg>
+                    </button>
+                    <button id="repeat-btn" class="control-btn text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-section flex-1 max-w-md mx-4 hidden md:block">
+                    <div class="time flex justify-between text-xs text-gray-400 mb-1">
+                        <span id="current-time">0:00</span>
+                        <span id="duration">0:00</span>
+                    </div>
+                    <input type="range" id="progress-bar" min="0" max="100" value="0" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Volume and Additional Controls -->
+                <div class="volume-section flex items-center space-x-2">
+                    <button class="text-gray-400 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2L3 7v10l7 5 7-5V7l-7-5z"></path></svg>
+                    </button>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" class="w-20 h-1 bg-gray-700 rounded appearance-none cursor-pointer">
+                    <div class="volume-icons flex space-x-1 text-gray-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.883 12.878a.5.5 0 00.707-.707L7.707 10l2.88-2.828a.5.5 0 10-.707-.707L7 9.293V5.5a.5.5 0 00-1 0v5a.5.5 0 00.5.5h3.293l-1.117 1.117a.5.5 0 00.707.707z"></path><path fill-rule="evenodd" d="M14.667 3.333L17 6v8l-2.333-2.667V16a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1.333L12 16v-8l2.667 2.667V4a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1.333z" clip-rule="evenodd"></path></svg>
+                        <svg class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.383 3.076A.5.5 0 019.5 3v1.398l1.658 1.658a.5.5 0 00.707-.707L10.707 4.9A3.498 3.498 0 009.5 3.098V3zM10.5 10.902V12a.5.5 0 00.5.5h1.398l1.657-1.657a.5.5 0 00-.707-.707L11.5 11.902A3.498 3.498 0 0010.5 12v-.098zM7.602 4.9a.5.5 0 00-.707.707L6.602 7.56A3.498 3.498 0 007.402 9H8.5a.5.5 0 00.5-.5V8.098l-1.898-1.898a.5.5 0 00-.707 0zM3.098 9.5A3.498 3.498 0 004.1 8.602L5.899 7.4a.5.5 0 00-.707-.707L4.102 7.098A3.498 3.498 0 003.098 9.5zM8.5 11.902V12a.5.5 0 00.5.5h1.398l1.657-1.657a.5.5 0 00-.707-.707L11.5 11.902A3.498 3.498 0 0010.5 12v-.098zM12 8.098V7a.5.5 0 00-.5-.5H9.402l1.658-1.658a.5.5 0 00-.707-.707L8.602 4.9A3.498 3.498 0 009.5 3.098V3a.5.5 0 00-.5.5V4.9l-1.898 1.898a.5.5 0 00.707.707L7.5 7.398V8.5a.5.5 0 00.5.5h1.402l-1.658 1.658a.5.5 0 00.707.707L9.898 11.1A3.498 3.498 0 0010.5 12v1.402a.5.5 0 00.5-.5V12a.5.5 0 00-.5-.5H8.5a.5.5 0 00-.5.5v1.402a.5.5 0 00.5.5H10a8 8 0 0016 0V8a8 8 0 00-16 0h-.5z" clip-rule="evenodd"></path></svg>
+                        <svg class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.383 3.076A.5.5 0 019.5 3v1.398l1.658 1.658a.5.5 0 00.707-.707L10.707 4.9A3.498 3.498 0 009.5 3.098V3zM10.5 10.902V12a.5.5 0 00.5.5h1.398l1.657-1.657a.5.5 0 00-.707-.707L11.5 11.902A3.498 3.498 0 0010.5 12v-.098zM7.602 4.9a.5.5 0 00-.707.707L6.602 7.56A3.498 3.498 0 007.402 9H8.5a.5.5 0 00.5-.5V8.098l-1.898-1.898a.5.5 0 00-.707 0zM3.098 9.5A3.498 3.498 0 004.1 8.602L5.899 7.4a.5.5 0 00-.707-.707L4.102 7.098A3.498 3.498 0 003.098 9.5zM8.5 11.902V12a.5.5 0 00.5.5h1.398l1.657-1.657a.5.5 0 00-.707-.707L11.5 11.902A3.498 3.498 0 0010.5 12v-.098zM12 8.098V7a.5.5 0 00-.5-.5H9.402l1.658-1.658a.5.5 0 00-.707-.707L8.602 4.9A3.498 3.498 0 009.5 3.098V3a.5.5 0 00-.5.5V4.9l-1.898 1.898a.5.5 0 00.707.707L7.5 7.398V8.5a.5.5 0 00.5.5h1.402l-1.658 1.658a.5.5 0 00.707.707L9.898 11.1A3.498 3.498 0 0010.5 12v1.402a.5.5 0 00.5-.5V12a.5.5 0 00-.5-.5H8.5a.5.5 0 00-.5.5v1.402a.5.5 0 00.5.5H10a8 8 0 0016 0V8a8 8 0 00-16 0h-.5zM4 4.5A2.5 2.5 0 016.5 7h3a.5.5 0 010 1h-3A2.5 2.5 0 014 7v-2.5zM12 10a2 2 0 01-2 2h-2a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v1z" clip-rule="evenodd"></path></svg>
+                    </div>
+                </div>
+            </footer>
+
+            <!-- Hidden Audio Element -->
+            <audio id="audio-player" class="hidden" controls></audio>
+        </main>
+    </div>
     <script>
+        // API Base URL
         const API_BASE = 'https://annonymous-sage.vercel.app/api';
 
-        // Fetch songs from API
-        async function fetchSongs(query) {
-            try {
-                const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                if (data.success) {
-                    return data.data.results;
-                } else {
-                    console.error('API error:', data.message);
-                    return [];
-                }
-            } catch (error) {
-                console.error('Fetch error:', error);
-                return [];
-            }
-        }
-
-        // Populate top hits on load
-        async function populateTopHits() {
-            const songs = await fetchSongs('top hits');
-            const list = document.querySelector('.top-hits-list');
-            list.innerHTML = '';
-            songs.slice(0, 5).forEach((song, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    ${index + 1} 🌟 ${song.name}
-                    ${song.artists.primary[0].name}
-                    ${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}
-                `;
-                li.onclick = () => playSong(song);
-                list.appendChild(li);
-            });
-        }
-
-        // Populate search results
-        async function populateSearchResults(songs) {
-            const songsList = document.querySelector('.songs-list');
-            if (songsList) {
-                songsList.innerHTML = '';
-                songs.forEach(song => {
-                    const div = document.createElement('div');
-                    div.innerHTML = `
-                        <img src="${song.image?.[2]?.url || ''}" alt="${song.name}">
-                        <p>${song.name}</p>
-                        <p>${song.artists.primary[0].name}</p>
-                    `;
-                    div.onclick = () => playSong(song);
-                    songsList.appendChild(div);
-                });
-            }
-        }
-
-        // Play song
-        async function playSong(song) {
-            try {
-                const res = await fetch(`${API_BASE}/songs?id=${song.id}`);
-                const data = await res.json();
-                if (data.success) {
-                    const audio = document.getElementById('audio');
-                    const highestQuality = data.data.downloadUrl[data.data.downloadUrl.length - 1].url;
-                    audio.src = highestQuality;
-                    audio.play();
-                    // Update player UI
-                    document.querySelector('.song-info').innerHTML = `
-                        🎵
-                        <span class="song-title">${song.name}</span>
-                        <span class="artist-name">${song.artists.primary[0].name}</span>
-                    `;
-                } else {
-                    console.error('API error:', data.message);
-                }
-            } catch (error) {
-                console.error('Fetch error:', error);
-            }
-        }
-
-        // Navigation
+        // DOM Elements
         const sections = {
             home: document.getElementById('home-section'),
             search: document.getElementById('search-section'),
@@ -453,11 +794,44 @@
             settings: document.getElementById('settings-section')
         };
 
-        function showSection(sectionId) {
-            Object.values(sections).forEach(sec => sec.style.display = 'none');
-            sections[sectionId].style.display = 'block';
+        const audio = document.getElementById('audio-player');
+        const playPauseBtn = document.getElementById('play-pause-btn-footer');
+        const playIcon = document.getElementById('play-icon-footer');
+        const pauseIcon = document.getElementById('pause-icon-footer');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const playerTitle = document.getElementById('player-title');
+        const playerArtist = document.getElementById('player-artist');
+        const playerArt = document.getElementById('player-art');
+        const searchInput = document.getElementById('search-input');
+        const topHitsList = document.getElementById('top-hits-list');
+        const songsList = document.getElementById('songs-list');
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const nowPlayingOverlay = document.getElementById('now-playing-overlay');
+        const queueLyricsSidebar = document.getElementById('queue-lyrics-sidebar');
+
+        let currentSong = null;
+        let isPlaying = false;
+        let queue = [];
+
+        // Utility Functions
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
+        function showSection(sectionKey) {
+            Object.values(sections).forEach(sec => sec.classList.add('hidden'));
+            sections[sectionKey].classList.remove('hidden');
+            // Update nav active
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            event?.target?.classList.add('active');
+        }
+
+        // Navigation Event Listeners
         document.querySelector('.home-link').addEventListener('click', (e) => {
             e.preventDefault();
             showSection('home');
@@ -483,20 +857,196 @@
             showSection('settings');
         });
 
-        // Search event
-        const searchInput = document.querySelector('.search-input');
+        // Profile Dropdown Toggle
+        document.querySelector('.profile-menu button').addEventListener('click', () => {
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        // API Fetch Function
+        async function fetchFromAPI(endpoint, params = {}) {
+            try {
+                const url = new URL(`${API_BASE}${endpoint}`);
+                Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                console.log('API Response:', data); // Logs for debugging
+                return data.success ? data.data : null;
+            } catch (error) {
+                console.error('API Error:', error);
+                return null;
+            }
+        }
+
+        // Search Functionality
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
-            if (query) {
-                const songs = await fetchSongs(query);
-                populateSearchResults(songs);
+            if (query.length < 2) return;
+            const results = await fetchFromAPI('/search/songs', { q: query });
+            if (results) {
+                populateList('#search-songs-list', results.results || [], 'song');
+                populateList('#search-artists', results.artists || [], 'artist');
+                populateList('#search-albums', results.albums || [], 'album');
             }
         });
 
-        // Initial setup
-        showSection('home');
-        populateTopHits();
-    </script>
+        // Populate List Function
+        function populateList(selector, items, type) {
+            const container = document.querySelector(selector);
+            if (!container) return;
+            container.innerHTML = '';
+            items.slice(0, 10).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 flex items-center space-x-3';
+                div.innerHTML = `
+                    <img src="${item.image?.[2]?.link || '/placeholder.jpg'}" alt="${item.name}" class="w-12 h-12 rounded object-cover">
+                    <div>
+                        <p class="font-semibold">${item.name}</p>
+                        <p class="text-gray-400 text-sm">${item.primary_artists?.[0]?.name || 'Various'}</p>
+                    </div>
+                `;
+                div.addEventListener('click', () => playSong(item));
+                container.appendChild(div);
+            });
+        }
 
+        // Populate Top Hits on Load
+        async function loadTopHits() {
+            const results = await fetchFromAPI('/search/songs', { q: 'top hits' });
+            if (results && topHitsList) {
+                topHitsList.innerHTML = '';
+                (results.results || []).slice(0, 5).forEach((song, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer';
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xl font-bold">${index + 1}</span>
+                            <span>🌟</span>
+                            <div>
+                                <p class="font-semibold">${song.name}</p>
+                                <p class="text-gray-400 text-sm">${song.primary_artists[0]?.name}</p>
+                            </div>
+                        </div>
+                        <span class="text-gray-400">${formatTime(song.duration || 200)}</span>
+                    `;
+                    li.addEventListener('click', () => playSong(song));
+                    topHitsList.appendChild(li);
+                });
+            }
+        }
+
+        // Play Song Function
+        async function playSong(song) {
+            if (!song) return;
+            currentSong = song;
+            const songDetails = await fetchFromAPI(`/song/${song.id}`);
+            if (songDetails && songDetails.download_urls) {
+                const highestQuality = Object.values(songDetails.download_urls).sort((a, b) => b.bitrate - a.bitrate)[0];
+                audio.src = highestQuality.link;
+                audio.load();
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                    nowPlayingOverlay.classList.remove('hidden');
+                    playerTitle.textContent = song.name;
+                    playerArtist.textContent = song.primary_artists[0]?.name;
+                    playerArt.src = song.image?.[2]?.link || '';
+                    document.getElementById('now-playing-title').textContent = song.name;
+                    document.getElementById('now-playing-artist').textContent = song.primary_artists[0]?.name;
+                    document.getElementById('now-playing-art').src = song.image?.[2]?.link || '';
+                    queue.push(song);
+                    console.log('Playing:', song.name); // Log
+                }).catch(err => console.error('Playback error:', err));
+            }
+        }
+
+        // Audio Event Listeners
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+        });
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+        });
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressBar.value = progress;
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                durationEl.textContent = formatTime(audio.duration);
+            }
+        });
+        audio.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+        audio.addEventListener('ended', () => {
+            // Play next in queue
+            const nextIndex = queue.indexOf(currentSong) + 1;
+            if (nextIndex < queue.length) {
+                playSong(queue[nextIndex]);
+            } else {
+                isPlaying = false;
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                nowPlayingOverlay.classList.add('hidden');
+            }
+        });
+
+        // Control Buttons
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play();
+            }
+        });
+
+        document.getElementById('prev-btn-footer').addEventListener('click', () => {
+            // Implement prev logic
+            console.log('Previous song');
+        });
+
+        document.getElementById('next-btn-footer').addEventListener('click', () => {
+            // Implement next logic
+            console.log('Next song');
+        });
+
+        progressBar.addEventListener('input', (e) => {
+            audio.currentTime = (e.target.value / 100) * audio.duration;
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            audio.volume = e.target.value / 100;
+            // Update volume icons logic here
+        });
+
+        // Sidebar Controls
+        document.querySelector('[data-action="queue"]').addEventListener('click', () => {
+            // Show queue
+            queueLyricsSidebar.querySelector('#queue-content').innerHTML = queue.map((song, i) => `<div>${i+1}. ${song.name}</div>`).join('');
+            queueLyricsSidebar.classList.remove('hidden');
+        });
+
+        document.querySelector('[data-action="lyrics"]').addEventListener('click', () => {
+            // Fetch and show lyrics
+            console.log('Lyrics for', currentSong?.name);
+        });
+
+        document.getElementById('close-sidebar').addEventListener('click', () => {
+            queueLyricsSidebar.classList.add('hidden');
+        });
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('home');
+            loadTopHits();
+            // Load playlists if API supports
+            console.log('App loaded'); // Log
+        });
+    </script>
 </body>
 </html>
