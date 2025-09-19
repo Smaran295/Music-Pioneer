@@ -3284,79 +3284,86 @@ document.addEventListener('DOMContentLoaded', ()=>{
 <!-- End Full API Integration Script -->
 
 
-<!-- BEGIN: MusicPioneer - Interactive App Script & Mini Player -->
+<!-- =========================
+  MusicPioneer - Full JS & CSS Fix Bundle
+  - Adds: navigation, search (API), audio player, mini-player UI,
+          liked songs, recently played, profile/settings persistence,
+          accessibility enhancements, responsive tweaks, and error handling.
+  - Works with: https://annonymous-sage.vercel.app/api/search/songs?query=...
+========================= -->
+
 <style>
-/* Mini-player styles */
-#miniPlayer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(10,10,20,0.95);
-  border-top: 1px solid rgba(255,255,255,0.04);
-  backdrop-filter: blur(6px);
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 60;
-  transform: translateY(110%);
-  transition: transform 260ms ease;
+/* Accessibility & small helpers */
+:focus { outline: 3px solid rgba(139,92,246,0.6); outline-offset: 2px; }
+.hidden { display: none !important; }
+/* Mini-player */
+#mp-mini { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: linear-gradient(180deg, rgba(10,10,20,0.98), rgba(6,6,10,0.95));
+  border-top: 1px solid rgba(255,255,255,0.04); padding:8px 12px; display:flex; gap:12px; align-items:center; }
+#mp-mini img { width:48px; height:48px; border-radius:6px; object-fit:cover; }
+#mp-mini .meta { flex:1; min-width:0; }
+#mp-mini .meta .title { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#mp-mini .meta .artist { font-size:12px; color:#c7c7d6; }
+#mp-mini .controls { display:flex; gap:8px; align-items:center; }
+#mp-progress-wrap { width:240px; max-width:38vw; background: rgba(255,255,255,0.04); height:6px; border-radius:6px; overflow:hidden; }
+#mp-progress { height:100%; width:0%; background: linear-gradient(90deg,#8B5CF6,#F59E0B); transition: width 120ms linear; }
+#mp-time { font-size:12px; color:#9aa0b4; min-width:64px; text-align:right; margin-left:8px; }
+
+/* Mobile responsive */
+@media (max-width: 880px) {
+  .sidebar-hidden-sm { display:none !important; }
+  #mp-mini { padding:8px; gap:8px; }
+  #mp-mini img { width:44px; height:44px; }
 }
-#miniPlayer.visible { transform: translateY(0%); }
-#miniPlayer img { width:48px; height:48px; border-radius:6px; object-fit:cover; }
-#miniPlayer .meta { flex: 1; min-width: 0; }
-#miniPlayer .meta .title { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#miniPlayer .meta .artist { font-size:12px; color: #c7c7d6; }
-#miniPlayer .controls { display:flex; gap:8px; align-items:center; }
-#miniPlayer .progress {
-  position: absolute;
-  left: 0; right: 0; bottom: 0; height:4px; background: rgba(255,255,255,0.06);
-}
-#miniPlayer .progress > div { height:100%; width:0%; background: linear-gradient(90deg, #8B5CF6, #F59E0B); transition: width 100ms linear; }
-#mp-time { font-size:12px; color:#9aa0b4; margin-left:8px; min-width:64px; text-align:right; }
-.mp-btn { background:transparent; border:0; color:white; padding:8px; border-radius:8px; cursor:pointer; }
-.mp-btn:hover { background: rgba(255,255,255,0.03); }
-@media (max-width:720px){
-  #miniPlayer .meta .title { font-size:13px; }
-  #miniPlayer img { width:44px; height:44px; }
-}
-/* small helper */
-.hidden { display:none !important; }
+
+/* Search results layout tweaks */
+.search-song { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.search-song .left { display:flex; gap:12px; align-items:center; }
+.search-song img { width:48px; height:48px; border-radius:6px; object-fit:cover; }
+
+/* Small utilities */
+.btn { cursor:pointer; border:0; background:transparent; color:inherit; padding:6px 10px; border-radius:8px; }
+.btn:hover { background: rgba(255,255,255,0.02); }
+.card { background: #0f1116; border: 1px solid rgba(255,255,255,0.03); padding:10px; border-radius:8px; }
+.visually-hidden { position:absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap; }
 </style>
 
-<!-- Hidden HTML5 audio element -->
-<audio id="mp-audio" crossorigin="anonymous"></audio>
+<!-- Hidden audio element -->
+<audio id="audioPlayer" crossorigin="anonymous"></audio>
 
-<!-- Mini Player UI -->
-<div id="miniPlayer" class="hidden" aria-hidden="true" role="region" aria-label="Music player">
-  <img id="mp-cover" src="" alt="cover">
+<!-- Mini player UI -->
+<div id="mp-mini" class="hidden" role="region" aria-label="Now playing">
+  <img id="mp-cover" src="" alt="Album cover" loading="lazy">
   <div class="meta">
     <div class="title" id="mp-title">Not playing</div>
     <div class="artist" id="mp-artist">—</div>
   </div>
-  <div class="controls">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <button id="mp-prev" class="mp-btn" title="Previous" aria-label="Previous">⏮</button>
-      <button id="mp-play" class="mp-btn" title="Play" aria-label="Play Pause">▶</button>
-      <button id="mp-next" class="mp-btn" title="Next" aria-label="Next">⏭</button>
-    </div>
-    <div style="width:160px; max-width:35vw; min-width:90px; margin-left:8px;">
-      <div class="progress" aria-hidden="true"><div id="mp-progress"></div></div>
-    </div>
-    <div id="mp-time">0:00 / 0:00</div>
+  <div class="controls" role="group" aria-label="Player controls">
+    <button id="mp-prev" class="btn" aria-label="Previous">⏮</button>
+    <button id="mp-play" class="btn" aria-label="Play">▶</button>
+    <button id="mp-next" class="btn" aria-label="Next">⏭</button>
+    <div id="mp-progress-wrap" aria-hidden="true"><div id="mp-progress"></div></div>
+    <div id="mp-time" aria-live="polite">0:00 / 0:00</div>
   </div>
 </div>
 
 <script>
-// MusicPioneer interactive script - vanilla JS
+/* MusicPioneer: App JS - single-file for demo/proof-of-fix
+   - Uses annonymous-sage search endpoint for song discovery.
+   - Persists likes, recently played, profile/settings to localStorage.
+   - Defensive parsing and graceful fallbacks.
+*/
+
 (function(){
-  // small helpers
+  'use strict';
+
+  // Helpers
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
-  const escapeHtml = (str='') => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const escapeHtml = (str='') => String(str === null || str === undefined ? '' : str).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const tpl = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content; };
 
-  // Sections map
+  // Section map (IDs expected in your HTML)
   const SECTIONS = {
     landing: $('#landingPage'),
     app: $('#mainApp'),
@@ -3371,416 +3378,400 @@ document.addEventListener('DOMContentLoaded', ()=>{
     library: $('#libraryContent')
   };
 
-  function hideAppSections(){ Object.values(SECTIONS).forEach(s=>{ if(s && s !== SECTIONS.landing && s !== SECTIONS.app) s.classList.add('hidden'); }); }
+  function hideAllAppSections(){
+    Object.values(SECTIONS).forEach(s => { if(s && s !== SECTIONS.landing && s !== SECTIONS.app) s.classList.add('hidden'); });
+  }
+
   function showSection(name){
-    // show app and the requested section
+    if(!SECTIONS[name]) return;
+    // show app shell
     SECTIONS.landing && SECTIONS.landing.classList.add('hidden');
     SECTIONS.app && SECTIONS.app.classList.remove('hidden');
-    hideAppSections();
-    if(SECTIONS[name]) SECTIONS[name].classList.remove('hidden');
-    // special: when opening liked, reload list
-    if(name === 'liked') loadLikedSongs();
-    if(name === 'profile') populateProfileFromStorage();
+    hideAllAppSections();
+    SECTIONS[name].classList.remove('hidden');
+
+    // lazy updates for certain sections
+    if(name === 'liked') renderLikedSongs();
+    if(name === 'recent') renderRecentlyPlayed();
+    if(name === 'profile') loadProfileIntoForm();
   }
 
-  // wire main CTA
-  $('#getStartedBtn')?.addEventListener('click', ()=> showSection('home') );
-  $('#learnMoreBtn')?.addEventListener('click', ()=> { alert('MusicPioneer — Learn more: This demo connects to an unofficial music API for search and playback.'); });
+  // Wire main CTAs
+  $('#getStartedBtn')?.addEventListener('click', ()=> showSection('home'));
+  $('#learnMoreBtn')?.addEventListener('click', ()=> alert('MusicPioneer — demo with live search & playback integrations.'));
 
-  // Sidebar nav (first nav in mainApp)
-  const sidebar = $('#mainApp > div'); // first child is sidebar
-  if(sidebar){
-    $$('nav a', sidebar).forEach(a=>{
-      const txt = (a.textContent||'').trim().toLowerCase();
-      a.addEventListener('click', (ev)=>{
-        ev.preventDefault();
-        if(txt.includes('home')) showSection('home');
-        else if(txt.includes('search')) { showSection('search'); $('#mainSearchInput')?.focus(); }
-        else if(txt.includes('your library')) showSection('library');
-      });
+  // Sidebar nav: attach click handlers to first nav in #mainApp
+  const navLinks = $$('#mainApp nav a');
+  navLinks.forEach(a => {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const txt = (a.textContent || '').trim().toLowerCase();
+      if(txt.includes('home')) showSection('home');
+      else if(txt.includes('search')) { showSection('search'); $('#mainSearchInput')?.focus(); }
+      else if(txt.includes('your library')) showSection('library');
     });
-  }
+  });
 
   // Playlist quick links
   $('#likedSongsLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('liked'); });
   $('#recentlyPlayedLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('recent'); });
   $('#yourPlaylistLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSection('playlist'); });
 
-  // Search integration
+  // User dropdown toggle
+  $('#userMenuButton')?.addEventListener('click', ()=> { $('#userDropdown')?.classList.toggle('hidden'); });
+  document.addEventListener('click', (e)=> { if(!e.target.closest('#userMenuButton') && !e.target.closest('#userDropdown')) { $('#userDropdown')?.classList.add('hidden'); } });
+
+  // -------------------- Search Integration --------------------
   const searchInput = $('#mainSearchInput');
-  const searchResults = $('#searchResults');
+  const searchResultsArea = $('#searchResults');
   const browseCategories = $('#browseCategories');
   const topResult = $('#topResult');
   const songResults = $('#songResults');
   const artistResults = $('#artistResults');
   const albumResults = $('#albumResults');
 
-  function findSongsInResponse(d){
-    if(!d) return [];
-    if(Array.isArray(d)) return d;
-    if(d.results && Array.isArray(d.results)) return d.results;
-    if(d.songs && Array.isArray(d.songs)) return d.songs;
-    if(d.data && Array.isArray(d.data.songs)) return d.data.songs;
-    // some wrappers: try top-level object values that are arrays of objects containing name/artist
-    for(const k of Object.keys(d)){
-      if(Array.isArray(d[k]) && d[k].length && typeof d[k][0] === 'object' && (d[k][0].name || d[k][0].title)) return d[k];
+  // Interpret API response to extract song-like objects
+  function extractSongs(data){
+    if(!data) return [];
+    if(Array.isArray(data)) return data;
+    if(Array.isArray(data.results)) return data.results;
+    if(Array.isArray(data.songs)) return data.songs;
+    if(Array.isArray(data.data)) return data.data;
+    // scan for arrays of objects with 'name' or 'title'
+    for(const k of Object.keys(data)){
+      if(Array.isArray(data[k]) && data[k].length && typeof data[k][0] === 'object' && (data[k][0].name || data[k][0].title)) return data[k];
     }
     return [];
   }
 
-  let searchDebounce = null;
+  let searchTimer = null;
   if(searchInput){
     searchInput.addEventListener('input', (e)=>{
-      const q = e.target.value || '';
-      clearTimeout(searchDebounce);
-      searchDebounce = setTimeout(()=> performSearch(q.trim()), 320);
+      const q = (e.target.value || '').trim();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(()=> performSearch(q), 300);
     });
   }
 
   async function performSearch(query){
     if(!query){
-      if(searchResults) searchResults.classList.add('hidden');
+      if(searchResultsArea) searchResultsArea.classList.add('hidden');
       if(browseCategories) browseCategories.classList.remove('hidden');
       return;
     }
-    if(searchResults) searchResults.classList.remove('hidden');
+    if(searchResultsArea) searchResultsArea.classList.remove('hidden');
     if(browseCategories) browseCategories.classList.add('hidden');
+    topResult && (topResult.innerHTML = '<p class="text-gray-400">Searching…</p>');
+    songResults && (songResults.innerHTML = '<p class="text-gray-400">Loading songs…</p>');
 
-    // loading state
-    if(topResult) topResult.innerHTML = '<p class="text-gray-400">Searching…</p>';
-    if(songResults) songResults.innerHTML = '<p class="text-gray-400">Loading songs…</p>';
     try{
       const url = `https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`;
       const res = await fetch(url);
+      if(!res.ok) throw new Error('Search failed: '+res.status);
       const data = await res.json();
-      console.log('API response:', data);
-      const songs = findSongsInResponse(data);
-      topResult.innerHTML = '';
-      songResults.innerHTML = '';
-      artistResults.innerHTML = '';
-      albumResults.innerHTML = '';
+      const songs = extractSongs(data);
+      // clear UI
+      topResult && (topResult.innerHTML = '');
+      songResults && (songResults.innerHTML = '');
+      artistResults && (artistResults.innerHTML = '');
+      albumResults && (albumResults.innerHTML = '');
 
-      if(songs && songs.length){
-        const first = songs[0];
-        const firstImage = first.image?.[2]?.url || first.image || first.cover || '';
-        topResult.innerHTML = `
-          <div class="flex items-center space-x-4">
-            <img src="${firstImage}" alt="${escapeHtml(first.name || first.title)}" class="w-16 h-16 rounded object-cover">
-            <div>
-              <h4 class="font-bold">${escapeHtml(first.name || first.title || 'Unknown')}</h4>
-              <p class="text-gray-400">${escapeHtml(first.artists?.[0]?.name || (first.artist && first.artist.name) || first.artist || 'Unknown')}</p>
-              <div class="mt-2"><button class="mp-play-now rounded-full bg-primary px-3 py-1 text-sm">Play</button></div>
+      if(songs.length === 0){
+        topResult && (topResult.innerHTML = '<p class="text-gray-400">No results found.</p>');
+        return;
+      }
+
+      // Top result
+      const first = songs[0];
+      const firstImg = first.image?.[2]?.url || first.image || first.cover || '';
+      topResult && (topResult.innerHTML = `
+        <div class="flex items-center gap-4">
+          <img src="${escapeHtml(firstImg)}" alt="${escapeHtml(first.name||first.title||'cover')}" loading="lazy" style="width:64px;height:64px;border-radius:8px;object-fit:cover;">
+          <div>
+            <div style="font-weight:700;">${escapeHtml(first.name||first.title||'Unknown')}</div>
+            <div style="color:#a8a8b3;">${escapeHtml(first.artists?.[0]?.name || first.artist || '')}</div>
+            <div style="margin-top:6px;"><button class="btn play-top" aria-label="Play top result">Play</button></div>
+          </div>
+        </div>
+      `);
+
+      // Songs list
+      songs.forEach((song, idx) => {
+        const img = song.image?.[2]?.url || song.image || song.cover || '';
+        const title = song.name || song.title || 'Unknown';
+        const artist = song.artists?.[0]?.name || song.artist || 'Unknown';
+        // derive playable media if present
+        const media = song.downloadUrl?.[0]?.url || song.media_url || song.url || song.streamingUrl || '';
+        const id = song.id || song.sid || song.songid || '';
+        const row = document.createElement('div');
+        row.className = 'search-song card';
+        row.innerHTML = `
+          <div class="left">
+            <div style="width:28px;text-align:center;color:#8B5CF6;font-weight:600">${idx+1}</div>
+            <img src="${escapeHtml(img)}" alt="${escapeHtml(title)}" loading="lazy">
+            <div style="min-width:0">
+              <div style="font-weight:600;color:white">${escapeHtml(title)}</div>
+              <div style="font-size:13px;color:#a8a8b3">${escapeHtml(artist)}</div>
             </div>
           </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn play-btn" data-media="${encodeURIComponent(media)}" data-title="${escapeHtml(title)}" data-artist="${escapeHtml(artist)}" data-cover="${encodeURIComponent(img)}" aria-label="Play ${escapeHtml(title)}">▶</button>
+            <button class="btn like-btn" data-id="${escapeHtml(id|| (title+'|'+artist))}" data-title="${escapeHtml(title)}" data-artist="${escapeHtml(artist)}" data-cover="${encodeURIComponent(img)}" aria-label="Like ${escapeHtml(title)}">❤️</button>
+          </div>
         `;
-        // populate songs list
-        songs.forEach((song, idx)=>{
-          const image = song.image?.[2]?.url || song.image || song.cover || '';
-          const title = escapeHtml(song.name || song.title || 'Unknown');
-          const artist = escapeHtml(song.artists?.[0]?.name || song.artist || 'Unknown');
-          const media = song.downloadUrl?.[0]?.url || song.media_url || song.url || song.streamUrl || song.streamingUrl || '';
-          // render with data attributes
-          songResults.innerHTML += `
-            <div class="search-song flex items-center justify-between bg-gray-800 p-2 rounded hover:bg-gray-700 cursor-pointer" data-media="${encodeURIComponent(media)}" data-title="${title}" data-artist="${artist}" data-image="${encodeURIComponent(image)}">
-              <div class="flex items-center space-x-4">
-                <span class="text-primary font-bold w-6">${idx+1}</span>
-                <img class="w-10 h-10 rounded object-cover" src="${image}" alt="${title}">
-                <div>
-                  <p class="font-semibold">${title}</p>
-                  <p class="text-sm text-gray-400">${artist}</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-2">
-                <button class="play-btn mp-btn" aria-label="Play ${title}">▶</button>
-                <button class="like-btn mp-btn" aria-label="Like ${title}">❤️</button>
-              </div>
-            </div>`;
-        });
-      } else {
-        topResult.innerHTML = '<p class="text-gray-400">No results found.</p>';
-      }
-    } catch(err){
+        songResults.appendChild(row);
+      });
+
+      // attach top play handler
+      $('.play-top')?.addEventListener('click', ()=>{
+        const media = songs[0].downloadUrl?.[0]?.url || songs[0].media_url || songs[0].url || songs[0].streamingUrl || '';
+        if(media) player.playNow({url: media, title: songs[0].name||songs[0].title, artist: songs[0].artists?.[0]?.name || songs[0].artist, cover: songs[0].image?.[2]?.url || ''});
+        else alert('No playable preview for this track.');
+      });
+
+    }catch(err){
       console.error('Search error', err);
-      if(topResult) topResult.innerHTML = `<p class="text-red-400">Error fetching results</p>`;
+      topResult && (topResult.innerHTML = `<p class="text-red-400">Search error: ${escapeHtml(err.message)}</p>`);
+      songResults && (songResults.innerHTML = '');
     }
   }
 
-  // Event delegation for play / like in results
-  if(songResults){
-    songResults.addEventListener('click', (ev)=>{
-      const songEl = ev.target.closest('.search-song');
-      if(!songEl) return;
-      if(ev.target.closest('.play-btn')){
-        const media = decodeURIComponent(songEl.dataset.media || '');
-        const title = songEl.dataset.title;
-        const artist = songEl.dataset.artist;
-        const img = decodeURIComponent(songEl.dataset.image || '');
-        if(!media){ alert('No preview available for this track.'); return; }
-        player.playNow({url: media, title, artist, cover: img});
-      } else if(ev.target.closest('.like-btn')){
-        const title = songEl.dataset.title;
-        const artist = songEl.dataset.artist;
-        const img = decodeURIComponent(songEl.dataset.image || '');
-        const media = decodeURIComponent(songEl.dataset.media || '');
-        toggleLike({id: media || title + '|' + artist, title, artist, cover: img, media});
-        ev.target.classList.add('animate-pulse');
-        setTimeout(()=>ev.target.classList.remove('animate-pulse'), 600);
-      } else {
-        // clicking anywhere on row -> show topResult details or play
-        const media = decodeURIComponent(songEl.dataset.media || '');
-        const title = songEl.dataset.title;
-        const artist = songEl.dataset.artist;
-        const img = decodeURIComponent(songEl.dataset.image || '');
-        // small UX: play on row click
-        if(media) player.playNow({url: media, title, artist, cover: img});
-      }
-    });
-  }
+  // delegate play/like inside songResults
+  $('#songResults')?.addEventListener('click', (ev)=>{
+    const playBtn = ev.target.closest('.play-btn');
+    if(playBtn){
+      const media = decodeURIComponent(playBtn.dataset.media || '');
+      const title = playBtn.dataset.title;
+      const artist = playBtn.dataset.artist;
+      const cover = decodeURIComponent(playBtn.dataset.cover || '');
+      if(!media) return alert('No preview available for this track.');
+      player.playNow({url: media, title, artist, cover});
+      return;
+    }
+    const likeBtn = ev.target.closest('.like-btn');
+    if(likeBtn){
+      const id = likeBtn.dataset.id;
+      const title = likeBtn.dataset.title;
+      const artist = likeBtn.dataset.artist;
+      const cover = decodeURIComponent(likeBtn.dataset.cover || '');
+      toggleLike({id, title, artist, cover, media: ''});
+      return;
+    }
+  });
 
-  // Basic in-memory queue + persistent liked storage
+  // -------------------- Player (queue + playback) --------------------
+  const audio = $('#audioPlayer');
+  const mpMini = $('#mp-mini');
+  const mpCover = $('#mp-cover');
+  const mpTitle = $('#mp-title');
+  const mpArtist = $('#mp-artist');
+  const mpPlayBtn = $('#mp-play');
+  const mpPrev = $('#mp-prev');
+  const mpNext = $('#mp-next');
+  const mpProgress = $('#mp-progress');
+  const mpTime = $('#mp-time');
+
   const player = {
-    audio: $('#mp-audio'),
-    queue: [],
-    index: -1,
-    isPlaying: false,
-    playNow(track){ // track: {url, title, artist, cover}
-      if(!track || !track.url){ alert('No playable audio URL'); return; }
-    },
+    queue: [], index: -1, playing:false,
     playNow(track){
-      const url = track.url;
-      this.queue = [track]; this.index = 0;
-      this._setAndPlay(track);
+      if(!track || !track.url) { alert('Playable URL not found'); return; }
+      this.queue = [track];
+      this.index = 0;
+      this._loadAndPlay(track);
     },
-    enqueue(track){
-      this.queue.push(track);
-    },
-    _setAndPlay(track){
+    enqueue(track){ this.queue.push(track); },
+    _loadAndPlay(track){
       try{
-        this.audio.src = track.url;
-        this.audio.play().catch(e=>console.warn('Playback prevented', e));
-        this.isPlaying = true;
-        updateMiniUI(track);
-      } catch(e){
-        console.error('play error', e);
-      }
+        audio.src = track.url;
+        audio.play().catch(e => console.warn('Playback prevented', e));
+        this.playing = true;
+        updateMini(track);
+        addToRecentlyPlayed(track);
+      }catch(e){ console.error(e); alert('Playback error'); }
     },
-    playIndex(i){
-      if(i < 0 || i >= this.queue.length) return;
-      this.index = i;
-      this._setAndPlay(this.queue[i]);
-    },
-    playNext(){
-      if(this.index + 1 < this.queue.length) this.playIndex(this.index + 1);
-      else { this.audio.pause(); this.isPlaying = false; }
-    },
-    playPrev(){
-      if(this.index - 1 >= 0) this.playIndex(this.index - 1);
-    },
-    togglePlayPause(){
-      if(this.audio.paused) this.audio.play();
-      else this.audio.pause();
-    }
+    playIndex(i){ if(i>=0 && i < this.queue.length){ this.index = i; this._loadAndPlay(this.queue[i]); } },
+    playNext(){ if(this.index + 1 < this.queue.length) this.playIndex(this.index + 1); else { audio.pause(); this.playing = false; } },
+    playPrev(){ if(this.index - 1 >= 0) this.playIndex(this.index - 1); }
   };
 
-  // UI bindings for mini-player
-  const mini = $('#miniPlayer');
-  const mpCover = $('#mp-cover'); const mpTitle = $('#mp-title'); const mpArtist = $('#mp-artist');
-  const mpPlayBtn = $('#mp-play'); const mpPrev = $('#mp-prev'); const mpNext = $('#mp-next'); const mpProgress = $('#mp-progress'); const mpTime = $('#mp-time');
-
-  function updateMiniUI(track){
+  function updateMini(track){
     if(!track) return;
+    mpMini.classList.remove('hidden');
     mpCover.src = track.cover || '';
     mpCover.alt = track.title || 'cover';
     mpTitle.textContent = track.title || 'Untitled';
-    mpArtist.textContent = track.artist || 'Unknown';
-    mini.classList.remove('hidden'); mini.classList.add('visible'); mini.setAttribute('aria-hidden','false');
-    // update play icon
+    mpArtist.textContent = track.artist || '';
     mpPlayBtn.textContent = '⏸';
   }
 
-  // wire mp buttons
-  mpPlayBtn?.addEventListener('click', ()=>{ if(player.audio.paused) { player.audio.play(); mpPlayBtn.textContent='⏸'; } else { player.audio.pause(); mpPlayBtn.textContent='▶'; } });
+  mpPlayBtn?.addEventListener('click', ()=>{
+    if(audio.paused){ audio.play(); mpPlayBtn.textContent='⏸'; } else { audio.pause(); mpPlayBtn.textContent='▶'; }
+  });
   mpPrev?.addEventListener('click', ()=> player.playPrev());
   mpNext?.addEventListener('click', ()=> player.playNext());
 
-  // audio events
-  if(player.audio){
-    player.audio.addEventListener('timeupdate', ()=>{
-      const cur = player.audio.currentTime || 0;
-      const dur = player.audio.duration || 0;
-      const pct = dur ? (cur/dur)*100 : 0;
-      mpProgress.style.width = pct + '%';
-      mpTime.textContent = formatTime(cur) + ' / ' + (dur ? formatTime(dur) : '0:00');
-    });
-    player.audio.addEventListener('ended', ()=> player.playNext() );
-    player.audio.addEventListener('play', ()=> { mpPlayBtn.textContent = '⏸'; });
-    player.audio.addEventListener('pause', ()=> { mpPlayBtn.textContent = '▶'; });
-  }
+  audio?.addEventListener('timeupdate', ()=>{
+    const cur = audio.currentTime || 0;
+    const dur = audio.duration || 0;
+    const pct = dur ? (cur/dur)*100 : 0;
+    mpProgress.style.width = pct + '%';
+    mpTime.textContent = formatTime(cur) + ' / ' + (dur ? formatTime(dur) : '0:00');
+  });
+  audio?.addEventListener('ended', ()=> player.playNext());
+  audio?.addEventListener('play', ()=> mpPlayBtn.textContent = '⏸');
+  audio?.addEventListener('pause', ()=> mpPlayBtn.textContent = '▶');
 
-  function formatTime(t){
-    if(!t || !isFinite(t)) return '0:00';
-    const m = Math.floor(t/60); const s = Math.floor(t%60); return `${m}:${s.toString().padStart(2,'0')}`;
-  }
+  function formatTime(t){ if(!t || !isFinite(t)) return '0:00'; const m = Math.floor(t/60); const s = Math.floor(t%60); return `${m}:${String(s).padStart(2,'0')}`; }
 
-  // Like management (stored as array of objects)
-  function getLiked(){ try{ return JSON.parse(localStorage.getItem('mp_liked')||'[]'); } catch(e){ return []; } }
-  function saveLiked(arr){ localStorage.setItem('mp_liked', JSON.stringify(arr)); }
+  // -------------------- Likes & Persistence --------------------
+  function getLikes(){ try{ return JSON.parse(localStorage.getItem('mp_likes') || '[]'); }catch(e){ return []; } }
+  function saveLikes(arr){ localStorage.setItem('mp_likes', JSON.stringify(arr)); }
   function toggleLike(song){
-    const list = getLiked();
-    const idx = list.findIndex(s => s.id === (song.id || song.media || (song.title + '|' + song.artist)));
-    if(idx >= 0){ list.splice(idx,1); saveLiked(list); toast('Removed from Liked Songs'); }
-    else { const obj = { id: song.id || song.media || (song.title + '|' + song.artist), title: song.title, artist: song.artist, cover: song.cover, media: song.media }; list.push(obj); saveLiked(list); toast('Added to Liked Songs'); }
-    // if liked view open, refresh
-    if(!SECTIONS.liked.classList.contains('hidden')) loadLikedSongs();
+    const arr = getLikes();
+    const id = song.id || (song.title + '|' + song.artist);
+    const idx = arr.findIndex(x => x.id === id);
+    if(idx >= 0){ arr.splice(idx,1); saveLikes(arr); notify('Removed from Liked Songs'); }
+    else { const entry = { id, title: song.title, artist: song.artist, cover: song.cover || '', media: song.media || '', addedAt: new Date().toLocaleString() }; arr.push(entry); saveLikes(arr); notify('Added to Liked Songs'); }
+    // refresh liked view if open
+    if(!SECTIONS.liked.classList.contains('hidden')) renderLikedSongs();
   }
-  window.toggleLike = toggleLike; // expose for console/testing
+  window.toggleLike = toggleLike;
 
-  // populate liked list UI
-  function elFromLikedItem(item, idx){
-    return `
-      <div class="grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 items-center">
+  function renderLikedSongs(){
+    const list = getLikes();
+    const container = $('#likedSongsList');
+    if(!container) return;
+    container.innerHTML = '';
+    if(list.length === 0){ container.innerHTML = '<div class="p-4 text-gray-400">No liked songs yet. ❤️ songs from search to add here.</div>'; return; }
+    list.forEach((item, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 items-center';
+      div.innerHTML = `
         <div class="col-span-1">${idx+1}</div>
-        <div class="col-span-5 flex items-center space-x-3">
-          <img src="${item.cover||''}" class="w-10 h-10 rounded object-cover" alt="${escapeHtml(item.title)}">
+        <div class="col-span-5 flex items-center gap-3">
+          <img src="${escapeHtml(item.cover||'')}" alt="${escapeHtml(item.title)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover">
           <div>
-            <div class="text-white font-semibold">${escapeHtml(item.title)}</div>
-            <div class="text-xs text-gray-400">${escapeHtml(item.artist)}</div>
+            <div style="color:white;font-weight:600">${escapeHtml(item.title)}</div>
+            <div style="font-size:13px;color:#a8a8b3">${escapeHtml(item.artist)}</div>
           </div>
         </div>
         <div class="col-span-3">${escapeHtml(item.album||'—')}</div>
         <div class="col-span-2 text-xs">${escapeHtml(item.addedAt||'—')}</div>
-        <div class="col-span-1">
-          <div style="display:flex;gap:6px;justify-end;">
-            <button class="mp-btn like-remove" data-id="${escapeHtml(item.id)}" title="Remove">🗑</button>
-            <button class="mp-btn like-play" data-media="${encodeURIComponent(item.media||'')}" data-title="${escapeHtml(item.title)}" data-artist="${escapeHtml(item.artist)}" data-cover="${encodeURIComponent(item.cover||'')}" title="Play">▶</button>
-          </div>
+        <div class="col-span-1" style="display:flex;gap:6px;justify-end">
+          <button class="btn play-liked" data-media="${encodeURIComponent(item.media||'')}" data-title="${escapeHtml(item.title)}" data-artist="${escapeHtml(item.artist)}" aria-label="Play ${escapeHtml(item.title)}">▶</button>
+          <button class="btn remove-liked" data-id="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)}">🗑</button>
         </div>
-      </div>
-    `;
+      `;
+      container.appendChild(div);
+    });
+    // attach handlers
+    container.querySelectorAll('.play-liked').forEach(btn => btn.addEventListener('click', ()=>{
+      const media = decodeURIComponent(btn.dataset.media || '');
+      const title = btn.dataset.title; const artist = btn.dataset.artist;
+      if(media) player.playNow({url: media, title, artist, cover: ''});
+      else alert('No preview available for this track.');
+    }));
+    container.querySelectorAll('.remove-liked').forEach(btn => btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id; const arr = getLikes().filter(x => x.id !== id); saveLikes(arr); renderLikedSongs(); notify('Removed');
+    }));
   }
-  function loadLikedSongs(){
-    const list = getLiked();
-    const container = $('#likedSongsList');
+
+  // -------------------- Recently Played --------------------
+  function getRecent(){ try{ return JSON.parse(localStorage.getItem('mp_recent') || '[]'); }catch(e){ return []; } }
+  function saveRecent(arr){ localStorage.setItem('mp_recent', JSON.stringify(arr)); }
+  function addToRecentlyPlayed(track){
+    if(!track || !track.title) return;
+    const arr = getRecent();
+    // add simple object
+    arr.unshift({ title: track.title, artist: track.artist, cover: track.cover||'', media: track.url||'', playedAt: new Date().toLocaleString() });
+    if(arr.length > 200) arr.length = 200;
+    saveRecent(arr);
+  }
+  function renderRecentlyPlayed(){
+    const list = getRecent();
+    const container = $('#recentlyPlayedList');
     if(!container) return;
     container.innerHTML = '';
-    if(!list.length){
-      container.innerHTML = '<div class="p-4 text-gray-400">No liked songs yet. Use the search to find songs and ❤️ to like them.</div>';
-      return;
-    }
-    list.forEach((it, i)=> container.innerHTML += elFromLikedItem(it,i) );
-    // attach handlers (delegation)
-    container.querySelectorAll('.like-remove').forEach(btn=> btn.addEventListener('click', ()=>{
-      const id = btn.dataset.id;
-      const arr = getLiked().filter(x=> x.id !== id); saveLiked(arr); loadLikedSongs(); toast('Removed');
-    }));
-    container.querySelectorAll('.like-play').forEach(btn=> btn.addEventListener('click', ()=>{
-      const media = decodeURIComponent(btn.dataset.media||'');
-      const title = btn.dataset.title;
-      const artist = btn.dataset.artist;
-      const cover = decodeURIComponent(btn.dataset.cover||'');
-      if(media) player.playNow({url: media, title, artist, cover});
+    if(list.length === 0){ container.innerHTML = '<div class="p-4 text-gray-400">No recently played tracks.</div>'; return; }
+    list.forEach((it, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 items-center';
+      div.innerHTML = `
+        <div class="col-span-1">${idx+1}</div>
+        <div class="col-span-5 flex items-center gap-3">
+          <img src="${escapeHtml(it.cover||'')}" alt="${escapeHtml(it.title)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover">
+          <div><div style="color:white;font-weight:600">${escapeHtml(it.title)}</div><div style="font-size:13px;color:#a8a8b3">${escapeHtml(it.artist)}</div></div>
+        </div>
+        <div class="col-span-3">—</div>
+        <div class="col-span-2 text-xs">${escapeHtml(it.playedAt||'—')}</div>
+        <div class="col-span-1" style="display:flex;justify-end"><button class="btn play-recent" data-media="${encodeURIComponent(it.media||'')}">▶</button></div>
+      `;
+      container.appendChild(div);
+    });
+    container.querySelectorAll('.play-recent').forEach(b => b.addEventListener('click', ()=>{
+      const media = decodeURIComponent(b.dataset.media||'');
+      if(media) player.playNow({url: media, title:'Recently played', artist:'', cover:''});
+      else alert('No preview available');
     }));
   }
 
-  // quick toast
-  function toast(msg){
-    console.log('TOAST:', msg);
-    // small ephemeral HUD
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.style.position='fixed'; t.style.right='18px'; t.style.bottom='110px'; t.style.background='rgba(0,0,0,0.7)'; t.style.padding='8px 12px'; t.style.borderRadius='8px'; t.style.color='white'; t.style.zIndex=9999;
-    document.body.appendChild(t);
-    setTimeout(()=> t.style.opacity='0', 1600);
-    setTimeout(()=> t.remove(), 2200);
-  }
-
-  // playback wrapper used by search click
-  // this will set queue = [track] and play it
-  player.playNow = function(track){
-    if(!track || !track.url) { alert('No playable url'); return; }
-    this.queue = [track]; this.index = 0;
-    this._setAndPlay(track);
-  };
-  player._setAndPlay = function(track){
-    this.audio.src = track.url;
-    this.audio.play().catch(e=>console.warn('play prevented', e));
-    this.isPlaying = true;
-    updateMiniUI(track);
-  };
-
-  // topResult 'Play' button (delegation)
-  document.addEventListener('click', (ev)=>{
-    if(ev.target && ev.target.matches('.mp-play-now')){
-      const parent = ev.target.closest('#topResult');
-      if(!parent) return;
-      // try to extract info from markup
-      const img = parent.querySelector('img')?.src || '';
-      const title = parent.querySelector('h4')?.textContent || 'Unknown';
-      const artist = parent.querySelector('p')?.textContent || '';
-      // Try to find a song element from search results to reuse its data if present
-      const firstsong = $('#songResults .search-song');
-      const media = firstsong?.dataset?.media ? decodeURIComponent(firstsong.dataset.media) : '';
-      if(media) player.playNow({url: media, title, artist, cover: img});
-      else toast('No playable preview found for the top result.');
-    }
-  });
-
-  // profile & settings persistence (simple localStorage)
-  function populateProfileFromStorage(){
-    const profileSection = $('#profileContent');
-    if(!profileSection) return;
-    const inputs = profileSection.querySelectorAll('input,textarea,select');
-    inputs.forEach(ip=>{
-      const key = 'mp_profile_' + (ip.name || ip.id || ip.placeholder || ip.getAttribute('aria-label') || '');
+  // -------------------- Profile & Settings Persistence --------------------
+  function persistInputs(rootSelector, storagePrefix='mp_profile_'){
+    const root = document.querySelector(rootSelector);
+    if(!root) return;
+    const inputs = root.querySelectorAll('input,textarea,select');
+    inputs.forEach(inp => {
+      const key = storagePrefix + (inp.name || inp.id || inp.placeholder || inp.getAttribute('aria-label') || '');
       const val = localStorage.getItem(key);
       if(val !== null){
-        if(ip.type === 'checkbox') ip.checked = (val === 'true');
-        else ip.value = val;
+        if(inp.type === 'checkbox') inp.checked = (val === 'true');
+        else inp.value = val;
       }
-      // store on change
-      ip.addEventListener('change', ()=>{
-        const v = ip.type === 'checkbox' ? ip.checked.toString() : ip.value;
+      inp.addEventListener('change', ()=> {
+        const v = inp.type === 'checkbox' ? inp.checked.toString() : inp.value;
         localStorage.setItem(key, v);
       });
     });
   }
-  // attach save action for Settings "Save All Settings" and Profile "Save Changes"
-  // find buttons by text
-  Array.from(document.querySelectorAll('#profileContent button, #settingsContent button')).forEach(btn=>{
-    const txt = (btn.textContent||'').trim().toLowerCase();
-    if(txt.includes('save')){
+
+  function loadProfileIntoForm(){ persistInputs('#profileContent'); }
+
+  // wire save buttons in profile & settings
+  $$('#profileContent button, #settingsContent button').forEach(btn => {
+    if((btn.textContent || '').toLowerCase().includes('save')){
       btn.addEventListener('click', ()=>{
-        // save all inputs in the parent section
-        const root = btn.closest('section');
-        if(!root) return;
-        const inputs = root.querySelectorAll('input,textarea,select');
-        inputs.forEach(ip=>{
-          const key = 'mp_profile_' + (ip.name || ip.id || ip.placeholder || ip.getAttribute('aria-label') || '');
-          const v = ip.type === 'checkbox' ? ip.checked.toString() : ip.value;
-          localStorage.setItem(key, v);
-        });
-        toast('Saved settings');
+        persistInputs('#profileContent');
+        persistInputs('#settingsContent');
+        notify('Saved settings');
       });
     }
   });
 
-  // initialize small UX states
-  // If user clicks user menu button, toggle dropdown (simple)
-  $('#userMenuButton')?.addEventListener('click', ()=> { $('#userDropdown')?.classList.toggle('hidden'); });
-  // close dropdown on outside click
-  document.addEventListener('click', (ev)=>{ if(ev.target.closest('#userMenuButton')) return; if(ev.target.closest('#userDropdown')) return; $('#userDropdown')?.classList.add('hidden'); });
+  // -------------------- Small UI helpers --------------------
+  function notify(msg){ console.log('MP:', msg); const n = document.createElement('div'); n.textContent = msg; n.style.position='fixed'; n.style.right='18px'; n.style.bottom='110px'; n.style.background='rgba(0,0,0,0.7)'; n.style.padding='8px 12px'; n.style.borderRadius='8px'; n.style.color='white'; n.style.zIndex=9999; document.body.appendChild(n); setTimeout(()=> n.style.opacity='0', 1400); setTimeout(()=> n.remove(), 2000); }
 
-  // attach handlers to liked songs section controls (like-play will be wired when list loaded)
-  // When the app loads, if user had previously opened app, show home
-  if(!SECTIONS.app.classList.contains('hidden')){ /* nothing */ } // leave as is
-  // else keep landing shown - user will click Get Started.
+  // initial hydration: load recent/likes counts into UI badges if present
+  function hydrateCounts(){
+    const likes = getLikes(); const rec = getRecent();
+    // example: update any element showing counts (if in DOM can customize)
+    $$('#mainApp .badge-liked').forEach(el => el.textContent = likes.length);
+    $$('#mainApp .badge-recent').forEach(el => el.textContent = rec.length);
+  }
 
-  // expose a console helper
-  window.MP = { playNow: (t)=> player.playNow(t), toggleLike, getLiked };
+  // on load
+  document.addEventListener('DOMContentLoaded', ()=>{
+    hydrateCounts();
+    // populate profile inputs
+    persistInputs('#profileContent');
+    // attach search placeholder behavior
+    if(searchInput && searchInput.value) performSearch(searchInput.value);
+  });
 
+  // Expose for debugging
+  window.MusicPioneer = { performSearch, player, toggleLike, getLikes: getLikes, getRecent };
 })();
 </script>
-<!-- END: MusicPioneer Script & Mini Player -->
+<!-- END MusicPioneer Fix Bundle -->
 
 </body>
 </html>
