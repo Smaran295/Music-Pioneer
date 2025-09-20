@@ -66,7 +66,7 @@
         </main>
 
         <!-- Right Sidebar: Now Playing / Queue -->
-        <aside class="w-80 bg-gray-800 p-6 flex-shrink-0 overflow-y-auto hidden lg:block">
+        <aside class="w-80 bg-gray-800 p-6 flex-shrink-0 overflow-y-auto hidden lg:block" id="queue-sidebar">
             <h2 class="text-xl font-bold mb-4">Now Playing</h2>
             <div class="mb-6">
                 <div class="artwork w-full h-64 bg-gray-700 flex items-center justify-center text-6xl rounded-lg mb-4">🎶</div>
@@ -100,7 +100,7 @@
             </div>
             <div class="flex items-center w-full max-w-md">
                 <span id="current-time" class="text-xs mr-2">0:00</span>
-                <div class="flex-grow h-1 bg-gray-600 rounded-full overflow-hidden cursor-pointer" onclick="seek(event)">
+                <div class="flex-grow h-1 bg-gray-600 rounded-full overflow-hidden cursor-pointer" id="progress-container" onclick="seek(event)">
                     <div id="progress-bar" class="h-full bg-indigo-500 w-0"></div>
                 </div>
                 <span id="duration" class="text-xs ml-2">0:00</span>
@@ -109,7 +109,7 @@
         <div class="flex items-center gap-3 w-1/4 justify-end">
             <button onclick="toggleQueue()" class="hover:text-indigo-400" title="Queue"><i class="fa fa-list-ul"></i></button>
             <button class="hover:text-indigo-400" title="Devices"><i class="fa fa-mobile-alt"></i></button>
-            <div class="w-20 h-1 bg-gray-600 rounded-full overflow-hidden cursor-pointer" onclick="adjustVolume(event)">
+            <div class="w-20 h-1 bg-gray-600 rounded-full overflow-hidden cursor-pointer" id="volume-container" onclick="adjustVolume(event)">
                 <div id="volume-bar" class="h-full bg-white w-full"></div>
             </div>
             <button class="hover:text-indigo-400" title="Volume"><i class="fa fa-volume-up"></i></button>
@@ -125,86 +125,117 @@
         let isRepeat = false;
         const audio = document.getElementById('audio-player');
 
+        // Mock data for fallback
+        const mockSongs = [
+            { id: '1', title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', duration: '3:20', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+            { id: '2', title: 'Shape of You', artist: 'Ed Sheeran', album: '÷', duration: '3:53', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+            { id: '3', title: 'Bad Guy', artist: 'Billie Eilish', album: 'When We All Fall Asleep', duration: '3:14', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
+        ];
+
+        const mockPlaylists = [
+            { id: '1', name: 'Chill Nights', songCount: 24, duration: '1h 32m' },
+            { id: '2', name: 'Hot Hits', songCount: 50, duration: '3h 15m' }
+        ];
+
         // Fetch songs from proxy
         async function fetchSongs(query = '') {
+            console.log('Fetching songs:', query ? `/api/songs?query=${query}` : '/api/songs');
             try {
                 const url = query ? `/api/songs?query=${encodeURIComponent(query)}` : '/api/songs';
                 const response = await fetch(url);
+                console.log('Songs API status:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const data = await response.json();
-                if (response.ok) {
-                    songs = data.songs || [];
-                    updateQueue(songs);
-                    updateSearchResults(songs);
-                    if (data.currentSong && songs.length > 0) {
-                        currentSongIndex = songs.findIndex(song => song.id === data.currentSong.id);
-                        if (currentSongIndex >= 0) {
-                            playSong(currentSongIndex);
-                        }
+                console.log('Songs API data:', data);
+                // Handle nested { songs: [...] } or flat [...]
+                songs = Array.isArray(data) ? data : data.songs || [];
+                if (songs.length === 0) {
+                    console.warn('Empty songs array from API, using mock data');
+                    songs = mockSongs;
+                }
+                // Filter valid songs
+                songs = songs.filter(song => song.id && song.title && song.artist && song.audioUrl);
+                if (songs.length === 0) {
+                    console.warn('No valid songs after filtering, using mock data');
+                    songs = mockSongs;
+                }
+                updateQueue(songs);
+                updateSearchResults(songs);
+                if (data.currentSong) {
+                    currentSongIndex = songs.findIndex(song => song.id === data.currentSong.id);
+                    if (currentSongIndex >= 0) {
+                        playSong(currentSongIndex);
                     }
-                } else {
-                    console.error('Error fetching songs:', data.error);
-                    showError('Failed to load songs');
                 }
             } catch (err) {
-                console.error('Fetch error:', err.message);
-                showError('Network error');
-                // Fallback static songs
-                songs = [
-                    { id: '1', title: 'Chill Vibes', artist: 'Artist 1', album: 'Album 1', duration: '3:45', audioUrl: 'https://example.com/song1.mp3' },
-                    { id: '2', title: 'Hot Track', artist: 'Artist 2', album: 'Album 2', duration: '4:20', audioUrl: 'https://example.com/song2.mp3' }
-                ];
+                console.error('Songs API error:', err.message);
+                showError(`Failed to fetch songs: ${err.message}. Using mock data.`);
+                songs = mockSongs;
                 updateQueue(songs);
                 updateSearchResults(songs);
             }
         }
 
-        // Fetch playlists from proxy
+        // Fetch playlists
         async function fetchPlaylists() {
+            console.log('Fetching playlists: /api/playlists');
             try {
                 const response = await fetch('/api/playlists');
-                const data = await response.json();
-                if (response.ok) {
-                    playlists = data.playlists || [];
-                    updatePlaylists(playlists);
-                    updateHomePlaylists(playlists);
-                } else {
-                    console.error('Error fetching playlists:', data.error);
-                    showError('Failed to load playlists');
+                console.log('Playlists API status:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-            } catch (err) {
-                console.error('Fetch error:', err.message);
-                showError('Network error');
-                // Fallback static playlists
-                playlists = [
-                    { id: '1', name: 'Chill Nights', songCount: 24, duration: '1h 32m' },
-                    { id: '2', name: 'Hot Hits', songCount: 50, duration: '3h 15m' }
-                ];
+                const data = await response.json();
+                console.log('Playlists API data:', data);
+                playlists = Array.isArray(data) ? data : data.playlists || [];
+                if (playlists.length === 0) {
+                    console.warn('Empty playlists array, using mock data');
+                    playlists = mockPlaylists;
+                }
                 updatePlaylists(playlists);
                 updateHomePlaylists(playlists);
+                updateLibraryContent();
+            } catch (err) {
+                console.error('Playlists API error:', err.message);
+                showError(`Failed to fetch playlists: ${err.message}. Using mock data.`);
+                playlists = mockPlaylists;
+                updatePlaylists(playlists);
+                updateHomePlaylists(playlists);
+                updateLibraryContent();
             }
         }
 
-        // Fetch songs for a playlist
+        // Fetch playlist songs
         async function fetchPlaylistSongs(playlistId) {
+            console.log(`Fetching playlist songs: /api/playlists/${playlistId}/songs`);
             try {
                 const response = await fetch(`/api/playlists/${playlistId}/songs`);
-                const data = await response.json();
-                if (response.ok) {
-                    songs = data.songs || [];
-                    updateQueue(songs);
-                    updateSearchResults(songs);
-                    currentSongIndex = -1;
-                    updatePlayer(null);
-                    showHome();
-                } else {
-                    console.error('Error fetching playlist songs:', data.error);
-                    showError('Failed to load playlist songs');
+                console.log('Playlist Songs API status:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                const data = await response.json();
+                console.log('Playlist Songs API data:', data);
+                songs = Array.isArray(data) ? data : data.songs || [];
+                if (songs.length === 0) {
+                    console.warn('Empty playlist songs, using mock data');
+                    songs = mockSongs;
+                }
+                songs = songs.filter(song => song.id && song.title && song.artist && song.audioUrl);
+                updateQueue(songs);
+                updateSearchResults(songs);
+                currentSongIndex = -1;
+                updatePlayer(null);
+                showHome();
             } catch (err) {
-                console.error('Fetch error:', err.message);
-                showError('Network error');
-                // Fallback to default songs
-                fetchSongs();
+                console.error('Playlist Songs API error:', err.message);
+                showError(`Failed to fetch playlist songs: ${err.message}. Using mock data.`);
+                songs = mockSongs;
+                updateQueue(songs);
+                updateSearchResults(songs);
+                showHome();
             }
         }
 
@@ -240,7 +271,26 @@
             });
         }
 
-        // Update queue (right sidebar)
+        // Update library content
+        function updateLibraryContent() {
+            const libraryContent = document.getElementById('library-content');
+            libraryContent.innerHTML = '';
+            playlists.forEach(playlist => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-800 p-4 rounded-lg shadow-lg flex items-center hover:bg-gray-700 cursor-pointer';
+                div.innerHTML = `
+                    <div class="w-16 h-16 bg-gray-700 flex items-center justify-center text-2xl rounded mr-4">📚</div>
+                    <div>
+                        <h3 class="font-bold">${playlist.name}</h3>
+                        <p class="text-gray-400 text-sm">Playlist • ${playlist.songCount} songs</p>
+                    </div>
+                `;
+                div.onclick = () => fetchPlaylistSongs(playlist.id);
+                libraryContent.appendChild(div);
+            });
+        }
+
+        // Update queue
         function updateQueue(songsList) {
             const queueList = document.getElementById('queue-list');
             queueList.innerHTML = '';
@@ -249,7 +299,7 @@
                 li.className = `p-2 hover:bg-gray-700 rounded cursor-pointer flex justify-between items-center ${index === currentSongIndex ? 'bg-gray-700' : ''}`;
                 li.innerHTML = `
                     <span>${song.title} - ${song.artist}</span>
-                    <span class="text-gray-500 text-sm">${song.duration}</span>
+                    <p class="text-gray-500 text-sm">${song.duration}</p>
                 `;
                 li.onclick = () => playSong(index);
                 queueList.appendChild(li);
@@ -262,14 +312,13 @@
             const searchResults = document.getElementById('search-results');
             const homeSection = document.getElementById('home-section');
             const librarySection = document.getElementById('library-section');
-            const query = document.getElementById('search-input').value;
+            const query = document.getElementById('search-input').value.trim();
             if (query && filteredSongs.length > 0) {
                 searchSection.classList.remove('hidden');
                 homeSection.classList.add('hidden');
                 librarySection.classList.add('hidden');
             } else {
                 searchSection.classList.add('hidden');
-                // Show home or library based on last navigation
                 if (document.querySelector('#library-section:not(.hidden)')) {
                     librarySection.classList.remove('hidden');
                 } else {
@@ -286,7 +335,7 @@
                         <h3 class="font-medium">${song.title}</h3>
                         <p class="text-gray-400 text-sm">${song.artist} • ${song.album}</p>
                     </div>
-                    <span class="text-gray-500 text-sm">${song.duration}</span>
+                    <p class="text-gray-500 text-sm">${song.duration}</p>
                 `;
                 div.onclick = () => playSong(index);
                 searchResults.appendChild(div);
@@ -300,8 +349,15 @@
             document.getElementById('np-title').textContent = song ? song.title : 'No Song Playing';
             document.getElementById('np-artist').textContent = song ? song.artist : 'Select a Song';
             document.getElementById('np-album').textContent = song ? song.album : 'N/A';
-            audio.src = song ? song.audioUrl : '';
-            audio.volume = document.getElementById('volume-bar').offsetWidth / 80;
+            if (song && song.audioUrl) {
+                audio.src = song.audioUrl;
+                console.log('Setting audio src:', song.audioUrl);
+            } else {
+                audio.src = '';
+                console.warn('No valid audioUrl for song:', song);
+            }
+            const volumeContainer = document.getElementById('volume-container');
+            audio.volume = volumeContainer ? (document.getElementById('volume-bar').offsetWidth / 80) : 1;
             updateQueue(songs);
         }
 
@@ -310,9 +366,14 @@
             if (index >= 0 && index < songs.length) {
                 currentSongIndex = index;
                 updatePlayer(songs[index]);
-                audio.play().catch(err => showError('Playback error: ' + err.message));
-                isPlaying = true;
-                document.getElementById('play-pause').innerHTML = '<i class="fa fa-pause"></i>';
+                audio.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('play-pause').innerHTML = '<i class="fa fa-pause"></i>';
+                    console.log('Playing song:', songs[index].title);
+                }).catch(err => {
+                    console.error('Playback failed:', err);
+                    showError('Playback error: ' + err.message + '. Check if audioUrl is valid.');
+                });
             }
         }
 
@@ -323,9 +384,13 @@
                 isPlaying = false;
                 document.getElementById('play-pause').innerHTML = '<i class="fa fa-play"></i>';
             } else if (currentSongIndex >= 0) {
-                audio.play().catch(err => showError('Playback error: ' + err.message));
-                isPlaying = true;
-                document.getElementById('play-pause').innerHTML = '<i class="fa fa-pause"></i>';
+                audio.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('play-pause').innerHTML = '<i class="fa fa-pause"></i>';
+                }).catch(err => {
+                    console.error('Playback failed:', err);
+                    showError('Playback error: ' + err.message);
+                });
             }
         }
 
@@ -346,7 +411,7 @@
         }
 
         function shuffle() {
-            songs = songs.sort(() => Math.random() - 0.5);
+            songs = [...songs].sort(() => Math.random() - 0.5);
             currentSongIndex = 0;
             updateQueue(songs);
             updateSearchResults(songs);
@@ -359,26 +424,29 @@
         }
 
         function toggleQueue() {
-            const queueSidebar = document.querySelector('aside.w-80');
+            const queueSidebar = document.getElementById('queue-sidebar');
             queueSidebar.classList.toggle('hidden');
-            queueSidebar.classList.toggle('lg:block');
         }
 
         function seek(event) {
-            if (audio.duration) {
-                const progressBar = event.currentTarget;
-                const rect = progressBar.getBoundingClientRect();
+            const progressContainer = document.getElementById('progress-container');
+            if (audio.duration && progressContainer) {
+                const rect = progressContainer.getBoundingClientRect();
                 const pos = (event.clientX - rect.left) / rect.width;
                 audio.currentTime = pos * audio.duration;
+                console.log('Seeking to:', audio.currentTime);
             }
         }
 
         function adjustVolume(event) {
-            const volumeBar = document.getElementById('volume-bar');
-            const rect = event.currentTarget.getBoundingClientRect();
-            const pos = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
-            audio.volume = pos;
-            volumeBar.style.width = `${pos * 100}%`;
+            const volumeContainer = document.getElementById('volume-container');
+            if (volumeContainer) {
+                const rect = volumeContainer.getBoundingClientRect();
+                const pos = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+                audio.volume = pos;
+                document.getElementById('volume-bar').style.width = `${pos * 100}%`;
+                console.log('Volume set to:', pos);
+            }
         }
 
         audio.ontimeupdate = () => {
@@ -388,7 +456,9 @@
             const current = audio.currentTime || 0;
             currentTime.textContent = formatTime(current);
             document.getElementById('duration').textContent = formatTime(duration);
-            progressBar.style.width = `${(current / duration) * 100}%`;
+            if (progressBar && duration > 0) {
+                progressBar.style.width = `${(current / duration) * 100}%`;
+            }
         };
 
         audio.onended = () => next();
@@ -400,16 +470,16 @@
         }
 
         function showError(message) {
+            console.error(message);
             alert(message); // Replace with toast notification in production
         }
 
-        // Navigation functions
         function showHome() {
             document.getElementById('home-section').classList.remove('hidden');
             document.getElementById('library-section').classList.add('hidden');
             document.getElementById('search-results-section').classList.add('hidden');
             document.getElementById('search-input').value = '';
-            fetchSongs(); // Refresh home content
+            fetchSongs();
         }
 
         function showLibrary() {
@@ -420,33 +490,23 @@
             updateLibraryContent();
         }
 
-        // Update library content (same as playlists for now)
-        function updateLibraryContent() {
-            const libraryContent = document.getElementById('library-content');
-            libraryContent.innerHTML = '';
-            playlists.forEach(playlist => {
-                const div = document.createElement('div');
-                div.className = 'bg-gray-800 p-4 rounded-lg shadow-lg flex items-center hover:bg-gray-700 cursor-pointer';
-                div.innerHTML = `
-                    <div class="w-16 h-16 bg-gray-700 flex items-center justify-center text-2xl rounded mr-4">📚</div>
-                    <div>
-                        <h3 class="font-bold">${playlist.name}</h3>
-                        <p class="text-gray-400 text-sm">Playlist • ${playlist.songCount} songs</p>
-                    </div>
-                `;
-                div.onclick = () => fetchPlaylistSongs(playlist.id);
-                libraryContent.appendChild(div);
-            });
-        }
-
-        // Search with API
+        // Search with debounce
+        let searchTimeout;
         document.getElementById('search-input').addEventListener('input', (e) => {
-            const query = e.target.value;
-            fetchSongs(query);
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            searchTimeout = setTimeout(() => {
+                if (query.length < 2) {
+                    fetchSongs('');
+                    return;
+                }
+                fetchSongs(query);
+            }, 300); // 300ms debounce
         });
 
         // Initialize
         window.onload = () => {
+            console.log('Initializing MusicPioneer...');
             fetchSongs();
             fetchPlaylists();
         };
