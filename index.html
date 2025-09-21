@@ -7,27 +7,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-      
+       
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
         }
-      
+       
         .gradient-bg {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
         }
-      
+       
         .glass-effect {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-      
+       
         .progress-bar {
             transition: width 0.1s ease;
         }
-      
+       
         .album-art {
             animation: rotate 20s linear infinite;
             animation-play-state: paused;
@@ -36,16 +36,16 @@
             border-radius: 50%;
             overflow: hidden;
         }
-      
+       
         .album-art.playing {
             animation-play-state: running;
         }
-      
+       
         @keyframes rotate {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-      
+       
         .wave-animation {
             display: flex;
             align-items: center;
@@ -53,47 +53,47 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-      
+       
         .wave-animation.playing {
             opacity: 1;
         }
-      
+       
         .wave-bar {
             width: 3px;
             background: #fff;
             border-radius: 2px;
             animation: wave 1.5s ease-in-out infinite;
         }
-      
+       
         .wave-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
         .wave-bar:nth-child(2) { height: 30px; animation-delay: 0.1s; }
         .wave-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
         .wave-bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
         .wave-bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
-      
+       
         @keyframes wave {
             0%, 100% { transform: scaleY(1); }
             50% { transform: scaleY(0.3); }
         }
-      
+       
         .playlist-item:hover {
             background: rgba(255, 255, 255, 0.08);
         }
-      
+       
         .song-item {
             padding: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
         }
-      
+       
         .song-item:hover {
             background-color: rgba(255, 255, 255, 0.08);
         }
-      
+       
         #player {
             display: none;
         }
-      
+       
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-top: 4px solid #34d399;
@@ -103,11 +103,12 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
-      
+       
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
         .mobile-nav {
             display: none;
             flex-direction: column;
@@ -128,6 +129,8 @@
         .nav-link:hover {
             background: rgba(255, 255, 255, 0.1);
         }
+
+        /* MedPlay-like search result styles */
         .search-result-row {
             display: flex;
             align-items: center;
@@ -182,6 +185,7 @@
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
+    <!-- Header -->
     <header class="glass-effect p-6 fixed w-full z-10">
         <div class="max-w-6xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -225,9 +229,11 @@
         </div>
     </header>
     <div class="max-w-6xl mx-auto p-6 pt-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Player -->
         <div class="lg:col-span-2">
             <div class="glass-effect rounded-2xl p-8 mb-8">
                 <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+                    <!-- Album Art -->
                     <div class="relative">
                         <div id="albumArt" class="album-art w-48 h-48 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl">
                             <span class="text-6xl">🎶</span>
@@ -240,10 +246,12 @@
                             <div class="wave-bar"></div>
                         </div>
                     </div>
+                    <!-- Song Info -->
                     <div class="flex-1 text-center md:text-left">
                         <h2 id="songTitle" class="text-3xl font-bold text-white mb-2">No Song Playing</h2>
                         <p id="artistName" class="text-xl text-emerald-300 mb-4">Select a Song</p>
                         <p id="albumName" class="text-emerald-400">N/A</p>
+                        <!-- Progress Bar -->
                         <div class="mt-6">
                             <div class="flex justify-between text-sm text-emerald-300 mb-2">
                                 <span id="currentTime">0:00</span>
@@ -253,6 +261,7 @@
                                 <div id="progressBar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
                             </div>
                         </div>
+                        <!-- Controls -->
                         <div class="flex items-center justify-center flex-wrap space-x-4 mt-8">
                             <button id="shuffleBtn" class="text-emerald-300 hover:text-white transition-colors p-3" aria-label="Shuffle">
                                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -287,6 +296,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Featured Playlists -->
             <div class="glass-effect rounded-2xl p-6">
                 <h3 class="text-2xl font-bold text-white mb-6">Featured Playlists</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,17 +324,22 @@
                     </div>
                 </div>
             </div>
+            <!-- Search Results (Hidden; Now in Sidebar) -->
             <div class="glass-effect rounded-2xl p-6 mt-8 hidden">
                 <div id="results"></div>
                 <div id="spinner" class="spinner hidden"></div>
             </div>
         </div>
+        <!-- Playlist Sidebar -->
         <div id="playlist-sidebar" class="glass-effect rounded-2xl p-6 lg:block hidden">
             <h3 class="text-2xl font-bold text-white mb-6" id="sidebar-title">Up Next</h3>
             <div id="playlist-items" class="space-y-3"></div>
         </div>
     </div>
+
+    <!-- Audio Player -->
     <audio id="player"></audio>
+
     <script>
         let isPlaying = false;
         let currentTime = 0;
@@ -332,6 +347,7 @@
         let currentSongIndex = 0;
         let playlist = [];
         let currentUser = null;
+
         const playBtn = document.getElementById('playBtn');
         const playIcon = document.getElementById('playIcon');
         const pauseIcon = document.getElementById('pauseIcon');
@@ -360,11 +376,13 @@
         const mobileNav = document.getElementById('mobile-nav');
         const sidebarTitle = document.getElementById('sidebar-title');
         const loginBtn = document.getElementById('google-login-btn');
+
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
+
         function updateProgress() {
             if (player.readyState > 0) {
                 currentTime = player.currentTime;
@@ -375,12 +393,14 @@
                 totalTimeEl.textContent = formatTime(totalTime);
             }
         }
+
         function updateUI(playing = isPlaying) {
             playIcon.classList.toggle('hidden', playing);
             pauseIcon.classList.toggle('hidden', !playing);
             albumArt.classList.toggle('playing', playing);
             waveAnimation.classList.toggle('playing', playing);
         }
+
         function togglePlay() {
             isPlaying = !isPlaying;
             updateUI(isPlaying);
@@ -395,6 +415,7 @@
                 player.pause();
             }
         }
+
         function loadSong(index, skipPlay = false) {
             currentSongIndex = index;
             const song = playlist[index];
@@ -405,12 +426,14 @@
             });
             if (currentUser) saveLastPlayed(index);
         }
+
         function playSong(song, skipPlay = false) {
             songTitle.textContent = song.title || song.name || 'Unknown Title';
             artistName.textContent = song.artist || (song.artists?.primary?.map(a => a.name).join(', ') || 'Unknown Artist');
             albumName.textContent = `Album: ${song.album?.name || 'N/A'} • ${new Date().getFullYear()}`;
             const imgUrl = (song.image && Array.isArray(song.image) ? song.image[2]?.url : song.image) || 'https://via.placeholder.com/192';
             albumArt.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover rounded-full" alt="Album Art">`;
+
             const downloadUrls = song.downloadUrl || [];
             let audioUrl = downloadUrls.length > 0 ? downloadUrls[downloadUrls.length - 1].url : 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
             player.src = audioUrl;
@@ -420,6 +443,7 @@
             progressBar.style.width = '0%';
             currentTimeEl.textContent = '0:00';
             totalTimeEl.textContent = formatTime(totalTime);
+
             if (!skipPlay) {
                 player.play().catch(error => {
                     console.error('Auto-play failed:', error);
@@ -430,17 +454,20 @@
                 updateUI(true);
             }
         }
+
         function nextSong() {
             currentSongIndex = (currentSongIndex + 1) % playlist.length;
             loadSong(currentSongIndex);
         }
+
         function prevSong() {
             currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
             loadSong(currentSongIndex);
         }
+
         function playFeaturedPlaylist(query) {
             spinner.classList.remove('hidden');
-            fetch(`/api/search/songs?query=${encodeURIComponent(query)}&limit=20`)
+            fetch(`https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`)
                 .then(response => response.json())
                 .then(data => {
                     spinner.classList.add('hidden');
@@ -467,6 +494,7 @@
                     fallbackPlaylist(query);
                 });
         }
+
         function fallbackPlaylist(query) {
             const dummySongs = [`${query} Song 1`, `${query} Song 2`, `${query} Song 3`];
             playlist = dummySongs.map((title, i) => ({
@@ -479,6 +507,7 @@
             renderPlaylist();
             loadSong(0);
         }
+
         function loadSection(section) {
             spinner.classList.remove('hidden');
             resultsDiv.innerHTML = '';
@@ -508,7 +537,7 @@
                 default:
                     apiEndpoint = '/api/search/songs?query=popular&limit=20';
             }
-            fetch(apiEndpoint)
+            fetch(`https://annonymous-sage.vercel.app${apiEndpoint}`)
                 .then(response => response.json())
                 .then(data => {
                     spinner.classList.add('hidden');
@@ -536,11 +565,13 @@
                     fallbackToLocal(section);
                 });
         }
+
         function fallbackToLocal(section) {
             sidebarTitle.textContent = `${section.charAt(0).toUpperCase() + section.slice(1)} - Up Next`;
             renderPlaylist();
             resultsDiv.innerHTML = `<p class="text-emerald-300 text-sm">Loading ${section}... Using local playlist.</p>`;
         }
+
         function renderPlaylist() {
             playlistItemsDiv.innerHTML = '';
             playlist.forEach((song, index) => {
@@ -560,6 +591,8 @@
                 playlistItemsDiv.appendChild(div);
             });
         }
+
+        // Google Login
         function initGoogleSignIn() {
             if (typeof gapi === 'undefined') {
                 console.error('gapi not loaded');
@@ -578,6 +611,7 @@
                 });
             });
         }
+
         function checkSignedInStatus() {
             const authInstance = gapi.auth2.getAuthInstance();
             if (authInstance?.isSignedIn.get()) {
@@ -588,6 +622,7 @@
                 loadUserHistory();
             }
         }
+
         function signIn() {
             const authInstance = gapi.auth2.getAuthInstance();
             authInstance.signIn().then(googleUser => {
@@ -602,6 +637,7 @@
                 alert('Sign-in failed. Check CLIENT_ID or try again.');
             });
         }
+
         function signOut() {
             const authInstance = gapi.auth2.getAuthInstance();
             authInstance.signOut().then(() => {
@@ -610,14 +646,17 @@
                 loginBtn.onclick = signIn;
                 clearUserHistory();
                 console.log('Signed out');
-                fetchTrendingForInit();
+                fetchTrendingForInit(); // Reset to trending
             });
         }
+
+        // User History
         function loadUserHistory() {
             if (!currentUser) return;
             const userId = currentUser.id;
             const lastPlayedStr = localStorage.getItem(`lastPlayed_${userId}`);
             const likedStr = localStorage.getItem(`liked_${userId}`);
+
             if (likedStr) {
                 const likedIds = JSON.parse(likedStr);
                 const likedSongs = likedIds.map(id => playlist.find(s => (s.id || s.title) === id) || { title: 'Liked Song', artist: 'Unknown', duration: 180, image: 'https://via.placeholder.com/192' }).filter(Boolean);
@@ -627,15 +666,18 @@
                     renderLikedSongs(likedSongs);
                 }
             }
+
             if (lastPlayedStr) {
                 const lastIndex = JSON.parse(lastPlayedStr);
                 if (playlist[lastIndex]) loadSong(lastIndex, true);
             }
         }
+
         function saveLastPlayed(index) {
             if (!currentUser) return;
             localStorage.setItem(`lastPlayed_${currentUser.id}`, JSON.stringify(index));
         }
+
         function toggleLike(song, element) {
             if (!currentUser) {
                 alert('Sign in to like songs!');
@@ -662,6 +704,7 @@
                 renderPlaylist();
             }
         }
+
         function renderLikedSongs(songs) {
             playlistItemsDiv.innerHTML = '';
             songs.forEach((song, index) => {
@@ -681,6 +724,7 @@
                 playlistItemsDiv.appendChild(div);
             });
         }
+
         function clearUserHistory() {
             if (!currentUser) return;
             const userId = currentUser.id;
@@ -689,6 +733,7 @@
             sidebarTitle.textContent = 'Up Next';
             renderPlaylist();
         }
+
         function searchSongs() {
             const query = searchInput.value.trim();
             if (!query) {
@@ -697,7 +742,7 @@
             }
             spinner.classList.remove('hidden');
             resultsDiv.innerHTML = '';
-            fetch(`/api/search/songs?query=${encodeURIComponent(query)}&limit=20`)
+            fetch(`https://annonymous-sage.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=20`)
                 .then(response => response.json())
                 .then(data => {
                     spinner.classList.add('hidden');
@@ -715,6 +760,7 @@
                     displayLocalResults(query);
                 });
         }
+
         function displayResults(songs) {
             sidebarTitle.textContent = 'Search Results';
             playlistItemsDiv.innerHTML = '';
@@ -770,6 +816,7 @@
             });
             resultsDiv.innerHTML = '';
         }
+
         function displayLocalResults(query) {
             const filtered = playlist.filter(song =>
                 (song.title || song.name || '').toLowerCase().includes(query.toLowerCase()) ||
@@ -825,10 +872,13 @@
                 resultsDiv.innerHTML = '';
             }
         }
+
         function toggleMobileNav() {
             mobileNav.classList.toggle('open');
             playlistSidebar.classList.toggle('hidden');
         }
+
+        // Event Listeners
         playBtn.addEventListener('click', togglePlay);
         nextBtn.addEventListener('click', nextSong);
         prevBtn.addEventListener('click', prevSong);
@@ -895,6 +945,8 @@
                 nextSong();
             }
         });
+
+        // Load Google Scripts
         const script1 = document.createElement('script');
         script1.src = 'https://apis.google.com/js/api.js';
         script1.async = true;
@@ -906,8 +958,10 @@
             document.head.appendChild(script2);
         };
         document.head.appendChild(script1);
+
+        // Initial Fetch for Trending Up Next
         function fetchTrendingForInit() {
-            fetch('/api/search/songs?query=trending&limit=10')
+            fetch(`https://annonymous-sage.vercel.app/api/search/songs?query=trending&limit=10`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data && data.data.results) {
@@ -923,6 +977,7 @@
                         renderPlaylist();
                         loadSong(0, true);
                     } else {
+                        // Dynamic trending-like fallback
                         playlist = [
                             { title: "Global Hit 2025", artist: "Pop Star A", duration: 210, image: "https://via.placeholder.com/192?text=G" },
                             { title: "Dance Fever", artist: "DJ X", duration: 245, image: "https://via.placeholder.com/192?text=D" },
@@ -936,6 +991,7 @@
                 })
                 .catch(error => {
                     console.error('Trending fetch failed:', error);
+                    // Same fallback as above
                     playlist = [
                         { title: "Global Hit 2025", artist: "Pop Star A", duration: 210, image: "https://via.placeholder.com/192?text=G" },
                         { title: "Dance Fever", artist: "DJ X", duration: 245, image: "https://via.placeholder.com/192?text=D" },
@@ -947,6 +1003,8 @@
                     loadSong(0, true);
                 });
         }
+
+        // Initialize
         fetchTrendingForInit();
     </script>
 </body>
