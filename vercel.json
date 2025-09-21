@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://annonymous-sage.vercel.app/:path*" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/proxy"
+    }
   ]
 }
