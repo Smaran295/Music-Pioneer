@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicPioneer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+            transition: background-color 0.3s;
+        }
+        .dark {
+            background-color: #1a1a1a;
+        }
+        .dark .login-modal, .dark header, .dark .player, .dark .queue {
+            background: #222;
+            border-color: #444;
+        }
+        .dark .playlist-card, .dark .song-card, .dark .queue-item {
+            background: #333;
+        }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-modal {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            width: 300px;
+        }
+        .login-modal h1 {
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        .login-modal input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #111;
+            color: #fff;
+        }
+        .login-modal button {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: none;
+            border-radius: 4px;
+            background: #1db954;
+            color: #fff;
+            cursor: pointer;
+        }
+        .login-modal button:hover {
+            background: #1ed760;
+        }
+        .login-link {
+            color: #1db954;
+            text-decoration: none;
+        }
+        .main-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: #000;
+            border-bottom: 1px solid #333;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1db954;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .nav-links a:hover {
+            color: #1db954;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-info span {
+            font-size: 0.9rem;
+        }
+        .user-info button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        .content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .search-container {
+            margin-bottom: 2rem;
+        }
+        .search-container input {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #111;
+            color: #fff;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .playlist-grid, .song-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .playlist-card, .song-card {
+            background: #111;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .playlist-card:hover, .song-card:hover {
+            transform: scale(1.02);
+        }
+        .playlist-image, .song-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .playlist-title, .song-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .playlist-info, .song-artist {
+            color: #b3b3b3;
+            font-size: 0.9rem;
+        }
+        .song-duration {
+            color: #b3b3b3;
+            font-size: 0.8rem;
+        }
+        .song-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+        .song-actions button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .no-songs {
+            text-align: center;
+            color: #b3b3b3;
+            font-size: 1.1rem;
+            padding: 2rem;
+        }
+        .player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #000;
+            border-top: 1px solid #333;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .player-art {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .player-info {
+            flex: 1;
+        }
+        .player-title {
+            font-weight: bold;
+        }
+        .player-artist {
+            color: #b3b3b3;
+            font-size: 0.9rem;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.8rem;
+            color: #b3b3b3;
+        }
+        .progress {
+            flex: 1;
+            height: 4px;
+            background: #404040;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .progress-filled {
+            height: 100%;
+            background: #1db954;
+            border-radius: 2px;
+            width: 0%;
+        }
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .player-controls button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .play-btn {
+            font-size: 2rem;
+        }
+        .queue {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: #111;
+            transition: right 0.3s;
+            padding: 2rem;
+            overflow-y: auto;
+            border-left: 1px solid #333;
+        }
+        .queue.open {
+            right: 0;
+        }
+        .queue h3 {
+            margin-bottom: 1rem;
+        }
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: #222;
+            border-radius: 4px;
+        }
+        .queue-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+        .queue-title {
+            font-weight: bold;
+            flex: 1;
+        }
+        .queue-artist {
+            color: #b3b3b3;
+            font-size: 0.8rem;
+        }
+        .queue-duration {
+            color: #b3b3b3;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .playlist-grid, .song-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-modal">
+            <h1>Sign in to MusicPioneer</h1>
+            <input type="email" placeholder="Email" id="email" required>
+            <input type="password" placeholder="Password" id="password" required>
+            <button onclick="handleLogin()">Sign in</button>
+            <p>Need an account? <a href="#" onclick="showSignup()" class="login-link">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="main-container">
+        <header>
+            <div class="logo">🎧 MusicPioneer</div>
+            <div class="nav-links" id="navLinks"></div>
+            <div class="user-info">
+                <span id="userName">User</span>
+                <button onclick="toggleDarkMode()">🌙</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </header>
+        <div class="content">
+            <div class="search-container">
+                <input type="search" id="searchInput" placeholder="Search for songs..." oninput="searchSongs()">
+            </div>
+            <div class="section-title">Trending Songs</div>
+            <div class="song-grid" id="trendingList"><div class="no-songs">Loading trending songs...</div></div>
+            <div class="section-title">Songs</div>
+            <div id="songList" class="song-grid"><div class="no-songs">Loading songs...</div></div>
+        </div>
+        <div class="player" id="player">
+            <img id="playerArt" class="player-art" src="https://via.placeholder.com/50?text=Song" alt="">
+            <div class="player-info">
+                <div id="playerTitle" class="player-title">No Song Playing</div>
+                <div id="playerArtist" class="player-artist">Select a Song</div>
+            </div>
+            <div class="progress-container">
+                <span id="currentTime">0:00</span>
+                <div class="progress" id="progress">
+                    <div class="progress-filled" id="progressFilled"></div>
+                </div>
+                <span id="totalTime">0:00</span>
+            </div>
+            <div class="player-controls">
+                <button onclick="prevSong()">⏮</button>
+                <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
+                <button onclick="nextSong()">⏭</button>
+                <button onclick="toggleQueue()">📋</button>
+            </div>
+        </div>
+        <div class="queue" id="queue">
+            <h3>Up Next</h3>
+            <div id="queueList"></div>
+        </div>
+    </div>
+</body>
+<script>
+    let currentUser = null;
+    let audio = new Audio();
+    let isPlaying = false;
+    let currentSongIndex = -1;
+    let queue = [];
+    let allSongs = [];
+    let trendingSongs = [];
+    let searchTimeout;
+
+    function formatDuration(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTime() {
+        const timeEl = document.createElement('span');
+        timeEl.id = 'time';
+        timeEl.style.fontSize = '0.9rem';
+        document.getElementById('navLinks').prepend(timeEl);
+        setInterval(() => {
+            timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }, 1000);
+    }
+
+    function handleLogin() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if (email && password) {
+            currentUser = { email };
+            document.getElementById('userName').textContent = email.split('@')[0];
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            loadTrendingSongs();
+            loadInitialSongs();
+            updateTime();
+        } else {
+            alert('Please enter both email and password.');
+        }
+    }
+
+    function showSignup() {
+        alert('Sign up functionality - implement backend');
+    }
+
+    function logout() {
+        currentUser = null;
+        allSongs = [];
+        queue = [];
+        audio.pause();
+        audio.src = '';
+        isPlaying = false;
+        document.getElementById('playPauseBtn').textContent = '▶';
+        document.getElementById('player').style.display = 'none';
+        document.getElementById('songList').innerHTML = '<div class="no-songs">Loading songs...</div>';
+        document.getElementById('trendingList').innerHTML = '<div class="no-songs">Loading trending songs...</div>';
+        document.getElementById('queueList').innerHTML = '';
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        document.querySelector('.user-info button').textContent = document.body.classList.contains('dark') ? '☀' : '🌙';
+    }
+
+    async function loadTrendingSongs() {
+        try {
+            const response = await fetch(`/api/search/songs?query=popular&limit=5`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.success && data.data?.songs?.length > 0) {
+                trendingSongs = data.data.songs;
+                displaySongs(trendingSongs, 'trendingList');
+            } else {
+                document.getElementById('trendingList').innerHTML = '<div class="no-songs">No trending songs available.</div>';
+            }
+        } catch (error) {
+            console.error('Trending songs load error:', error);
+            document.getElementById('trendingList').innerHTML = '<div class="no-songs">Failed to load trending songs.</div>';
+        }
+    }
+
+    async function loadInitialSongs() {
+        try {
+            const response = await fetch(`/api/search/songs?query=popular&limit=10`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.success && data.data?.songs?.length > 0) {
+                allSongs = data.data.songs;
+                displaySongs(allSongs, 'songList');
+            } else {
+                document.getElementById('songList').innerHTML = '<div class="no-songs">No songs available. Try searching!</div>';
+            }
+        } catch (error) {
+            console.error('Initial load error:', error);
+            document.getElementById('songList').innerHTML = '<div class="no-songs">Failed to load songs.</div>';
+        }
+    }
+
+    async function searchSongs() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+            const query = document.getElementById('searchInput').value.trim();
+            const container = document.getElementById('songList');
+            container.innerHTML = '<div class="no-songs">Loading songs...</div>';
+            if (!query) {
+                loadInitialSongs();
+                return;
+            }
+            try {
+                const response = await fetch(`/api/search/songs?query=${encodeURIComponent(query)}&limit=10`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                if (data.success && data.data?.songs?.length > 0) {
+                    allSongs = data.data.songs;
+                    displaySongs(allSongs, 'songList');
+                } else {
+                    container.innerHTML = '<div class="no-songs">No songs found for "' + query + '".</div>';
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                container.innerHTML = '<div class="no-songs">Search failed for "' + query + '".</div>';
+            }
+        }, 300);
+    }
+
+    function displaySongs(songs, containerId) {
+        const container = document.getElementById(containerId);
+        if (!songs || songs.length === 0) {
+            container.innerHTML = '<div class="no-songs">No songs available.</div>';
+            return;
+        }
+        container.innerHTML = songs.map((song, index) => `
+            <div class="song-card" onclick="playSong(${index}, '${containerId}')">
+                <img class="song-image" src="${song.image || 'https://via.placeholder.com/150?text=Song'}" alt="${song.title || 'Unknown'}">
+                <div class="song-title">${song.title || 'Unknown Title'}</div>
+                <div class="song-artist">${song.artist || 'Unknown Artist'}</div>
+                <div class="song-duration">${formatDuration(song.duration || 0)}</div>
+                <div class="song-actions">
+                    <button onclick="event.stopPropagation(); addToQueue(${index}, '${containerId}')">➕</button>
+                    <button onclick="event.stopPropagation(); downloadSong('${song.media_url || ''}', '${song.title || 'Unknown'}')">⬇</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function playSong(index, sourceList) {
+        const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
+        if (index < 0 || index >= songs.length) return;
+        currentSongIndex = index;
+        const song = songs[index];
+        if (!song || !song.media_url) {
+            alert('Song not available');
+            return;
+        }
+        audio.src = song.media_url;
+        audio.play().catch(e => console.error('Playback error:', e));
+        updatePlayer(song);
+        isPlaying = true;
+        document.getElementById('playPauseBtn').textContent = '⏸';
+        document.getElementById('player').style.display = 'flex';
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            audio.pause();
+            document.getElementById('playPauseBtn').textContent = '▶';
+        } else {
+            audio.play().catch(e => console.error('Playback error:', e));
+            document.getElementById('playPauseBtn').textContent = '⏸';
+        }
+        isPlaying = !isPlaying;
+    }
+
+    function nextSong() {
+        if (queue.length > 0) {
+            const song = queue.shift();
+            updateQueue();
+            audio.src = song.media_url;
+            audio.play().catch(e => console.error('Playback error:', e));
+            updatePlayer(song);
+            isPlaying = true;
+            document.getElementById('playPauseBtn').textContent = '⏸';
+        } else if (currentSongIndex < allSongs.length - 1) {
+            playSong(currentSongIndex + 1, 'songList');
+        }
+    }
+
+    function prevSong() {
+        if (currentSongIndex > 0) {
+            playSong(currentSongIndex - 1, 'songList');
+        }
+    }
+
+    function updatePlayer(song) {
+        document.getElementById('playerArt').src = song.image || 'https://via.placeholder.com/50?text=Song';
+        document.getElementById('playerTitle').textContent = song.title || 'No Song Playing';
+        document.getElementById('playerArtist').textContent = song.artist || 'Select a Song';
+        document.getElementById('totalTime').textContent = formatDuration(song.duration || 0);
+        document.getElementById('progressFilled').style.width = '0%';
+        document.getElementById('currentTime').textContent = '0:00';
+    }
+
+    function updateProgress() {
+        if (audio.duration && !isNaN(audio.duration)) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            document.getElementById('progressFilled').style.width = progress + '%';
+            document.getElementById('currentTime').textContent = formatDuration(audio.currentTime);
+        }
+    }
+
+    document.getElementById('progress').addEventListener('click', (e) => {
+        if (audio.duration) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const width = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = width * audio.duration;
+        }
+    });
+
+    function addToQueue(index, sourceList) {
+        const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
+        const song = songs[index];
+        if (song) {
+            queue.push({ ...song, emoji: '🎶' });
+            updateQueue();
+        }
+    }
+
+    function updateQueue() {
+        const container = document.getElementById('queueList');
+        container.innerHTML = queue.length ? queue.map((song) => `
+            <div class="queue-item">
+                <img src="${song.image || 'https://via.placeholder.com/40?text=Song'}" alt="">
+                <div>
+                    <div class="queue-title">${song.emoji || ''} ${song.title || 'Unknown'}</div>
+                    <div class="queue-artist">${song.artist || 'Unknown'}</div>
+                </div>
+                <div class="queue-duration">${formatDuration(song.duration || 0)}</div>
+            </div>
+        `).join('') : '<div class="no-songs">Queue empty</div>';
+    }
+
+    function toggleQueue() {
+        document.getElementById('queue').classList.toggle('open');
+    }
+
+    function downloadSong(url, title) {
+        if (url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            alert('Download not available');
+        }
+    }
+
+    // Event listeners
+    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('ended', nextSong);
+
+    // Initial setup
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('player').style.display = 'none';
+</script>
+</html>
