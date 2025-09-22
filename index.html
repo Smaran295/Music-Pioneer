@@ -4,451 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MusicPioneer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000;
-            color: #fff;
-            overflow-x: hidden;
-            transition: background-color 0.3s ease;
-        }
-        .dark {
-            background-color: #1a1a1a;
-        }
-        .dark .login-modal, .dark header, .dark .player, .dark .queue {
-            background: #222;
-            border-color: #444;
-        }
-        .dark .playlist-card, .dark .song-card, .dark .queue-item {
-            background: #333;
-        }
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .login-modal {
-            background: #000;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 2.5rem;
-            text-align: center;
-            width: 350px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-        .login-modal h1 {
-            margin-bottom: 1.5rem;
-            color: #fff;
-            font-size: 1.8rem;
-        }
-        .login-modal input {
-            width: 100%;
-            padding: 0.85rem;
-            margin: 0.75rem 0;
-            border: 1px solid #333;
-            border-radius: 6px;
-            background: #111;
-            color: #fff;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .login-modal input:focus {
-            border-color: #1db954;
-            outline: none;
-        }
-        .login-modal button {
-            width: 100%;
-            padding: 0.85rem;
-            margin: 0.75rem 0;
-            border: none;
-            border-radius: 6px;
-            background: #1db954;
-            color: #fff;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .login-modal button:hover {
-            background: #1ed760;
-            transform: translateY(-2px);
-        }
-        .login-link {
-            color: #1db954;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .login-link:hover {
-            text-decoration: underline;
-        }
-        .main-container {
-            display: none;
-            height: 100vh;
-            flex-direction: column;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: #000;
-            border-bottom: 1px solid #333;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #1db954;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 1rem;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover {
-            color: #1db954;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .user-info span {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .user-info button {
-            background: none;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.2s, transform 0.1s;
-        }
-        .user-info button:hover {
-            color: #1db954;
-            transform: scale(1.1);
-        }
-        .content {
-            flex: 1;
-            padding: 2.5rem;
-            overflow-y: auto;
-            background: linear-gradient(to bottom, #121212, #000);
-        }
-        .search-container {
-            margin-bottom: 2.5rem;
-        }
-        .search-container input {
-            width: 100%;
-            max-width: 500px;
-            padding: 1rem;
-            border: 1px solid #333;
-            border-radius: 50px;
-            background: #111;
-            color: #fff;
-            font-size: 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .search-container input:focus {
-            border-color: #1db954;
-            box-shadow: 0 0 10px rgba(29, 185, 84, 0.3);
-            outline: none;
-        }
-        .section-title {
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: #fff;
-            letter-spacing: 0.5px;
-        }
-        .song-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-        .song-card {
-            background: #111;
-            border-radius: 12px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        }
-        .song-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(29, 185, 84, 0.2);
-        }
-        .song-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            transition: transform 0.3s;
-        }
-        .song-card:hover .song-image {
-            transform: scale(1.05);
-        }
-        .song-title {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-        .song-artist {
-            color: #b3b3b3;
-            font-size: 0.95rem;
-            margin-bottom: 0.5rem;
-        }
-        .song-duration {
-            color: #b3b3b3;
-            font-size: 0.85rem;
-        }
-        .song-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-        }
-        .song-actions button {
-            background: none;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            font-size: 1.3rem;
-            transition: color 0.2s, transform 0.1s;
-        }
-        .song-actions button:hover {
-            color: #1db954;
-            transform: scale(1.2);
-        }
-        .no-songs {
-            text-align: center;
-            color: #b3b3b3;
-            font-size: 1.2rem;
-            padding: 3rem;
-        }
-        .player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, #000, #121212);
-            border-top: 1px solid #333;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
-        }
-        .player-art {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        .player-info {
-            flex: 1;
-        }
-        .player-title {
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .player-artist {
-            color: #b3b3b3;
-            font-size: 0.95rem;
-        }
-        .progress-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin: 0.75rem 0;
-            font-size: 0.85rem;
-            color: #b3b3b3;
-        }
-        .progress {
-            flex: 1;
-            height: 6px;
-            background: #404040;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .progress:hover {
-            background: #505050;
-        }
-        .progress-filled {
-            height: 100%;
-            background: #1db954;
-            border-radius: 3px;
-            transition: width 0.1s ease;
-        }
-        .player-controls {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .player-controls button {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.8rem;
-            cursor: pointer;
-            transition: color 0.2s, transform 0.1s;
-        }
-        .player-controls button:hover {
-            color: #1db954;
-            transform: scale(1.1);
-        }
-        .play-btn {
-            font-size: 2.5rem;
-        }
-        .queue {
-            position: fixed;
-            right: -350px;
-            top: 0;
-            width: 350px;
-            height: 100vh;
-            background: #111;
-            transition: right 0.4s ease;
-            padding: 2.5rem;
-            overflow-y: auto;
-            border-left: 1px solid #333;
-            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
-        }
-        .queue.open {
-            right: 0;
-        }
-        .queue h3 {
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-        }
-        .queue-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: #222;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .queue-item:hover {
-            background: #333;
-        }
-        .queue-item img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .queue-title {
-            font-weight: bold;
-            flex: 1;
-            font-size: 1rem;
-        }
-        .queue-artist {
-            color: #b3b3b3;
-            font-size: 0.85rem;
-        }
-        .queue-duration {
-            color: #b3b3b3;
-            font-size: 0.85rem;
-        }
-        @media (max-width: 768px) {
-            .song-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-            header {
-                padding: 1rem;
-            }
-            .login-modal {
-                width: 90%;
-            }
-            .queue {
-                width: 100%;
-                right: -100%;
-            }
-            .queue.open {
-                right: 0;
-            }
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-black text-white overflow-x-hidden transition-colors duration-300">
     <!-- Login Overlay -->
-    <div id="loginOverlay" class="login-overlay">
-        <div class="login-modal">
-            <h1>Sign in to MusicPioneer</h1>
-            <input type="email" placeholder="Email" id="email" required>
-            <input type="password" placeholder="Password" id="password" required>
-            <button onclick="handleLogin()">Sign in</button>
-            <p>Need an account? <a href="#" onclick="showSignup()" class="login-link">Sign up</a></p>
+    <div id="loginOverlay" class="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
+        <div class="bg-black border border-gray-700 rounded-xl p-8 text-center w-full max-w-sm shadow-2xl">
+            <h1 class="text-2xl font-bold mb-6">Sign in to MusicPioneer</h1>
+            <input type="email" placeholder="Email" id="email" required class="w-full p-3 mb-4 border border-gray-700 rounded-lg bg-gray-900 text-white focus:border-green-500 focus:outline-none transition-colors">
+            <input type="password" placeholder="Password" id="password" required class="w-full p-3 mb-4 border border-gray-700 rounded-lg bg-gray-900 text-white focus:border-green-500 focus:outline-none transition-colors">
+            <button onclick="handleLogin()" class="w-full p-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition-transform hover:-translate-y-1">Sign in</button>
+            <p class="mt-4">Need an account? <a href="#" onclick="showSignup()" class="text-green-500 font-bold hover:underline">Sign up</a></p>
         </div>
     </div>
 
     <!-- Main App -->
-    <div id="mainApp" class="main-container">
-        <header>
-            <div class="logo">🎧 MusicPioneer</div>
-            <div class="nav-links" id="navLinks"></div>
-            <div class="user-info">
-                <span id="userName">User</span>
-                <button onclick="toggleDarkMode()">🌙</button>
-                <button onclick="logout()">Logout</button>
+    <div id="mainApp" class="hidden h-screen flex flex-col">
+        <header class="flex justify-between items-center p-4 bg-black border-b border-gray-800 shadow-md">
+            <div class="text-2xl font-bold text-green-500 flex items-center gap-2">🎧 MusicPioneer</div>
+            <div id="navLinks" class="flex gap-6 items-center"></div>
+            <div class="flex items-center gap-6">
+                <span id="userName" class="font-semibold">User</span>
+                <button onclick="toggleDarkMode()" class="text-xl hover:text-green-500 transition-transform hover:scale-110">🌙</button>
+                <button onclick="logout()" class="text-white hover:text-green-500 transition-transform hover:scale-110">Logout</button>
             </div>
         </header>
-        <div class="content">
-            <div class="search-container">
-                <input type="search" id="searchInput" placeholder="Search for songs..." oninput="searchSongs()">
+        <div class="flex-1 p-8 overflow-y-auto bg-gradient-to-b from-gray-900 to-black">
+            <div class="mb-8 max-w-lg mx-auto">
+                <input type="search" id="searchInput" placeholder="Search for songs..." oninput="searchSongs()" class="w-full p-4 border border-gray-700 rounded-full bg-gray-900 text-white focus:border-green-500 focus:outline-none focus:shadow-lg transition-all">
             </div>
-            <div class="section-title">Trending Songs</div>
-            <div class="song-grid" id="trendingList"><div class="no-songs">Loading trending songs...</div></div>
-            <div class="section-title">Songs</div>
-            <div id="songList" class="song-grid"><div class="no-songs">Loading songs...</div></div>
+            <div class="text-2xl font-bold mb-6">Trending Songs</div>
+            <div id="trendingList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+                <div class="text-center text-gray-400 text-lg py-8">Loading trending songs...</div>
+            </div>
+            <div class="text-2xl font-bold mb-6">Songs</div>
+            <div id="songList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="text-center text-gray-400 text-lg py-8">Loading songs...</div>
+            </div>
         </div>
-        <div class="player" id="player">
-            <img id="playerArt" class="player-art" src="https://via.placeholder.com/50?text=Song" alt="">
-            <div class="player-info">
-                <div id="playerTitle" class="player-title">No Song Playing</div>
-                <div id="playerArtist" class="player-artist">Select a Song</div>
+        <div id="player" class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black to-gray-900 border-t border-gray-800 p-4 flex items-center gap-4 shadow-2xl">
+            <img id="playerArt" class="w-16 h-16 object-cover rounded-lg shadow-md" src="https://via.placeholder.com/50?text=Song" alt="">
+            <div class="flex-1">
+                <div id="playerTitle" class="font-bold text-lg">No Song Playing</div>
+                <div id="playerArtist" class="text-gray-400 text-sm">Select a Song</div>
             </div>
-            <div class="progress-container">
+            <div class="flex items-center gap-2 text-gray-400 text-sm">
                 <span id="currentTime">0:00</span>
-                <div class="progress" id="progress">
-                    <div class="progress-filled" id="progressFilled"></div>
+                <div id="progress" class="flex-1 h-1.5 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-600 transition-colors">
+                    <div id="progressFilled" class="h-full bg-green-500 rounded-full transition-width duration-100"></div>
                 </div>
                 <span id="totalTime">0:00</span>
             </div>
-            <div class="player-controls">
-                <button onclick="prevSong()">⏮</button>
-                <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
-                <button onclick="nextSong()">⏭</button>
-                <button onclick="toggleQueue()">📋</button>
+            <div class="flex items-center gap-6">
+                <button onclick="prevSong()" class="text-2xl hover:text-green-500 transition-transform hover:scale-110">⏮</button>
+                <button id="playPauseBtn" onclick="togglePlay()" class="text-3xl hover:text-green-500 transition-transform hover:scale-110">▶</button>
+                <button onclick="nextSong()" class="text-2xl hover:text-green-500 transition-transform hover:scale-110">⏭</button>
+                <button onclick="toggleQueue()" class="text-2xl hover:text-green-500 transition-transform hover:scale-110">📋</button>
             </div>
         </div>
-        <div class="queue" id="queue">
-            <h3>Up Next</h3>
+        <div id="queue" class="fixed top-0 right-[-350px] w-[350px] h-screen bg-gray-900 transition-all duration-400 p-8 overflow-y-auto border-l border-gray-800 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Up Next</h3>
             <div id="queueList"></div>
         </div>
     </div>
@@ -472,7 +87,7 @@
     function updateTime() {
         const timeEl = document.createElement('span');
         timeEl.id = 'time';
-        timeEl.style.fontSize = '0.9rem';
+        timeEl.className = 'text-sm';
         document.getElementById('navLinks').prepend(timeEl);
         setInterval(() => {
             timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -508,8 +123,8 @@
         isPlaying = false;
         document.getElementById('playPauseBtn').textContent = '▶';
         document.getElementById('player').style.display = 'none';
-        document.getElementById('songList').innerHTML = '<div class="no-songs">Loading songs...</div>';
-        document.getElementById('trendingList').innerHTML = '<div class="no-songs">Loading trending songs...</div>';
+        document.getElementById('songList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Loading songs...</div>';
+        document.getElementById('trendingList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Loading trending songs...</div>';
         document.getElementById('queueList').innerHTML = '';
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'flex';
@@ -517,7 +132,14 @@
 
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
-        document.querySelector('.user-info button').textContent = document.body.classList.contains('dark') ? '☀' : '🌙';
+        if (document.body.classList.contains('dark')) {
+            document.body.classList.replace('bg-black', 'bg-gray-900');
+            document.body.classList.replace('text-white', 'text-gray-200');
+        } else {
+            document.body.classList.replace('bg-gray-900', 'bg-black');
+            document.body.classList.replace('text-gray-200', 'text-white');
+        }
+        document.querySelector('[onclick="toggleDarkMode()"]').textContent = document.body.classList.contains('dark') ? '☀' : '🌙';
     }
 
     async function loadTrendingSongs() {
@@ -529,11 +151,11 @@
                 trendingSongs = data.data.songs;
                 displaySongs(trendingSongs, 'trendingList');
             } else {
-                document.getElementById('trendingList').innerHTML = '<div class="no-songs">No trending songs available.</div>';
+                document.getElementById('trendingList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">No trending songs available.</div>';
             }
         } catch (error) {
             console.error('Trending songs load error:', error);
-            document.getElementById('trendingList').innerHTML = '<div class="no-songs">Failed to load trending songs.</div>';
+            document.getElementById('trendingList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Failed to load trending songs.</div>';
         }
     }
 
@@ -546,11 +168,11 @@
                 allSongs = data.data.songs;
                 displaySongs(allSongs, 'songList');
             } else {
-                document.getElementById('songList').innerHTML = '<div class="no-songs">No songs available. Try searching!</div>';
+                document.getElementById('songList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">No songs available. Try searching!</div>';
             }
         } catch (error) {
             console.error('Initial load error:', error);
-            document.getElementById('songList').innerHTML = '<div class="no-songs">Failed to load songs.</div>';
+            document.getElementById('songList').innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Failed to load songs.</div>';
         }
     }
 
@@ -559,7 +181,7 @@
         searchTimeout = setTimeout(async () => {
             const query = document.getElementById('searchInput').value.trim();
             const container = document.getElementById('songList');
-            container.innerHTML = '<div class="no-songs">Loading songs...</div>';
+            container.innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Loading songs...</div>';
             if (!query) {
                 loadInitialSongs();
                 return;
@@ -572,11 +194,11 @@
                     allSongs = data.data.songs;
                     displaySongs(allSongs, 'songList');
                 } else {
-                    container.innerHTML = '<div class="no-songs">No songs found for "' + query + '".</div>';
+                    container.innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">No songs found for "' + query + '".</div>';
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                container.innerHTML = '<div class="no-songs">Search failed for "' + query + '".</div>';
+                container.innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">Search failed for "' + query + '".</div>';
             }
         }, 300);
     }
@@ -584,18 +206,18 @@
     function displaySongs(songs, containerId) {
         const container = document.getElementById(containerId);
         if (!songs || songs.length === 0) {
-            container.innerHTML = '<div class="no-songs">No songs available.</div>';
+            container.innerHTML = '<div class="text-center text-gray-400 text-lg py-8 col-span-full">No songs available.</div>';
             return;
         }
         container.innerHTML = songs.map((song, index) => `
-            <div class="song-card" onclick="playSong(${index}, '${containerId}')">
-                <img class="song-image" src="${song.image || 'https://via.placeholder.com/150?text=Song'}" alt="${song.title || 'Unknown'}">
-                <div class="song-title">${song.title || 'Unknown Title'}</div>
-                <div class="song-artist">${song.artist || 'Unknown Artist'}</div>
-                <div class="song-duration">${formatDuration(song.duration || 0)}</div>
-                <div class="song-actions">
-                    <button onclick="event.stopPropagation(); addToQueue(${index}, '${containerId}')">➕</button>
-                    <button onclick="event.stopPropagation(); downloadSong('${song.media_url || ''}', '${song.title || 'Unknown'}')">⬇</button>
+            <div class="bg-gray-900 rounded-xl p-4 cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all shadow-md" onclick="playSong(${index}, '${containerId}')">
+                <img class="w-full h-48 object-cover rounded-lg mb-4 hover:scale-105 transition-transform" src="${song.image || 'https://via.placeholder.com/150?text=Song'}" alt="${song.title || 'Unknown'}">
+                <div class="font-bold text-lg mb-1">${song.title || 'Unknown Title'}</div>
+                <div class="text-gray-400 text-sm mb-2">${song.artist || 'Unknown Artist'}</div>
+                <div class="text-gray-400 text-xs">${formatDuration(song.duration || 0)}</div>
+                <div class="flex justify-between mt-4">
+                    <button onclick="event.stopPropagation(); addToQueue(${index}, '${containerId}')" class="text-xl hover:text-green-500 transition-transform hover:scale-125">➕</button>
+                    <button onclick="event.stopPropagation(); downloadSong('${song.media_url || ''}', '${song.title || 'Unknown'}')" class="text-xl hover:text-green-500 transition-transform hover:scale-125">⬇</button>
                 </div>
             </div>
         `).join('');
@@ -686,19 +308,21 @@
     function updateQueue() {
         const container = document.getElementById('queueList');
         container.innerHTML = queue.length ? queue.map((song) => `
-            <div class="queue-item">
-                <img src="${song.image || 'https://via.placeholder.com/40?text=Song'}" alt="">
-                <div>
-                    <div class="queue-title">${song.emoji || ''} ${song.title || 'Unknown'}</div>
-                    <div class="queue-artist">${song.artist || 'Unknown'}</div>
+            <div class="flex items-center gap-4 mb-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                <img src="${song.image || 'https://via.placeholder.com/40?text=Song'}" class="w-12 h-12 object-cover rounded-md" alt="">
+                <div class="flex-1">
+                    <div class="font-bold">${song.emoji || ''} ${song.title || 'Unknown'}</div>
+                    <div class="text-gray-400 text-sm">${song.artist || 'Unknown'}</div>
                 </div>
-                <div class="queue-duration">${formatDuration(song.duration || 0)}</div>
+                <div class="text-gray-400 text-sm">${formatDuration(song.duration || 0)}</div>
             </div>
-        `).join('') : '<div class="no-songs">Queue empty</div>';
+        `).join('') : '<div class="text-center text-gray-400 text-lg py-8">Queue empty</div>';
     }
 
     function toggleQueue() {
-        document.getElementById('queue').classList.toggle('open');
+        const queueEl = document.getElementById('queue');
+        queueEl.classList.toggle('right-0');
+        queueEl.classList.toggle('right-[-350px]');
     }
 
     function downloadSong(url, title) {
