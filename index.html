@@ -7,30 +7,27 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg1:#0a0f1f;
-      --bg2:#111a37;
-      --acc1:#a78bfa; /* violet-400 */
-      --acc2:#22d3ee; /* cyan-400 */
-      --rose:#f472b6;/* violet-400 */
-      --blue:#60a5fa;
+    :root {
+      --bg1: #0a0f1f;
+      --bg2: #111a37;
+      --acc1: #a78bfa; /* violet-400 */
+      --acc2: #22d3ee; /* cyan-400 */
+      --rose: #f472b6;
+      --blue: #60a5fa;
     }
-    html, body { height:100% }
+    html, body { height: 100% }
     body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-
     .mesh {
       background:
         radial-gradient(1200px 600px at 12% 10%, rgba(167,139,250,.16), transparent 60%),
         radial-gradient(1000px 600px at 88% 15%, rgba(34,211,238,.14), transparent 60%),
         linear-gradient(135deg, var(--bg1), var(--bg2));
     }
-
     .glass {
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
       border: 1px solid rgba(255,255,255,.08);
       backdrop-filter: blur(10px);
     }
-
     .card {
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid rgba(255,255,255,.08);
@@ -38,41 +35,58 @@
       transition: transform .2s ease, box-shadow .2s ease;
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(0,0,0,.35); }
-
     .art {
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,.12);
       box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 0 18px rgba(167,139,250,.25);
     }
-
-    .eq { display:inline-flex; align-items:flex-end; gap:3px; height:16px; }
-    .eq span { width:3px; border-radius:2px; background: linear-gradient(180deg,#fff,rgba(255,255,255,.65)); opacity:.95; }
+    .eq {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 16px;
+    }
+    .eq span {
+      width: 3px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #fff, rgba(255,255,255,.65));
+      opacity: .95;
+    }
     .eq.playing span { animation: bounce 700ms infinite ease-in-out; }
-    .eq.playing span:nth-child(2){ animation-delay:80ms }
-    .eq.playing span:nth-child(3){ animation-delay:160ms }
-    .eq.playing span:nth-child(4){ animation-delay:240ms }
-    @keyframes bounce { 0%,100%{height:6px} 50%{height:16px} }
-
-    .track { height:6px; border-radius:999px; background: rgba(255,255,255,.15); position: relative; overflow: hidden; }
-    .fill  { position:absolute; left:0; top:0; height:6px; width:0%; border-radius:999px; background: linear-gradient(90deg, var(--acc1), var(--acc2)); box-shadow: 0 0 18px rgba(167,139,250,.35); }
-
+    .eq.playing span:nth-child(2) { animation-delay: 80ms; }
+    .eq.playing span:nth-child(3) { animation-delay: 160ms; }
+    .eq.playing span:nth-child(4) { animation-delay: 240ms; }
+    @keyframes bounce { 0%, 100% { height: 6px } 50% { height: 16px } }
+    .track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 6px;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--acc1), var(--acc2));
+      box-shadow: 0 0 18px rgba(167,139,250,.35);
+    }
     .player-shadow { box-shadow: 0 -8px 24px rgba(0,0,0,.35); }
-
     .drawer { transform: translateY(100%); transition: transform .28s ease; }
     .drawer.open { transform: translateY(0%); }
-
     .spin-slow { animation: spin 14s linear infinite; }
     .paused { animation-play-state: paused; }
     @keyframes spin { to { transform: rotate(360deg) } }
-
     .btn-ghost { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
-
     .dark { --bg1: #03050b; --bg2: #0a0f1f; }
   </style>
 </head>
 <body class="mesh min-h-screen text-slate-100">
-  <!-- Login Overlay (from your code) -->
+  <!-- Login Overlay -->
   <div id="loginOverlay" class="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
     <div class="glass border border-gray-700 rounded-xl p-8 text-center w-full max-w-sm shadow-2xl">
       <h1 class="text-2xl font-bold mb-6">Sign in to MusicPioneer</h1>
@@ -86,7 +100,6 @@
   <!-- Header -->
   <header class="sticky top-0 z-30 glass">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-      <!-- Logo -->
       <div class="flex items-center gap-2">
         <svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true">
           <defs>
@@ -102,15 +115,11 @@
           <div class="text-[11px] text-slate-300">Discover Your Sound</div>
         </div>
       </div>
-
-      <!-- Nav -->
       <nav class="ml-6 hidden md:flex items-center gap-1">
         <button data-tab="home" class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10">Home</button>
         <button data-tab="browse" class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10">Browse</button>
         <button data-tab="library" class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10">Library</button>
       </nav>
-
-      <!-- Search -->
       <form id="searchForm" class="ml-auto w-full md:w-80" autocomplete="off">
         <div class="relative">
           <input id="searchInput" type="search" placeholder="Search songs, artists..." class="w-full pl-10 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 placeholder-slate-400 outline-none focus:ring-2 focus:ring-cyan-400/40">
@@ -119,8 +128,6 @@
           </span>
         </div>
       </form>
-
-      <!-- User Info (from your code) -->
       <div class="flex items-center gap-2">
         <span id="userName" class="font-semibold text-sm hidden">User</span>
         <button onclick="toggleDarkMode()" class="text-xl hover:text-cyan-400 transition-transform hover:scale-110">🌙</button>
@@ -131,7 +138,6 @@
 
   <!-- Main -->
   <main class="max-w-7xl mx-auto px-4 pt-6 pb-36" id="mainContent">
-    <!-- Hero -->
     <section id="hero" class="mb-8">
       <div class="rounded-2xl p-6 md:p-8 glass border border-white/10">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -151,8 +157,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Trending Songs (Mapped to Featured Albums) -->
     <section id="featured" class="mb-10">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xl font-extrabold">Trending Songs</h2>
@@ -167,16 +171,12 @@
         <div class="text-slate-300 text-center col-span-full py-8">Loading trending songs...</div>
       </div>
     </section>
-
-    <!-- Songs (Mapped to New Releases) -->
     <section id="newReleases" class="mb-10">
       <h2 class="text-xl font-extrabold mb-3">Songs</h2>
       <div id="songList" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="text-slate-300 text-center col-span-full py-8">Loading songs...</div>
       </div>
     </section>
-
-    <!-- Library -->
     <section id="librarySection" class="mb-10 hidden">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xl font-extrabold">Your Library</h2>
@@ -184,8 +184,6 @@
       </div>
       <div id="libraryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     </section>
-
-    <!-- Search Results -->
     <section id="searchSection" class="mb-10 hidden">
       <h2 class="text-xl font-extrabold mb-3">Search Results</h2>
       <div id="searchGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"></div>
@@ -198,12 +196,9 @@
     <div class="max-w-7xl mx-auto px-4">
       <div class="glass border border-white/10 rounded-t-2xl px-3 md:px-4 py-3">
         <div class="flex items-center gap-3 md:gap-4">
-          <!-- Artwork disc -->
           <div class="h-12 w-12 rounded-full overflow-hidden border border-white/10">
             <svg id="playerArt" viewBox="0 0 100 100" class="h-full w-full spin-slow paused"></svg>
           </div>
-
-          <!-- Meta + progress -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-3">
               <div class="min-w-0">
@@ -224,13 +219,11 @@
                 <div id="fill" class="fill"></div>
               </div>
               <div class="flex justify-between text-[11px] text-slate-300 mt-1">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+                <span id="current">0:00</span>
+                <span id="duration">0:00</span>
               </div>
             </div>
           </div>
-
-          <!-- Controls -->
           <div class="flex items-center gap-1.5 md:gap-2">
             <button onclick="prevSong()" class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10" title="Previous">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="6" width="2" height="12"></rect><polygon points="18,6 10,12 18,18"></polygon></svg>
@@ -254,7 +247,10 @@
                 <input id="volRange" type="range" min="0" max="100" value="70" class="w-full">
               </div>
             </div>
-            <button onclick="toggleQueue()" class="h-9 px-3 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold">Queue</button>
+            <button onclick="downloadCurrentSong()" class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10" title="Download">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3v10l3.5-3.5 1.4 1.4L12 16.8 7.1 10.9l1.4-1.4L11 13V3h1z"></path><rect x="4" y="18" width="16" height="2" rx="1" ry="1"></rect></svg>
+            </button>
+            <button id="queueBtn" class="h-9 px-3 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold">Queue</button>
           </div>
         </div>
       </div>
@@ -280,7 +276,7 @@
   <audio id="audio-player" preload="none"></audio>
 
   <script>
-    // API Usage: Uses /api/search/songs proxy to https://annonymous-sage.vercel.app/api/search/songs for song data (title, artist, image, media_url, duration)
+    // State
     let currentUser = null;
     let audio = document.getElementById('audio-player');
     let isPlaying = false;
@@ -289,11 +285,11 @@
     let queue = [];
     let allSongs = [];
     let trendingSongs = [];
-    let searchTimeout;
+    let filterGenre = 'all';
     let volume = 0.7;
     audio.volume = volume;
 
-    // New elements
+    // Elements
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
     const heroArt = document.getElementById('heroArt');
@@ -313,13 +309,9 @@
     const currentEl = document.getElementById('current');
     const durationEl = document.getElementById('duration');
     const eq = document.getElementById('eq');
-    const playBtn = document.getElementById('play');
+    const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
     const pauseIcon = document.getElementById('pauseIcon');
-    const prevBtn = document.getElementById('prev');
-    const nextBtn = document.getElementById('next');
-    const likeBtn = document.getElementById('like');
-    const heart = document.getElementById('heart');
     const volBtn = document.getElementById('volBtn');
     const volPop = document.getElementById('volPop');
     const volRange = document.getElementById('volRange');
@@ -333,42 +325,46 @@
     const ctaExplore = document.getElementById('ctaExplore');
     const ctaPlayMix = document.getElementById('ctaPlayMix');
 
-    // Utils from new code
-    const pad = n => n<10 ? "0"+n : ""+n;
+    // Utils
+    const pad = n => n < 10 ? "0" + n : "" + n;
     const fmt = s => `${Math.floor(s/60)}:${pad(Math.floor(s%60))}`;
-    const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
-
-    // Render Hero (fallback if no API)
-    function renderHero() {
-      heroArt.innerHTML = albumSVG(280,180, ["#a78bfa","#22d3ee"], "MusicPioneer");
+    const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    function generateColors(title) {
+      const hash = Array.from(title).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const colorOptions = [
+        ["#a78bfa", "#22d3ee"], ["#f472b6", "#60a5fa"], ["#34d399", "#a78bfa"],
+        ["#fb7185", "#22c55e"], ["#f59e0b", "#22d3ee"], ["#7c3aed", "#06b6d4"]
+      ];
+      return colorOptions[hash % colorOptions.length];
     }
 
-    function albumSVG(width, height, colors, seedLabel){
-      const [c1,c2] = colors;
+    // Artwork Generators
+    function albumSVG(width, height, colors, seedLabel) {
+      const [c1, c2] = colors;
       const w = width, h = height;
-      const seed = (Array.from(seedLabel).reduce((s,ch)=>s+ch.charCodeAt(0),0) * 997) % 50;
+      const seed = (Array.from(seedLabel).reduce((s, ch) => s + ch.charCodeAt(0), 0) * 997) % 50;
       return `
-        <defs>
-          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="${c1}"/>
-            <stop offset="100%" stop-color="${c2}"/>
-          </linearGradient>
-          <radialGradient id="glow" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stop-color="rgba(255,255,255,.35)"/>
-            <stop offset="80%" stop-color="rgba(255,255,255,0)"/>
-          </radialGradient>
-        </defs>
-        <rect width="${w}" height="${h}" fill="url(#g)"/>
-        <g opacity=".25">
-          <circle cx="${w*0.28+seed/3}" cy="${h*0.25+seed/5}" r="${Math.min(w,h)*0.18}" fill="white"/>
-          <circle cx="${w*0.72-seed/4}" cy="${h*0.7-seed/6}" r="${Math.min(w,h)*0.22}" fill="white"/>
-        </g>
-        <path d="M${w/2} ${h*0.1} C ${w*0.66} ${h*(0.2+seed/500)}, ${w*0.86} ${h*0.4}, ${w/2} ${h*0.66} C ${w*0.22} ${h*0.88}, ${w*0.34} ${h*(0.74-seed/600)}, ${w/2} ${h*0.88}" fill="url(#glow)"/>
-      `;
+        <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${c1}"/>
+              <stop offset="100%" stop-color="${c2}"/>
+            </linearGradient>
+            <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="rgba(255,255,255,.35)"/>
+              <stop offset="80%" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
+          </defs>
+          <rect width="${w}" height="${h}" fill="url(#g)"/>
+          <g opacity=".25">
+            <circle cx="${w*0.28+seed/3}" cy="${h*0.25+seed/5}" r="${Math.min(w,h)*0.18}" fill="white"/>
+            <circle cx="${w*0.72-seed/4}" cy="${h*0.7-seed/6}" r="${Math.min(w,h)*0.22}" fill="white"/>
+          </g>
+          <path d="M${w/2} ${h*0.1} C ${w*0.66} ${h*(0.2+seed/500)}, ${w*0.86} ${h*0.4}, ${w/2} ${h*0.66} C ${w*0.22} ${h*0.88}, ${w*0.34} ${h*(0.74-seed/600)}, ${w/2} ${h*0.88}" fill="url(#glow)"/>
+        </svg>`;
     }
-
-    function discSVG(colors){
-      const [c1,c2] = colors;
+    function discSVG(colors) {
+      const [c1, c2] = colors;
       return `
         <defs>
           <radialGradient id="disc" cx="50%" cy="50%" r="60%">
@@ -387,86 +383,77 @@
       `;
     }
 
-    // Adapted render for Trending (Featured)
-    function renderTrending(){
-      trendingList.innerHTML = '';
-      trendingSongs.forEach((song, index) => {
-        const colors = generateColors(song.title); // Generate fallback colors
-        const card = document.createElement('div');
-        card.className = 'card p-3';
-        card.innerHTML = `
-          <img src="${song.image || 'https://via.placeholder.com/400x300?text=' + song.title}" class="art h-36 w-full mb-3 object-cover rounded-2xl">
-          <div class="font-semibold truncate">${song.title}</div>
-          <div class="text-slate-300 text-sm truncate mb-3">${song.artist}</div>
-          <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold" onclick="playSong(${index}, 'trendingList')">Play</button>
-            <button class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10" onclick="addToQueue(${index}, 'trendingList')">Add to Queue</button>
-            <button class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="toggleLike(${index}, 'trendingList')" title="Like">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6-4.35-9-7.5C1 12 1 8.5 3.5 6.5S8 5 12 9c4-4 7.5-3 9.5-1.5S23 12 21 13.5C18 16.65 12 21 12 21z"/></svg>
-            </button>
-          </div>
-        `;
-        trendingList.appendChild(card);
-      });
+    // Renderers
+    function renderHero() {
+      heroArt.innerHTML = albumSVG(280, 180, ["#a78bfa", "#22d3ee"], "MusicPioneer");
     }
-
-    // Adapted render for Songs (New Releases)
-    function renderSongs(){
-      songList.innerHTML = '';
-      allSongs.forEach((song, index) => {
+    function renderTrending() {
+      const filteredSongs = filterGenre === 'all' ? trendingSongs : trendingSongs.filter(song => song.genre?.toLowerCase() === filterGenre);
+      trendingList.innerHTML = filteredSongs.length === 0 ? '<div class="text-slate-300 text-center col-span-full py-8">No trending songs available.</div>' : filteredSongs.map((song, index) => {
         const colors = generateColors(song.title);
-        const item = document.createElement('div');
-        item.className = 'card p-2';
-        item.innerHTML = `
-          <img src="${song.image || 'https://via.placeholder.com/400x300?text=' + song.title}" class="art h-28 w-full mb-2 object-cover rounded-2xl">
-          <div class="text-xs font-semibold truncate">${song.title}</div>
-          <div class="text-[11px] text-slate-300 truncate">${song.artist}</div>
-          <div class="mt-2 flex gap-2">
-            <button class="px-2 py-1 rounded-md bg-violet-500 hover:bg-violet-400 text-black text-xs font-semibold" onclick="playSong(${index}, 'songList')">Play</button>
-            <button class="px-2 py-1 rounded-md btn-ghost hover:bg-white/10 text-xs" onclick="addToQueue(${index}, 'songList')">Queue</button>
-          </div>
-        `;
-        songList.appendChild(item);
-      });
+        return `
+          <div class="card p-3">
+            <img src="${song.image || `https://via.placeholder.com/400x300?text=${song.title}`}" class="art h-36 w-full mb-3 object-cover rounded-2xl">
+            <div class="font-semibold truncate">${song.title}</div>
+            <div class="text-slate-300 text-sm truncate mb-3">${song.artist}</div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold" onclick="playSong(${index}, 'trendingList')">Play</button>
+              <button class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10" onclick="addToQueue(${index}, 'trendingList')">Add to Queue</button>
+              <button class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="toggleLike(${index}, 'trendingList')" title="Like">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="${song.liked ? 'currentColor' : 'none'}" stroke="${song.liked ? 'none' : 'currentColor'}" stroke-width="2" style="color: ${song.liked ? '#f472b6' : ''}">
+                  <path d="M12 21s-6-4.35-9-7.5C1 12 1 8.5 3.5 6.5S8 5 12 9c4-4 7.5-3 9.5-1.5S23 12 21 13.5C18 16.65 12 21 12 21z"/>
+                </svg>
+              </button>
+              <button class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="downloadSong('${song.media_url}', '${song.title}')" title="Download">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3v10l3.5-3.5 1.4 1.4L12 16.8 7.1 10.9l1.4-1.4L11 13V3h1z"></path><rect x="4" y="18" width="16" height="2" rx="1" ry="1"></rect></svg>
+              </button>
+            </div>
+          </div>`;
+      }).join('');
     }
-
-    // Generate fallback colors based on song title (hash)
-    function generateColors(title) {
-      const hash = Array.from(title).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const colorOptions = [["#a78bfa","#22d3ee"], ["#f472b6","#60a5fa"], ["#34d399","#a78bfa"], ["#fb7185","#22c55e"], ["#f59e0b","#22d3ee"], ["#7c3aed","#06b6d4"]];
-      return colorOptions[hash % colorOptions.length];
+    function renderSongs() {
+      songList.innerHTML = allSongs.length === 0 ? '<div class="text-slate-300 text-center col-span-full py-8">No songs available.</div>' : allSongs.map((song, index) => {
+        const colors = generateColors(song.title);
+        return `
+          <div class="card p-2">
+            <img src="${song.image || `https://via.placeholder.com/400x300?text=${song.title}`}" class="art h-28 w-full mb-2 object-cover rounded-2xl">
+            <div class="text-xs font-semibold truncate">${song.title}</div>
+            <div class="text-[11px] text-slate-300 truncate">${song.artist}</div>
+            <div class="mt-2 flex gap-2">
+              <button class="px-2 py-1 rounded-md bg-violet-500 hover:bg-violet-400 text-black text-xs font-semibold" onclick="playSong(${index}, 'songList')">Play</button>
+              <button class="px-2 py-1 rounded-md btn-ghost hover:bg-white/10 text-xs" onclick="addToQueue(${index}, 'songList')">Queue</button>
+              <button class="h-7 w-7 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="downloadSong('${song.media_url}', '${song.title}')" title="Download">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 3v10l3.5-3.5 1.4 1.4L12 16.8 7.1 10.9l1.4-1.4L11 13V3h1z"></path><rect x="4" y="18" width="16" height="2" rx="1" ry="1"></rect></svg>
+              </button>
+            </div>
+          </div>`;
+      }).join('');
     }
-
-    // Render Library (liked songs)
-    function renderLibrary(){
-      libraryGrid.innerHTML = '';
+    function renderLibrary() {
       const likedSongs = allSongs.concat(trendingSongs).filter(song => song.liked);
-      likedSongs.forEach((song, index) => {
+      libraryGrid.innerHTML = likedSongs.length === 0 ? '<div class="text-slate-300 col-span-full text-center py-8">No liked songs yet. Tap the heart while playing to like a song.</div>' : likedSongs.map((song, index) => {
         const colors = generateColors(song.title);
-        const card = document.createElement('div');
-        card.className = 'card p-3';
-        card.innerHTML = `
-          <img src="${song.image || 'https://via.placeholder.com/400x300?text=' + song.title}" class="art h-36 w-full mb-3 object-cover rounded-2xl">
-          <div class="font-semibold truncate">${song.title}</div>
-          <div class="text-slate-300 text-sm truncate mb-3">${song.artist}</div>
-          <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold" onclick="playLikedSong(${index})">Play</button>
-            <button class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10" onclick="toggleLikeFromLibrary(${index})">Unlike</button>
-          </div>
-        `;
-        libraryGrid.appendChild(card);
-      });
-      if (likedSongs.length === 0) {
-        libraryGrid.innerHTML = `<div class="text-slate-300 col-span-full text-center py-8">No liked songs yet. Tap the heart while playing to like a song.</div>`;
-      }
+        return `
+          <div class="card p-3">
+            <img src="${song.image || `https://via.placeholder.com/400x300?text=${song.title}`}" class="art h-36 w-full mb-3 object-cover rounded-2xl">
+            <div class="font-semibold truncate">${song.title}</div>
+            <div class="text-slate-300 text-sm truncate mb-3">${song.artist}</div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold" onclick="playLikedSong(${index})">Play</button>
+              <button class="px-3 py-1.5 rounded-lg btn-ghost hover:bg-white/10" onclick="toggleLikeFromLibrary(${index})">Unlike</button>
+              <button class="h-9 w-9 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="downloadSong('${song.media_url}', '${song.title}')" title="Download">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3v10l3.5-3.5 1.4 1.4L12 16.8 7.1 10.9l1.4-1.4L11 13V3h1z"></path><rect x="4" y="18" width="16" height="2" rx="1" ry="1"></rect></svg>
+              </button>
+            </div>
+          </div>`;
+      }).join('');
     }
-
-    // Render Search Results
-    function renderSearchResults(){
-      searchGrid.innerHTML = '';
+    function renderSearchResults() {
       const term = searchInput.value.trim().toLowerCase();
+      searchGrid.innerHTML = '';
       if (!term) {
         searchSection.classList.add('hidden');
+        searchEmpty.classList.add('hidden');
         return;
       }
       searchSection.classList.remove('hidden');
@@ -475,32 +462,27 @@
         searchEmpty.classList.remove('hidden');
       } else {
         searchEmpty.classList.add('hidden');
-        results.forEach((song, index) => {
+        searchGrid.innerHTML = results.map((song, index) => {
           const colors = generateColors(song.title);
-          const item = document.createElement('div');
-          item.className = 'card p-3';
-          item.innerHTML = `
-            <img src="${song.image || 'https://via.placeholder.com/400x300?text=' + song.title}" class="art h-28 w-full mb-2 object-cover rounded-2xl">
-            <div class="text-sm font-semibold truncate">${song.title}</div>
-            <div class="text-xs text-slate-300 truncate">${song.artist}</div>
-            <div class="mt-2 flex gap-2">
-              <button class="px-2 py-1 rounded-md bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-semibold" onclick="playSearchSong(${index})">Play</button>
-              <button class="px-2 py-1 rounded-md btn-ghost hover:bg-white/10 text-xs" onclick="addToQueueFromSearch(${index})">Queue</button>
-            </div>
-          `;
-          searchGrid.appendChild(item);
-        });
+          return `
+            <div class="card p-3">
+              <img src="${song.image || `https://via.placeholder.com/400x300?text=${song.title}`}" class="art h-28 w-full mb-2 object-cover rounded-2xl">
+              <div class="text-sm font-semibold truncate">${song.title}</div>
+              <div class="text-xs text-slate-300 truncate">${song.artist}</div>
+              <div class="mt-2 flex gap-2">
+                <button class="px-2 py-1 rounded-md bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-semibold" onclick="playSearchSong(${index})">Play</button>
+                <button class="px-2 py-1 rounded-md btn-ghost hover:bg-white/10 text-xs" onclick="addToQueueFromSearch(${index})">Queue</button>
+                <button class="h-7 w-7 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="downloadSong('${song.media_url}', '${song.title}')" title="Download">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 3v10l3.5-3.5 1.4 1.4L12 16.8 7.1 10.9l1.4-1.4L11 13V3h1z"></path><rect x="4" y="18" width="16" height="2" rx="1" ry="1"></rect></svg>
+                </button>
+              </div>
+            </div>`;
+        }).join('');
       }
     }
-
-    // Render Queue
-    function renderQueue(){
-      queueList.innerHTML = '';
-      queue.forEach((q, i) => {
-        const song = q; // Since queue is now songs
-        const li = document.createElement('li');
-        li.className = 'px-3 py-2 flex items-center justify-between hover:bg-white/5 cursor-pointer';
-        li.innerHTML = `
+    function renderQueue() {
+      queueList.innerHTML = queue.map((song, i) => `
+        <li class="px-3 py-2 flex items-center justify-between hover:bg-white/5 cursor-pointer">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-6 text-slate-400 text-xs">${i+1}</div>
             <div class="min-w-0">
@@ -509,120 +491,415 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-xs text-slate-300">${formatDuration(song.duration)}</span>
-            <button class="h-8 w-8 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" title="Remove" onclick="removeFromQueue(${i})">
+            <span class="text-xs text-slate-400">${fmt(song.duration)}</span>
+            <button class="h-8 w-8 rounded-full btn-ghost hover:bg-white/10 flex items-center justify-center" onclick="removeFromQueue(${i})" title="Remove">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 7h10v2H7zM9 9h2v8H9zM13 9h2v8h-2z"/><path d="M5 5h14v2H5z"/></svg>
             </button>
           </div>
-        `;
-        li.addEventListener('click', (e) => {
-          if(e.target.closest('button')) return;
-          playByQueueIndex(i);
-        });
-        queueList.appendChild(li);
-      });
+        </li>`).join('');
     }
 
-    // Update Player UI
+    // Player Logic
     function updatePlayer(song) {
-        nowTitle.textContent = song.title || 'No Song Playing';
-        nowArtist.textContent = song.artist || 'Select a Song';
-        durationEl.textContent = formatDuration(song.duration || 0);
-        const colors = generateColors(song.title);
-        playerArt.innerHTML = discSVG(colors);
-        t = 0;
-        updateProgress();
-        // Like state
-        if (song.liked) {
-          heart.setAttribute('fill','currentColor');
-          heart.setAttribute('stroke','none');
-          heart.style.color = '#f472b6';
-        } else {
-          heart.setAttribute('fill','none');
-          heart.setAttribute('stroke','currentColor');
-          heart.style.color = '';
-        }
+      nowTitle.textContent = song.title || 'No Song Playing';
+      nowArtist.textContent = song.artist || 'Select a Song';
+      durationEl.textContent = fmt(song.duration || 0);
+      const colors = generateColors(song.title);
+      playerArt.innerHTML = discSVG(colors);
+      if (song.liked) {
+        heart.setAttribute('fill', 'currentColor');
+        heart.setAttribute('stroke', 'none');
+        heart.style.color = '#f472b6';
+      } else {
+        heart.setAttribute('fill', 'none');
+        heart.setAttribute('stroke', 'currentColor');
+        heart.style.color = '';
+      }
+      audio.src = song.media_url;
+      audio.load();
+      updateProgress();
     }
-
-    // Set Playing State
+    function updateProgress() {
+      const t = audio.currentTime;
+      currentEl.textContent = fmt(t);
+      fill.style.width = (t / (audio.duration || 1)) * 100 + '%';
+    }
     function setPlaying(p) {
-        isPlaying = p;
-        if(p){ playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); }
-        else { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); }
-        eq.classList.toggle('playing', p);
-        playerArt.classList.toggle('paused', !p);
-        if(p) audio.play().catch(e => console.error('Playback error:', e));
-        else audio.pause();
+      isPlaying = p;
+      if (p) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        audio.play().catch(e => console.error('Playback error:', e));
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        audio.pause();
+      }
+      eq.classList.toggle('playing', p);
+      playerArt.classList.toggle('paused', !p);
     }
-
-    // Handle Track End
-    function handleTrackEnd() {
-        if (queue.length > 0) {
-            nextSong();
+    function playSong(index, sourceList) {
+      const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
+      if (index < 0 || index >= songs.length) return;
+      currentSongIndex = index;
+      currentSong = songs[index];
+      if (!queue.some(q => q.media_url === currentSong.media_url)) {
+        queue.push(currentSong);
+      }
+      updatePlayer(currentSong);
+      setPlaying(true);
+      renderQueue();
+    }
+    function playLikedSong(index) {
+      const likedSongs = allSongs.concat(trendingSongs).filter(song => song.liked);
+      if (index < 0 || index >= likedSongs.length) return;
+      currentSong = likedSongs[index];
+      currentSongIndex = allSongs.concat(trendingSongs).findIndex(s => s.media_url === currentSong.media_url);
+      if (!queue.some(q => q.media_url === currentSong.media_url)) {
+        queue.push(currentSong);
+      }
+      updatePlayer(currentSong);
+      setPlaying(true);
+      renderQueue();
+    }
+    function playSearchSong(index) {
+      const results = allSongs.concat(trendingSongs).filter(song => song.title.toLowerCase().includes(searchInput.value.trim().toLowerCase()) || song.artist.toLowerCase().includes(searchInput.value.trim().toLowerCase()));
+      if (index < 0 || index >= results.length) return;
+      currentSong = results[index];
+      currentSongIndex = allSongs.concat(trendingSongs).findIndex(s => s.media_url === currentSong.media_url);
+      if (!queue.some(q => q.media_url === currentSong.media_url)) {
+        queue.push(currentSong);
+      }
+      updatePlayer(currentSong);
+      setPlaying(true);
+      renderQueue();
+    }
+    function playByQueueIndex(i) {
+      if (i < 0 || i >= queue.length) return;
+      currentSong = queue[i];
+      currentSongIndex = allSongs.concat(trendingSongs).findIndex(s => s.media_url === currentSong.media_url);
+      updatePlayer(currentSong);
+      setPlaying(true);
+    }
+    function nextSong() {
+      if (queue.length > 0) {
+        const currentQueueIndex = queue.findIndex(q => q.media_url === currentSong.media_url);
+        if (currentQueueIndex < queue.length - 1) {
+          playByQueueIndex(currentQueueIndex + 1);
         } else {
-            setPlaying(false);
+          setPlaying(false);
         }
+      } else if (currentSongIndex < (allSongs.length || trendingSongs.length) - 1) {
+        playSong(currentSongIndex + 1, allSongs.includes(currentSong) ? 'songList' : 'trendingList');
+      } else {
+        setPlaying(false);
+      }
     }
-
-    // Toggle Like
+    function prevSong() {
+      if (audio.currentTime > 3) {
+        audio.currentTime = 0;
+        updateProgress();
+        return;
+      }
+      if (queue.length > 0) {
+        const currentQueueIndex = queue.findIndex(q => q.media_url === currentSong.media_url);
+        if (currentQueueIndex > 0) {
+          playByQueueIndex(currentQueueIndex - 1);
+        }
+      } else if (currentSongIndex > 0) {
+        playSong(currentSongIndex - 1, allSongs.includes(currentSong) ? 'songList' : 'trendingList');
+      }
+    }
+    function togglePlay() {
+      if (!currentSong) return;
+      setPlaying(!isPlaying);
+    }
     function toggleLike(index, sourceList) {
-        const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
-        songs[index].liked = !songs[index].liked;
-        if (librarySection.classList.contains('open')) renderLibrary();
-        if (currentSong === songs[index]) {
-            heart.setAttribute('fill', songs[index].liked ? 'currentColor' : 'none');
-            heart.setAttribute('stroke', songs[index].liked ? 'none' : 'currentColor');
-            heart.style.color = songs[index].liked ? '#f472b6' : '';
+      const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
+      songs[index].liked = !songs[index].liked;
+      if (currentSong === songs[index]) {
+        heart.setAttribute('fill', songs[index].liked ? 'currentColor' : 'none');
+        heart.setAttribute('stroke', songs[index].liked ? 'none' : 'currentColor');
+        heart.style.color = songs[index].liked ? '#f472b6' : '';
+      }
+      renderTrending();
+      renderSongs();
+      if (!librarySection.classList.contains('hidden')) renderLibrary();
+    }
+    function toggleLikeFromLibrary(index) {
+      const likedSongs = allSongs.concat(trendingSongs).filter(song => song.liked);
+      likedSongs[index].liked = false;
+      if (currentSong && currentSong.media_url === likedSongs[index].media_url) {
+        heart.setAttribute('fill', 'none');
+        heart.setAttribute('stroke', 'currentColor');
+        heart.style.color = '';
+      }
+      renderLibrary();
+      renderTrending();
+      renderSongs();
+    }
+    function addToQueue(index, sourceList) {
+      const songs = sourceList === 'trendingList' ? trendingSongs : allSongs;
+      if (!queue.some(q => q.media_url === songs[index].media_url)) {
+        queue.push(songs[index]);
+        renderQueue();
+        openQueue();
+      }
+    }
+    function addToQueueFromSearch(index) {
+      const results = allSongs.concat(trendingSongs).filter(song => song.title.toLowerCase().includes(searchInput.value.trim().toLowerCase()) || song.artist.toLowerCase().includes(searchInput.value.trim().toLowerCase()));
+      if (!queue.some(q => q.media_url === results[index].media_url)) {
+        queue.push(results[index]);
+        renderQueue();
+        openQueue();
+      }
+    }
+    function removeFromQueue(index) {
+      queue.splice(index, 1);
+      renderQueue();
+    }
+    function downloadSong(url, title) {
+      if (!url) {
+        alert('No download link available for this song.');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug(title)}.mp3`;
+      a.click();
+    }
+    function downloadCurrentSong() {
+      if (!currentSong || !currentSong.media_url) {
+        alert('No song selected for download.');
+        return;
+      }
+      downloadSong(currentSong.media_url, currentSong.title);
+    }
+    function toggleQueue() {
+      queueDrawer.querySelector('.drawer').classList.toggle('open');
+    }
+    function openQueue() {
+      queueDrawer.querySelector('.drawer').classList.add('open');
+    }
+    function closeQueueFn() {
+      queueDrawer.querySelector('.drawer').classList.remove('open');
+    }
+
+    // API Calls
+    async function loadTrendingSongs() {
+      try {
+        const response = await fetch('/api/search/songs?query=popular&limit=5');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.success && data.data?.songs?.length > 0) {
+          trendingSongs = data.data.songs.map(song => ({ ...song, liked: false }));
+          renderTrending();
+        } else {
+          trendingList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">No trending songs available.</div>';
         }
+      } catch (error) {
+        console.error('Trending songs load error:', error);
+        trendingList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Failed to load trending songs.</div>';
+      }
+    }
+    async function loadInitialSongs() {
+      try {
+        const response = await fetch('/api/search/songs?query=popular&limit=10');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.success && data.data?.songs?.length > 0) {
+          allSongs = data.data.songs.map(song => ({ ...song, liked: false }));
+          renderSongs();
+        } else {
+          songList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">No songs available. Try searching!</div>';
+        }
+      } catch (error) {
+        console.error('Initial load error:', error);
+        songList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Failed to load songs.</div>';
+      }
+    }
+    async function searchSongs() {
+      const term = searchInput.value.trim();
+      if (!term) {
+        searchSection.classList.add('hidden');
+        loadInitialSongs();
+        return;
+      }
+      try {
+        const response = await fetch(`/api/search/songs?query=${encodeURIComponent(term)}&limit=18`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.success && data.data?.songs?.length > 0) {
+          allSongs = data.data.songs.map(song => ({ ...song, liked: false }));
+          renderSearchResults();
+        } else {
+          searchSection.classList.remove('hidden');
+          searchGrid.innerHTML = '';
+          searchEmpty.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        searchSection.classList.remove('hidden');
+        searchGrid.innerHTML = '';
+        searchEmpty.classList.remove('hidden');
+      }
     }
 
-    // Volume Toggle
-    function toggleVol() {
-        volPop.classList.toggle('hidden');
+    // Auth Handlers
+    function handleLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      if (email && password) {
+        currentUser = { email };
+        document.getElementById('userName').textContent = email.split('@')[0];
+        document.getElementById('userName').classList.remove('hidden');
+        document.getElementById('loginOverlay').style.display = 'none';
+        loadInitialSongs();
+        loadTrendingSongs();
+      } else {
+        alert('Please enter both email and password.');
+      }
     }
-
-    // Open/Close Queue
-    function openQueue() { queueDrawer.classList.add('open'); }
-    function closeQueueFn() { queueDrawer.classList.remove('open'); }
+    function showSignup() {
+      alert('Sign-up functionality is not implemented yet.');
+    }
+    function logout() {
+      currentUser = null;
+      allSongs = [];
+      trendingSongs = [];
+      queue = [];
+      currentSong = null;
+      currentSongIndex = -1;
+      audio.src = '';
+      setPlaying(false);
+      document.getElementById('userName').classList.add('hidden');
+      document.getElementById('loginOverlay').style.display = 'flex';
+      trendingList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Loading trending songs...</div>';
+      songList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Loading songs...</div>';
+      libraryGrid.innerHTML = '';
+      searchGrid.innerHTML = '';
+      queueList.innerHTML = '';
+      nowTitle.textContent = 'No Song Playing';
+      nowArtist.textContent = 'Select a Song';
+      durationEl.textContent = '0:00';
+      currentEl.textContent = '0:00';
+      fill.style.width = '0%';
+    }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+      document.querySelector('[onclick="toggleDarkMode()"]').textContent = document.body.classList.contains('dark') ? '☀' : '🌙';
+    }
 
     // Event Listeners
     audio.addEventListener('loadedmetadata', () => {
-        durationEl.textContent = formatDuration(audio.duration);
+      durationEl.textContent = fmt(audio.duration);
     });
-    audio.addEventListener('timeupdate', () => {
-        t = audio.currentTime;
-        updateProgress();
+    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('ended', nextSong);
+    searchForm.addEventListener('submit', e => e.preventDefault());
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(searchSongs, 300);
     });
-    audio.addEventListener('ended', handleTrackEnd);
-
-    searchInput.addEventListener('input', renderSearchResults);
-
-    volBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleVol();
+    volBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      volPop.classList.toggle('hidden');
     });
     document.addEventListener('click', () => volPop.classList.add('hidden'));
-    volPop.addEventListener('click', (e) => e.stopPropagation());
-    volRange.addEventListener('input', (e) => {
-        volume = Number(e.target.value)/100;
-        audio.volume = volume;
-        volPct.textContent = Math.round(volume*100) + '%';
-        // Update icon (as in demo)
+    volPop.addEventListener('click', e => e.stopPropagation());
+    volRange.addEventListener('input', e => {
+      volume = Number(e.target.value) / 100;
+      audio.volume = volume;
+      volPct.textContent = Math.round(volume * 100) + '%';
+      if (volume === 0) {
+        volIcon.innerHTML = '<path d="M3 9v6h4l5 4V5L7 9H3z"></path><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none"/>';
+      } else if (volume < 0.35) {
+        volIcon.innerHTML = '<path d="M3 9v6h4l5 4V5L7 9H3z"></path><path d="M16 12a3 3 0 0 0 0 0" fill="currentColor"/>';
+      } else if (volume < 0.75) {
+        volIcon.innerHTML = '<path d="M3 9v6h4l5 4V5L7 9H3z"></path><path d="M16 9a6 6 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="2"/>';
+      } else {
+        volIcon.innerHTML = '<path d="M3 9v6h4l5 4V5L7 9H3z"></path><path d="M16 7a9 9 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="2"/>';
+      }
     });
-
-    queueBtn.addEventListener('click', openQueue);
+    progress.addEventListener('click', e => {
+      const rect = progress.getBoundingClientRect();
+      const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      audio.currentTime = audio.duration * pct;
+      updateProgress();
+    });
+    queueBtn.addEventListener('click', toggleQueue);
     closeQueue.addEventListener('click', closeQueueFn);
-    clearQueue.addEventListener('click', () => { queue = []; renderQueue(); });
-    queueDrawer.addEventListener('click', (e) => {
-        if(e.target === queueDrawer) closeQueueFn();
+    clearQueue.addEventListener('click', () => {
+      queue = [];
+      renderQueue();
+    });
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab');
+        hero.classList.toggle('hidden', tab !== 'home' && tab !== 'browse');
+        document.getElementById('featured').classList.toggle('hidden', tab === 'library' || tab === 'search');
+        document.getElementById('newReleases').classList.toggle('hidden', tab === 'library' || tab === 'search');
+        librarySection.classList.toggle('hidden', tab !== 'library');
+        searchSection.classList.toggle('hidden', tab !== 'search');
+        document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('bg-white/10'));
+        btn.classList.add('bg-white/10');
+        if (tab === 'library') renderLibrary();
+        if (tab === 'search') renderSearchResults();
+      });
+    });
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterGenre = btn.getAttribute('data-filter');
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('bg-white/10'));
+        btn.classList.add('bg-white/10');
+        renderTrending();
+      });
+    });
+    ctaExplore.addEventListener('click', () => {
+      document.querySelector('[data-tab="browse"]').click();
+      window.scrollTo({ top: hero.offsetTop + 10, behavior: 'smooth' });
+    });
+    ctaPlayMix.addEventListener('click', () => {
+      queue = [...trendingSongs, ...allSongs].slice(0, 10);
+      if (queue.length > 0) {
+        currentSongIndex = 0;
+        currentSong = queue[0];
+        updatePlayer(currentSong);
+        setPlaying(true);
+        renderQueue();
+      }
+    });
+    document.getElementById('likeBtn').addEventListener('click', () => {
+      if (currentSong) {
+        currentSong.liked = !currentSong.liked;
+        heart.setAttribute('fill', currentSong.liked ? 'currentColor' : 'none');
+        heart.setAttribute('stroke', currentSong.liked ? 'none' : 'currentColor');
+        heart.style.color = currentSong.liked ? '#f472b6' : '';
+        renderTrending();
+        renderSongs();
+        if (!librarySection.classList.contains('hidden')) renderLibrary();
+      }
+    });
+    document.getElementById('clearLikes').addEventListener('click', () => {
+      allSongs.forEach(song => song.liked = false);
+      trendingSongs.forEach(song => song.liked = false);
+      if (currentSong) {
+        currentSong.liked = false;
+        heart.setAttribute('fill', 'none');
+        heart.setAttribute('stroke', 'currentColor');
+        heart.style.color = '';
+      }
+      renderLibrary();
+      renderTrending();
+      renderSongs();
     });
 
-    // Your original login, logout, etc.
-    // ... (add all your script functions here, like handleLogin, logout, toggleDarkMode, loadTrendingSongs, loadInitialSongs, searchSongs, displaySongs, playSong, togglePlay, nextSong, prevSong, updateProgress, addToQueue, updateQueue, toggleQueue, downloadSong)
-
-    // Initial
-    document.getElementById('loginOverlay').style.display = 'flex';
-    renderHero();
+    // Init
+    function init() {
+      renderHero();
+      document.getElementById('loginOverlay').style.display = 'flex';
+    }
+    init();
   </script>
 </body>
 </html>
