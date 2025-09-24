@@ -288,6 +288,7 @@
     let filterGenre = 'all';
     let volume = 0.7;
     audio.volume = volume;
+    let searchTimeout;
 
     // Elements
     const searchForm = document.getElementById('searchForm');
@@ -686,63 +687,45 @@
     }
 
     // API Calls
-    async function loadTrendingSongs() {
-      try {
-        const response = await fetch('/api/search/songs?query=popular&limit=5');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        if (data.success && data.data?.songs?.length > 0) {
-          trendingSongs = data.data.songs.map(song => ({ ...song, liked: false }));
-          renderTrending();
-        } else {
-          trendingList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">No trending songs available.</div>';
-        }
-      } catch (error) {
-        console.error('Trending songs load error:', error);
-        trendingList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Failed to load trending songs.</div>';
-      }
+    function loadTrendingSongs() {
+      const sampleSongs = [
+        { title: "Blinding Lights", artist: "The Weeknd", media_url: "https://example.com/blindinglights.mp3", duration: 200, genre: "synthwave", liked: false },
+        { title: "Levitating", artist: "Dua Lipa", media_url: "https://example.com/levitating.mp3", duration: 203, genre: "pop", liked: false },
+        { title: "Good 4 U", artist: "Olivia Rodrigo", media_url: "https://example.com/good4u.mp3", duration: 178, genre: "alt", liked: false },
+        { title: "Stay", artist: "The Kid LAROI & Justin Bieber", media_url: "https://example.com/stay.mp3", duration: 141, genre: "chill", liked: false },
+        { title: "Heat Waves", artist: "Glass Animals", media_url: "https://example.com/heatwaves.mp3", duration: 238, genre: "alt", liked: false },
+        { title: "Industry Baby", artist: "Lil Nas X & Jack Harlow", media_url: "https://example.com/industrybaby.mp3", duration: 212, genre: "hiphop", liked: false },
+        { title: "Montero", artist: "Lil Nas X", media_url: "https://example.com/montero.mp3", duration: 137, genre: "pop", liked: false },
+        { title: "Butter", artist: "BTS", media_url: "https://example.com/butter.mp3", duration: 164, genre: "kpop", liked: false },
+        { title: "Bad Habits", artist: "Ed Sheeran", media_url: "https://example.com/badhabits.mp3", duration: 231, genre: "pop", liked: false },
+        { title: "Fancy Like", artist: "Walker Hayes", media_url: "https://example.com/fancylike.mp3", duration: 162, genre: "country", liked: false }
+      ];
+      trendingSongs = sampleSongs.slice(0,5);
+      renderTrending();
     }
-    async function loadInitialSongs() {
-      try {
-        const response = await fetch('/api/search/songs?query=popular&limit=10');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        if (data.success && data.data?.songs?.length > 0) {
-          allSongs = data.data.songs.map(song => ({ ...song, liked: false }));
-          renderSongs();
-        } else {
-          songList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">No songs available. Try searching!</div>';
-        }
-      } catch (error) {
-        console.error('Initial load error:', error);
-        songList.innerHTML = '<div class="text-slate-300 text-center col-span-full py-8">Failed to load songs.</div>';
-      }
+    function loadInitialSongs() {
+      const sampleSongs = [
+        { title: "Blinding Lights", artist: "The Weeknd", media_url: "https://example.com/blindinglights.mp3", duration: 200, genre: "synthwave", liked: false },
+        { title: "Levitating", artist: "Dua Lipa", media_url: "https://example.com/levitating.mp3", duration: 203, genre: "pop", liked: false },
+        { title: "Good 4 U", artist: "Olivia Rodrigo", media_url: "https://example.com/good4u.mp3", duration: 178, genre: "alt", liked: false },
+        { title: "Stay", artist: "The Kid LAROI & Justin Bieber", media_url: "https://example.com/stay.mp3", duration: 141, genre: "chill", liked: false },
+        { title: "Heat Waves", artist: "Glass Animals", media_url: "https://example.com/heatwaves.mp3", duration: 238, genre: "alt", liked: false },
+        { title: "Industry Baby", artist: "Lil Nas X & Jack Harlow", media_url: "https://example.com/industrybaby.mp3", duration: 212, genre: "hiphop", liked: false },
+        { title: "Montero", artist: "Lil Nas X", media_url: "https://example.com/montero.mp3", duration: 137, genre: "pop", liked: false },
+        { title: "Butter", artist: "BTS", media_url: "https://example.com/butter.mp3", duration: 164, genre: "kpop", liked: false },
+        { title: "Bad Habits", artist: "Ed Sheeran", media_url: "https://example.com/badhabits.mp3", duration: 231, genre: "pop", liked: false },
+        { title: "Fancy Like", artist: "Walker Hayes", media_url: "https://example.com/fancylike.mp3", duration: 162, genre: "country", liked: false }
+      ];
+      allSongs = sampleSongs;
+      renderSongs();
     }
-    async function searchSongs() {
+    function searchSongs() {
       const term = searchInput.value.trim();
       if (!term) {
         searchSection.classList.add('hidden');
-        loadInitialSongs();
         return;
       }
-      try {
-        const response = await fetch(`/api/search/songs?query=${encodeURIComponent(term)}&limit=18`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        if (data.success && data.data?.songs?.length > 0) {
-          allSongs = data.data.songs.map(song => ({ ...song, liked: false }));
-          renderSearchResults();
-        } else {
-          searchSection.classList.remove('hidden');
-          searchGrid.innerHTML = '';
-          searchEmpty.classList.remove('hidden');
-        }
-      } catch (error) {
-        console.error('Search error:', error);
-        searchSection.classList.remove('hidden');
-        searchGrid.innerHTML = '';
-        searchEmpty.classList.remove('hidden');
-      }
+      renderSearchResults();
     }
 
     // Auth Handlers
